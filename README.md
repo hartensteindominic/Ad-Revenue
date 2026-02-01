@@ -75,6 +75,12 @@ npm run dev
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Storage**: JSON file-based storage
 
+## Security Notes
+
+- **Rate Limiting**: This application does not implement rate limiting. For production use, consider adding rate limiting middleware (e.g., express-rate-limit) to prevent abuse.
+- **Authentication**: This application does not include authentication. In a production environment, add proper authentication and authorization.
+- **Dependencies**: All dependencies are kept up-to-date to address known security vulnerabilities.
+
 ## License
 
 MIT
