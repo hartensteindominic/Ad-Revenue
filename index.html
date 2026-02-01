@@ -3,39 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARCADE_CORE_v1.0</title>
+    <title>ARCADE_CORE_SYSTEM</title>
     <style>
-        body { background: #000; color: #00ffad; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
-        .core-container { border: 2px solid #00ffad; padding: 20px; border-radius: 50%; width: 250px; height: 250px; margin: 40px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px #00ffad; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
-        .ad-slot { margin: 20px 0; background: #111; padding: 10px; border-radius: 5px; }
-        .btn-return { display: inline-block; margin-top: 30px; color: #00ffad; text-decoration: none; border: 1px solid #00ffad; padding: 10px 20px; }
+        :root { --neon-blue: #00d4ff; --neon-green: #39ff14; }
+        body { background: #000; color: var(--neon-blue); font-family: 'Courier New', monospace; margin: 0; padding: 15px; text-align: center; overflow-x: hidden; }
+        .core-wrapper { border: 2px solid var(--neon-blue); border-radius: 20px; padding: 20px; background: rgba(0, 212, 255, 0.05); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+        .header { font-size: 1.5rem; text-shadow: 0 0 10px var(--neon-blue); margin-bottom: 10px; }
+        .status-box { border: 1px solid var(--neon-green); color: var(--neon-green); padding: 10px; display: inline-block; margin: 10px 0; font-size: 0.8rem; }
+        .ad-container { margin: 20px 0; background: #0a0a0a; border-radius: 10px; min-height: 60px; display: flex; justify-content: center; align-items: center; border: 1px dashed #333; }
+        .data-stream { font-size: 0.9rem; margin: 20px 0; line-height: 1.6; text-align: left; background: #050505; padding: 15px; border-radius: 5px; color: #555; }
+        .highlight { color: var(--neon-blue); }
+        .btn-return { display: block; width: 200px; margin: 20px auto; padding: 15px; border: 2px solid var(--neon-blue); color: var(--neon-blue); text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .btn-return:active { background: var(--neon-blue); color: #000; }
     </style>
 </head>
 <body>
 
-    <h1>[ ARCADE_CORE_SYSTEM ]</h1>
-    
-    <div class="ad-slot">
+<div class="core-wrapper">
+    <div class="header">[ ARCADE_CORE_v2.0 ]</div>
+    <div class="status-box">SYSTEM_SYNC: ACTIVE // REVENUE_READY</div>
+
+    <div class="ad-container">
         <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
     </div>
 
-    <div class="core-container">
-        <div>
-            <div>CORE_STATUS: ACTIVE</div>
-            <div id="harvest">HARVESTING_ETH...</div>
-        </div>
+    <div class="data-stream">
+        > INITIALIZING UPLINK... <br>
+        > STATUS: <span class="highlight">CONNECTED</span> <br>
+        > CURRENT_YIELD: <span class="highlight" id="yield">0.00042 ETH</span> <br>
+        > NETWORK_LOAD: <span class="highlight">87%</span> <br>
+        > AUTO_REFRESH: <span class="highlight">ENABLED (300s)</span>
     </div>
 
-    <div class="ad-slot">
+    <div class="ad-container">
         <iframe data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
     </div>
 
-    <a href="https://hartensteindominic.github.io/" class="btn-return">RETURN_TO_HUB</a>
+    <a href="https://hartensteindominic.github.io/" class="btn-return">RETURN_TO_GATEWAY</a>
+</div>
 
-    <script>
-        // Auto-refresh every 5 minutes to reset the ads and count new impressions
-        setTimeout(() => { location.reload(); }, 300000);
-    </script>
+<script>
+    // Simulate data harvest to keep users on page
+    setInterval(() => {
+        let yield = (Math.random() * 0.001).toFixed(5);
+        document.getElementById('yield').innerText = yield + " ETH";
+    }, 3000);
+
+    // AUTO-REFRESH SCRIPT: Forces new ad impressions every 5 minutes
+    setTimeout(() => { location.reload(); }, 300000);
+</script>
+
 </body>
 </html>
