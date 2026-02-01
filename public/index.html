@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Revenue Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Ad Revenue Tracker</h1>
+            <p>Track and analyze your advertising revenue</p>
+        </header>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Ads</h3>
+                <p class="stat-value" id="totalAds">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <p class="stat-value" id="totalRevenue">$0.00</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Impressions</h3>
+                <p class="stat-value" id="totalImpressions">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Clicks</h3>
+                <p class="stat-value" id="totalClicks">0</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <section class="section">
+                <h2>📢 Manage Ads</h2>
+                <div class="form-group">
+                    <input type="text" id="adName" placeholder="Ad Name" required>
+                    <input type="text" id="adPlatform" placeholder="Platform (e.g., Google, Facebook)" required>
+                    <select id="adType">
+                        <option value="banner">Banner</option>
+                        <option value="video">Video</option>
+                        <option value="native">Native</option>
+                        <option value="interstitial">Interstitial</option>
+                    </select>
+                    <button onclick="addAd()" class="btn btn-primary">Add Ad</button>
+                </div>
+                <div id="adsList" class="items-list"></div>
+            </section>
+
+            <section class="section">
+                <h2>💵 Track Revenue</h2>
+                <div class="form-group">
+                    <select id="revenueAdId" required>
+                        <option value="">Select Ad</option>
+                    </select>
+                    <input type="number" id="revenueAmount" placeholder="Revenue Amount ($)" step="0.01" required>
+                    <input type="number" id="revenueImpressions" placeholder="Impressions" required>
+                    <input type="number" id="revenueClicks" placeholder="Clicks" required>
+                    <input type="date" id="revenueDate" required>
+                    <button onclick="addRevenue()" class="btn btn-primary">Add Revenue</button>
+                </div>
+                <div id="revenueList" class="items-list"></div>
+            </section>
+
+            <section class="section">
+                <h2>📊 Performance by Ad</h2>
+                <div id="performanceList" class="performance-list"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
