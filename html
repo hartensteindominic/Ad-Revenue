@@ -1,102 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH REVENUE TERMINAL | v4.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.5/web3.min.js"></script>
+    <title>ETH REVENUE</title>
     <style>
-        :root { --neon: #00ffad; --bg: #050505; --card: #0c0c0c; }
-        body { background: var(--bg); color: white; font-family: 'Courier New', monospace; margin: 0; text-align: center; }
-        
-        /* Header */
-        .header { padding: 30px; border-bottom: 1px solid var(--neon); background: #111; position: sticky; top: 0; z-index: 100; }
-        .wallet-text { font-size: 0.7rem; color: #666; margin-top: 10px; border: 1px solid #222; padding: 5px; display: inline-block; word-break: break-all; }
-
-        /* Modern Grid Layout */
-        .ad-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-            gap: 20px; 
-            padding: 40px 20px; 
-            max-width: 1200px; 
-            margin: auto; 
-        }
-        
-        .ad-wrapper { 
-            background: var(--card); 
-            border: 1px solid #1a1a1a; 
-            padding: 20px; 
-            transition: transform 0.3s, border-color 0.3s;
-        }
-        .ad-wrapper:hover { border-color: var(--neon); transform: translateY(-5px); }
-
-        .status-bar { font-size: 0.6rem; color: #444; margin-top: 15px; letter-spacing: 1px; }
-        .tip-btn { background: var(--neon); color: black; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; margin: 20px; border-radius: 4px; }
+        body { background: black; color: #00ffad; text-align: center; font-family: sans-serif; }
+        .ad-box { margin: 20px auto; padding: 10px; border: 1px solid #333; max-width: 728px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1 style="margin:0; font-size: 1.5rem;">ETH_REVENUE_QUAD_CORE</h1>
-    <div class="wallet-text">RECEIVE: 0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
-    <br>
-    <div id="timer" style="font-size: 0.6rem; color: var(--neon); margin-top: 10px;">CYCLE: 60s</div>
-</div>
+    <h1>ETH REVENUE TERMINAL</h1>
+    <p>Target: 0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</p>
 
-<div class="ad-grid">
-    <div class="ad-wrapper">
-        <iframe id="ad1" data-aa='2426199' src='//acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:100%; height:90px; overflow:hidden;'></iframe>
-        <div class="status-bar">NODE_01_ACTIVE</div>
+    <div class="ad-box">
+        <iframe data-aa='2426199' src='//acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; padding:0; width:100%; height:90px; overflow:hidden; display: block;'></iframe>
     </div>
 
-    <div class="ad-wrapper">
-        <iframe id="ad2" data-aa='2426200' src='//acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; width:100%; height:90px; overflow:hidden;'></iframe>
-        <div class="status-bar">NODE_02_ACTIVE</div>
+    <div class="ad-box">
+        <iframe data-aa='2426200' src='//acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; padding:0; width:100%; height:90px; overflow:hidden; display: block;'></iframe>
     </div>
 
-    <div class="ad-wrapper">
-        <iframe id="ad3" data-aa='2426201' src='//acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:100%; height:90px; overflow:hidden;'></iframe>
-        <div class="status-bar">NODE_03_ACTIVE</div>
+    <div class="ad-box">
+        <iframe data-aa='2426201' src='//acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; padding:0; width:100%; height:90px; overflow:hidden; display: block;'></iframe>
     </div>
 
-    <div class="ad-wrapper">
-        <iframe id="ad4" data-aa='2426202' src='//acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; width:100%; height:90px; overflow:hidden;'></iframe>
-        <div class="status-bar">NODE_04_ACTIVE</div>
+    <div class="ad-box">
+        <iframe data-aa='2426202' src='//acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; padding:0; width:100%; height:90px; overflow:hidden; display: block;'></iframe>
     </div>
-</div>
-
-<button class="tip-btn" onclick="sendTip()">SEND 0.01 ETH TIP</button>
-
-<script>
-    // REFRESH LOGIC
-    let timeLeft = 60;
-    setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').innerText = `CYCLE: ${timeLeft}s`;
-        if (timeLeft <= 0) {
-            ['ad1', 'ad2', 'ad3', 'ad4'].forEach(id => {
-                const f = document.getElementById(id);
-                f.src = f.src;
-            });
-            timeLeft = 60;
-        }
-    }, 1000);
-
-    // WEB3 TIP LOGIC
-    async function sendTip() {
-        if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            await window.ethereum.enable();
-            const accounts = await web3.eth.getAccounts();
-            web3.eth.sendTransaction({
-                from: accounts[0],
-                to: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
-                value: web3.utils.toWei('0.01', 'ether')
-            });
-        } else { alert("MetaMask not found!"); }
-    }
-</script>
 
 </body>
 </html>
