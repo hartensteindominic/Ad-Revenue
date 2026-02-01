@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETH REVENUE TERMINAL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.5/web3.min.js"></script>
+    <style>
+        :root { --eth-blue: #3c3c3d; --neon: #00ffad; --bg: #0a0a0a; }
+        body { background: var(--bg); color: white; font-family: 'Courier New', monospace; margin: 0; text-align: center; }
+        .header { border-bottom: 2px solid var(--neon); padding: 30px; background: #111; box-shadow: 0 0 20px rgba(0,255,173,0.1); }
+        .wallet-bar { font-size: 0.7rem; color: var(--neon); margin: 15px; border: 1px solid #333; display: inline-block; padding: 10px; }
+        .ad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; padding: 20px; }
+        .ad-slot { background: #151515; border: 1px solid #222; min-height: 280px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .btn-tip { background: var(--neon); color: black; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; margin: 20px; border-radius: 5px; }
+        .btn-tip:hover { background: #fff; box-shadow: 0 0 15px var(--neon); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>ETH_REVENUE_NODE_v1.0</h1>
+    <div class="wallet-bar">TARGET_0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
+    <br>
+    <button class="btn-tip" onclick="sendEth()">SEND DIRECT ETH TIP</button>
+</div>
+
+<div class="ad-grid">
+    <div class="ad-slot">
+        <div id="ad-placeholder-1">WAITING FOR AD STREAM 1...</div>
+    </div>
+
+    <div class="ad-unit ad-slot">
+        <div id="ad-placeholder-2">WAITING FOR AD STREAM 2...</div>
+    </div>
+</div>
+
+<script>
+    const destination = "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650";
+
+    async function sendEth() {
+        if (window.ethereum) {
+            const web3 = new Web3(window.ethereum);
+            await window.ethereum.enable();
+            const accounts = await web3.eth.getAccounts();
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: destination,
+                value: web3.utils.toWei('0.01', 'ether')
+            });
+        } else {
+            alert("Please install MetaMask to send ETH!");
+        }
+    }
+</script>
+
+</body>
+</html>
