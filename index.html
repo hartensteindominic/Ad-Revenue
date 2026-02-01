@@ -1,101 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH_MISSION_CONTROL_v8</title>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        :root { --neon: #00ffad; --bg: #050505; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; text-align: center; }
-        
-        /* Rocket CSS Animation */
-        #rocket { 
-            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
-            font-size: 80px; transition: bottom 2.5s ease-in; z-index: 1000; filter: drop-shadow(0 0 15px orange);
-        }
-        .launch { bottom: 150vh !important; }
-
-        /* Dashboard HUD */
-        .dashboard { padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .video-core { 
-            width: 95%; max-width: 720px; aspect-ratio: 16/9; 
-            border: 3px solid var(--neon); box-shadow: 0 0 30px rgba(0,255,173,0.4); 
-            background: #000; margin: 20px 0; border-radius: 8px; overflow: hidden;
-        }
-        
-        /* Ad Placement */
-        .ad-row { display: flex; gap: 15px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .ad-unit { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 5px; }
-
-        /* Launch Button */
-        .big-launch-btn { 
-            background: #ff4500; color: white; border: none; padding: 25px 50px; 
-            font-weight: bold; cursor: pointer; font-family: 'Courier New';
-            font-size: 1.5rem; letter-spacing: 3px; border-radius: 5px;
-            box-shadow: 0 0 20px #ff4500; margin: 30px 0;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .big-launch-btn:active { transform: scale(0.95); box-shadow: 0 0 5px #ff4500; }
+        body { background: #000; color: #ff003c; font-family: monospace; text-align: center; padding: 20px; }
+        .rocket { font-size: 50px; margin: 20px; animation: shake 0.5s infinite; display: inline-block; }
+        @keyframes shake { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+        .btn { display: block; border: 2px solid #ff003c; padding: 20px; color: #ff003c; text-decoration: none; margin: 20px auto; max-width: 200px; }
     </style>
 </head>
 <body>
+    <h1>NODE_01: MISSION_CONTROL</h1>
+    <div class="rocket">🚀</div>
+    <p>UPLINK_STABLE // HARVESTING_DATA</p>
+    
+    <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:100%; height:100px;'></iframe>
 
-<div id="rocket">🚀</div>
-
-<div class="dashboard">
-    <h1 style="margin:0; text-shadow: 0 0 10px var(--neon);">SYSTEM: MISSION_CONTROL</h1>
-    <div style="font-size: 0.6rem; opacity: 0.5;">0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
-
-    <div class="ad-row">
-        <div class="ad-unit"><iframe id="ad1" data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-        <div class="ad-unit"><iframe id="ad2" data-aa='2426200' src='https://acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-    </div>
-
-    <div class="video-core">
-        <div id="player"></div>
-    </div>
-
-    <button class="big-launch-btn" onclick="blastOff()">[ LAUNCH_REVENUE_STREAM ]</button>
-
-    <div class="ad-row">
-        <div class="ad-unit"><iframe id="ad3" data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-        <div class="ad-unit"><iframe id="ad4" data-aa='2426202' src='https://acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-    </div>
-</div>
-
-<script>
-    // YouTube API Logic
-    let player;
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-            height: '100%',
-            width: '100%',
-            videoId: 'q_r0THGGLy4', // Cyberpunk / Crypto Music track
-            playerVars: { 'autoplay': 0, 'controls': 1, 'rel': 0 },
-        });
-    }
-
-    function blastOff() {
-        // 1. Play Video
-        if (player && player.playVideo) player.playVideo();
-        
-        // 2. Animate Rocket
-        const r = document.getElementById('rocket');
-        r.classList.add('launch');
-        
-        // 3. Refresh Ads for new impressions
-        ['ad1', 'ad2', 'ad3', 'ad4'].forEach(id => {
-            const f = document.getElementById(id); 
-            f.src = f.src; 
-        });
-
-        // 4. Reset Rocket
-        setTimeout(() => { 
-            r.classList.remove('launch'); 
-        }, 3000);
-    }
-</script>
-
+    <a href="https://hartensteindominic.github.io/" class="btn">RETURN_TO_HUB</a>
 </body>
 </html>
