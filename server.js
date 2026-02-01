@@ -45,10 +45,15 @@ app.get('/api/ads', (req, res) => {
 
 // Add new ad
 app.post('/api/ads', (req, res) => {
+  // Validate required fields
+  if (!req.body.name || !req.body.platform || !req.body.type) {
+    return res.status(400).json({ error: 'Missing required fields: name, platform, type' });
+  }
+  
   const ad = {
-    id: Date.now().toString(),
-    name: req.body.name,
-    platform: req.body.platform,
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    name: req.body.name.trim(),
+    platform: req.body.platform.trim(),
     type: req.body.type,
     createdAt: new Date().toISOString()
   };
@@ -78,12 +83,38 @@ app.get('/api/revenue', (req, res) => {
 
 // Add revenue entry
 app.post('/api/revenue', (req, res) => {
+  // Validate required fields
+  if (!req.body.adId || req.body.amount == null || req.body.impressions == null || req.body.clicks == null) {
+    return res.status(400).json({ error: 'Missing required fields: adId, amount, impressions, clicks' });
+  }
+  
+  // Validate that adId exists
+  const adExists = data.ads.some(ad => ad.id === req.body.adId);
+  if (!adExists) {
+    return res.status(404).json({ error: 'Ad not found' });
+  }
+  
+  // Validate numeric values
+  const amount = parseFloat(req.body.amount);
+  const impressions = parseInt(req.body.impressions);
+  const clicks = parseInt(req.body.clicks);
+  
+  if (isNaN(amount) || amount < 0) {
+    return res.status(400).json({ error: 'Invalid amount: must be a non-negative number' });
+  }
+  if (isNaN(impressions) || impressions < 0) {
+    return res.status(400).json({ error: 'Invalid impressions: must be a non-negative integer' });
+  }
+  if (isNaN(clicks) || clicks < 0) {
+    return res.status(400).json({ error: 'Invalid clicks: must be a non-negative integer' });
+  }
+  
   const revenue = {
-    id: Date.now().toString(),
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     adId: req.body.adId,
-    amount: parseFloat(req.body.amount),
-    impressions: parseInt(req.body.impressions),
-    clicks: parseInt(req.body.clicks),
+    amount: amount,
+    impressions: impressions,
+    clicks: clicks,
     date: req.body.date || new Date().toISOString().split('T')[0],
     createdAt: new Date().toISOString()
   };
@@ -116,16 +147,23 @@ app.get('/api/stats', (req, res) => {
   // Calculate by ad
   stats.byAd = data.ads.map(ad => {
     const adRevenue = data.revenue.filter(r => r.adId === ad.id);
+    const totals = adRevenue.reduce((acc, r) => {
+      acc.revenue += r.amount;
+      acc.impressions += r.impressions;
+      acc.clicks += r.clicks;
+      return acc;
+    }, { revenue: 0, impressions: 0, clicks: 0 });
+    
     return {
       id: ad.id,
       name: ad.name,
       platform: ad.platform,
       type: ad.type,
-      revenue: adRevenue.reduce((sum, r) => sum + r.amount, 0),
-      impressions: adRevenue.reduce((sum, r) => sum + r.impressions, 0),
-      clicks: adRevenue.reduce((sum, r) => sum + r.clicks, 0),
-      ctr: adRevenue.reduce((sum, r) => sum + r.impressions, 0) > 0 
-        ? (adRevenue.reduce((sum, r) => sum + r.clicks, 0) / adRevenue.reduce((sum, r) => sum + r.impressions, 0) * 100).toFixed(2)
+      revenue: totals.revenue,
+      impressions: totals.impressions,
+      clicks: totals.clicks,
+      ctr: totals.impressions > 0 
+        ? (totals.clicks / totals.impressions * 100).toFixed(2)
         : 0
     };
   });
