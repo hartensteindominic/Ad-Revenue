@@ -1,21 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCADE_CORE_v1.0</title>
     <style>
-        body { background: #000; color: #ff003c; font-family: monospace; text-align: center; padding: 20px; }
-        .rocket { font-size: 50px; margin: 20px; animation: shake 0.5s infinite; display: inline-block; }
-        @keyframes shake { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
-        .btn { display: block; border: 2px solid #ff003c; padding: 20px; color: #ff003c; text-decoration: none; margin: 20px auto; max-width: 200px; }
+        body { background: #000; color: #00ffad; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
+        .core-container { border: 2px solid #00ffad; padding: 20px; border-radius: 50%; width: 250px; height: 250px; margin: 40px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px #00ffad; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
+        .ad-slot { margin: 20px 0; background: #111; padding: 10px; border-radius: 5px; }
+        .btn-return { display: inline-block; margin-top: 30px; color: #00ffad; text-decoration: none; border: 1px solid #00ffad; padding: 10px 20px; }
     </style>
 </head>
 <body>
-    <h1>NODE_01: MISSION_CONTROL</h1>
-    <div class="rocket">🚀</div>
-    <p>UPLINK_STABLE // HARVESTING_DATA</p>
-    
-    <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:100%; height:100px;'></iframe>
 
-    <a href="https://hartensteindominic.github.io/" class="btn">RETURN_TO_HUB</a>
+    <h1>[ ARCADE_CORE_SYSTEM ]</h1>
+    
+    <div class="ad-slot">
+        <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
+    </div>
+
+    <div class="core-container">
+        <div>
+            <div>CORE_STATUS: ACTIVE</div>
+            <div id="harvest">HARVESTING_ETH...</div>
+        </div>
+    </div>
+
+    <div class="ad-slot">
+        <iframe data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
+    </div>
+
+    <a href="https://hartensteindominic.github.io/" class="btn-return">RETURN_TO_HUB</a>
+
+    <script>
+        // Auto-refresh every 5 minutes to reset the ads and count new impressions
+        setTimeout(() => { location.reload(); }, 300000);
+    </script>
 </body>
 </html>
