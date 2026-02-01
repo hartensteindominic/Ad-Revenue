@@ -3,128 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH_CORE_NODE_v7</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.5/web3.min.js"></script>
+    <title>ETH_MISSION_CONTROL_v8</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        :root { --neon: #00ffad; --bg: #050505; --dim: #00442e; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; }
+        :root { --neon: #00ffad; --bg: #050505; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; text-align: center; }
         
-        /* Header & Stats */
-        .header { padding: 20px; border-bottom: 2px solid var(--neon); background: #000; box-shadow: 0 0 20px var(--dim); }
-        .stats-bar { display: flex; justify-content: space-around; font-size: 0.7rem; margin-top: 10px; color: white; border: 1px solid #222; padding: 5px; }
-        .live-pulse { height: 8px; width: 8px; background: red; border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 1s infinite; }
+        /* Rocket CSS Animation */
+        #rocket { 
+            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
+            font-size: 80px; transition: bottom 2.5s ease-in; z-index: 1000; filter: drop-shadow(0 0 15px orange);
+        }
+        .launch { bottom: 150vh !important; }
+
+        /* Dashboard HUD */
+        .dashboard { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .video-core { 
+            width: 95%; max-width: 720px; aspect-ratio: 16/9; 
+            border: 3px solid var(--neon); box-shadow: 0 0 30px rgba(0,255,173,0.4); 
+            background: #000; margin: 20px 0; border-radius: 8px; overflow: hidden;
+        }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        /* Ad Placement */
+        .ad-row { display: flex; gap: 15px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .ad-unit { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 5px; }
 
-        /* The Ad Wall */
-        .ad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; padding: 20px; }
-        .ad-wrapper { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; transition: 0.3s; }
-        .ad-wrapper:hover { border-color: var(--neon); }
-
-        /* Console */
-        #console { 
-            background: #000; color: #0f0; font-size: 0.65rem; height: 180px; 
-            padding: 10px; overflow: hidden; border-top: 1px solid #333; 
-            text-align: left; line-height: 1.4;
+        /* Launch Button */
+        .big-launch-btn { 
+            background: #ff4500; color: white; border: none; padding: 25px 50px; 
+            font-weight: bold; cursor: pointer; font-family: 'Courier New';
+            font-size: 1.5rem; letter-spacing: 3px; border-radius: 5px;
+            box-shadow: 0 0 20px #ff4500; margin: 30px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        .tip-btn { 
-            background: var(--neon); color: black; border: none; padding: 15px 30px; 
-            font-weight: bold; cursor: pointer; margin: 20px; font-family: 'Courier New';
-            box-shadow: 0 0 10px var(--dim);
-        }
+        .big-launch-btn:active { transform: scale(0.95); box-shadow: 0 0 5px #ff4500; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1 style="margin:0; font-size: 1.4rem;">NODE_CORE: ACTIVE</h1>
-    <div style="font-size: 0.6rem; color: #666; margin-bottom: 10px;">TARGET: 0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
-    
-    <div class="stats-bar">
-        <span><span class="live-pulse"></span>PEERS: <span id="peer-count">124</span></span>
-        <span>UPTIME: <span id="uptime">00:00:00</span></span>
-        <span>CYCLE: <span id="timer">60</span>s</span>
+<div id="rocket">🚀</div>
+
+<div class="dashboard">
+    <h1 style="margin:0; text-shadow: 0 0 10px var(--neon);">SYSTEM: MISSION_CONTROL</h1>
+    <div style="font-size: 0.6rem; opacity: 0.5;">0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
+
+    <div class="ad-row">
+        <div class="ad-unit"><iframe id="ad1" data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
+        <div class="ad-unit"><iframe id="ad2" data-aa='2426200' src='https://acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
+    </div>
+
+    <div class="video-core">
+        <div id="player"></div>
+    </div>
+
+    <button class="big-launch-btn" onclick="blastOff()">[ LAUNCH_REVENUE_STREAM ]</button>
+
+    <div class="ad-row">
+        <div class="ad-unit"><iframe id="ad3" data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
+        <div class="ad-unit"><iframe id="ad4" data-aa='2426202' src='https://acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
     </div>
 </div>
 
-<div class="ad-grid">
-    <div class="ad-wrapper"><iframe id="ad1" data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:100%; height:90px;'></iframe></div>
-    <div class="ad-wrapper"><iframe id="ad2" data-aa='2426200' src='https://acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; width:100%; height:90px;'></iframe></div>
-    <div class="ad-wrapper"><iframe id="ad3" data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:100%; height:90px;'></iframe></div>
-    <div class="ad-wrapper"><iframe id="ad4" data-aa='2426202' src='https://acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; width:100%; height:90px;'></iframe></div>
-</div>
-
-<button class="tip-btn" onclick="sendTip()">[ INITIALIZE_ETH_TRANSFER ]</button>
-
-<div id="console"></div>
-
 <script>
-    // FAKE PEER & UPTIME LOGIC
-    let peers = 124;
-    let seconds = 0;
-    
-    setInterval(() => {
-        // Randomly fluctuate peer count
-        peers += Math.floor(Math.random() * 5) - 2;
-        document.getElementById('peer-count').innerText = peers;
-        
-        // Update uptime
-        seconds++;
-        let hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
-        let mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-        let secs = (seconds % 60).toString().padStart(2, '0');
-        document.getElementById('uptime').innerText = `${hrs}:${mins}:${secs}`;
-    }, 1000);
-
-    // CONSOLE LOGS
-    const consoleDiv = document.getElementById('console');
-    const logs = [
-        "> INCOMING CONNECTION: 172.21.0.4",
-        "> SYNCING WITH BLOCKCHAIN...",
-        "> RELAYING AD_DATA TO PEERS...",
-        "> 0x13B8...6650 BALANCE VERIFIED",
-        "> HANDSHAKE SUCCESSFUL",
-        "> DATA_PACKET_ENCRYPTED",
-        "> PEER_DISCONNECTED: 88.102.3.1",
-        "> OPTIMIZING REVENUE STREAM..."
-    ];
-
-    function addLog() {
-        const line = document.createElement('div');
-        line.innerText = logs[Math.floor(Math.random() * logs.length)];
-        if (consoleDiv.childNodes.length > 10) consoleDiv.removeChild(consoleDiv.childNodes[0]);
-        consoleDiv.appendChild(line);
+    // YouTube API Logic
+    let player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: 'q_r0THGGLy4', // Cyberpunk / Crypto Music track
+            playerVars: { 'autoplay': 0, 'controls': 1, 'rel': 0 },
+        });
     }
-    setInterval(addLog, 2000);
 
-    // AD REFRESH
-    let timeLeft = 60;
-    setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').innerText = timeLeft;
-        if (timeLeft <= 0) {
-            ['ad1', 'ad2', 'ad3', 'ad4'].forEach(id => {
-                const f = document.getElementById(id); f.src = f.src;
-            });
-            timeLeft = 60;
-            const log = document.createElement('div');
-            log.style.color = "white";
-            log.innerText = ">>> REFRESH_COMPLETE: AD_UNITS_RESET";
-            consoleDiv.appendChild(log);
-        }
-    }, 1000);
+    function blastOff() {
+        // 1. Play Video
+        if (player && player.playVideo) player.playVideo();
+        
+        // 2. Animate Rocket
+        const r = document.getElementById('rocket');
+        r.classList.add('launch');
+        
+        // 3. Refresh Ads for new impressions
+        ['ad1', 'ad2', 'ad3', 'ad4'].forEach(id => {
+            const f = document.getElementById(id); 
+            f.src = f.src; 
+        });
 
-    async function sendTip() {
-        if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            await window.ethereum.enable();
-            const accounts = await web3.eth.getAccounts();
-            web3.eth.sendTransaction({
-                from: accounts[0], to: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
-                value: web3.utils.toWei('0.01', 'ether')
-            });
-        }
+        // 4. Reset Rocket
+        setTimeout(() => { 
+            r.classList.remove('launch'); 
+        }, 3000);
     }
 </script>
 
