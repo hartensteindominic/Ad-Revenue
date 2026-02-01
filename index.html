@@ -1,57 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARCADE_CORE_SYSTEM</title>
     <style>
-        :root { --neon-blue: #00d4ff; --neon-green: #39ff14; }
-        body { background: #000; color: var(--neon-blue); font-family: 'Courier New', monospace; margin: 0; padding: 15px; text-align: center; overflow-x: hidden; }
-        .core-wrapper { border: 2px solid var(--neon-blue); border-radius: 20px; padding: 20px; background: rgba(0, 212, 255, 0.05); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
-        .header { font-size: 1.5rem; text-shadow: 0 0 10px var(--neon-blue); margin-bottom: 10px; }
-        .status-box { border: 1px solid var(--neon-green); color: var(--neon-green); padding: 10px; display: inline-block; margin: 10px 0; font-size: 0.8rem; }
-        .ad-container { margin: 20px 0; background: #0a0a0a; border-radius: 10px; min-height: 60px; display: flex; justify-content: center; align-items: center; border: 1px dashed #333; }
-        .data-stream { font-size: 0.9rem; margin: 20px 0; line-height: 1.6; text-align: left; background: #050505; padding: 15px; border-radius: 5px; color: #555; }
-        .highlight { color: var(--neon-blue); }
-        .btn-return { display: block; width: 200px; margin: 20px auto; padding: 15px; border: 2px solid var(--neon-blue); color: var(--neon-blue); text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .btn-return:active { background: var(--neon-blue); color: #000; }
+        body { background: #000; color: #ff003c; font-family: monospace; text-align: center; margin: 0; }
+        .hub-return { display: block; width: 100%; padding: 15px 0; background: #111; border-bottom: 2px solid #ff003c; color: #ff003c; text-decoration: none; font-weight: bold; }
+        .rocket { font-size: 50px; margin: 30px; animation: launch 1s infinite alternate; display: inline-block; }
+        @keyframes launch { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+        .ad-box { margin: 20px auto; min-height: 100px; width: 300px; }
     </style>
 </head>
 <body>
-
-<div class="core-wrapper">
-    <div class="header">[ ARCADE_CORE_v2.0 ]</div>
-    <div class="status-box">SYSTEM_SYNC: ACTIVE // REVENUE_READY</div>
-
-    <div class="ad-container">
-        <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
+    <a href="https://hartensteindominic.github.io/" class="hub-return">◄ RETURN_TO_SYSTEM_GATEWAY</a>
+    
+    <h1>NODE_01: MISSION_CONTROL</h1>
+    <div class="rocket">🚀</div>
+    
+    <div class="ad-box">
+        <iframe data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:100%; height:100px;'></iframe>
     </div>
 
-    <div class="data-stream">
-        > INITIALIZING UPLINK... <br>
-        > STATUS: <span class="highlight">CONNECTED</span> <br>
-        > CURRENT_YIELD: <span class="highlight" id="yield">0.00042 ETH</span> <br>
-        > NETWORK_LOAD: <span class="highlight">87%</span> <br>
-        > AUTO_REFRESH: <span class="highlight">ENABLED (300s)</span>
-    </div>
-
-    <div class="ad-container">
-        <iframe data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe>
-    </div>
-
-    <a href="https://hartensteindominic.github.io/" class="btn-return">RETURN_TO_GATEWAY</a>
-</div>
-
-<script>
-    // Simulate data harvest to keep users on page
-    setInterval(() => {
-        let yield = (Math.random() * 0.001).toFixed(5);
-        document.getElementById('yield').innerText = yield + " ETH";
-    }, 3000);
-
-    // AUTO-REFRESH SCRIPT: Forces new ad impressions every 5 minutes
-    setTimeout(() => { location.reload(); }, 300000);
-</script>
-
+    <p>UPLINK_STABLE // DATA_HARVEST_ACTIVE</p>
 </body>
 </html>
