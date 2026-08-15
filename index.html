@@ -3,43 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Advanced Spatial Dimensional Mapping Engine</title>
+<title>HyperStream XD • Dimensional Volumetric Video Engine</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:420px;min-width:300px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:12px;gap:8px;z-index:10;overflow-y:auto}
-.brand{font-size:14px;font-weight:800;letter-spacing:1px;color:#38bdf8;line-height:1.3}
+body{background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
+#sidebar{width:390px;min-width:280px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:10px;gap:7px;z-index:10;overflow-y:auto}
+.brand{font-size:13px;font-weight:800;letter-spacing:1px;color:#38bdf8;line-height:1.25}
 .brand span{background:linear-gradient(90deg,#38bdf8,#a855f7,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.section-card{background:rgba(17,24,39,.75);border:1px solid #1f2937;border-radius:10px;padding:9px;display:flex;flex-direction:column;gap:5px}
-.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#94a3b8}
-.action-toggle-row{display:flex;gap:5px}
-.tab-btn{flex:1;padding:7px 3px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
+.section-card{background:rgba(17,24,39,.85);border:1px solid #1f2937;border-radius:9px;padding:9px;display:flex;flex-direction:column;gap:6px}
+.card-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8}
+.action-toggle-row{display:flex;gap:4px}
+.tab-btn{flex:1;padding:7px 2px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
 .tab-btn.active{background:#7c3aed;color:#fff;border-color:#6d28d9}
-.upload-section{border:2px dashed #334155;padding:10px;border-radius:8px;text-align:center;background:rgba(255,255,255,.015);cursor:pointer;font-size:11px}
-.upload-section.dragover{border-color:#a855f7;background:rgba(168,85,247,.08)}
+.upload-section{border:2px dashed #334155;padding:10px;border-radius:7px;text-align:center;background:rgba(255,255,255,.02);cursor:pointer;font-size:10px}
+.upload-section.dragover{border-color:#a855f7;background:rgba(168,85,247,.1)}
 input[type=file]{display:none}
-textarea{width:100%;height:58px;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:10px;resize:none}
-.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1;gap:6px}
+textarea{width:100%;height:48px;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:5px;color:#e2e8f0;font-family:ui-monospace,monospace;font-size:9px;resize:vertical;min-height:40px}
+.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1;gap:6px}
 input[type=range]{accent-color:#a855f7;cursor:pointer;width:105px}
-select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:5px;padding:2px 4px;font-size:11px}
-#chat-container{flex:1;min-height:48px;max-height:72px;background:#1e293b;border-radius:8px;padding:5px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;font-size:10px}
-.chat-message{padding:4px 6px;border-radius:5px;background:#334155;color:#e2e8f0;word-break:break-word}
+select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;padding:3px 4px;font-size:10px}
+#chat-container{flex:1;min-height:42px;max-height:70px;background:#1e293b;border-radius:7px;padding:5px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;font-size:9px}
+.chat-message{padding:3px 6px;border-radius:4px;background:#334155;color:#e2e8f0;word-break:break-word}
 .chat-message.system{background:#581c87;color:#e9d5ff}
 .chat-message.error{background:#7f1d1d;color:#fecaca}
-input[type=text]{flex:1;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:6px;color:#fff;font-size:11px}
-button.primary-btn{background:#7c3aed;color:#fff;border:none;padding:7px 10px;border-radius:7px;font-weight:700;cursor:pointer;font-size:11px}
+input[type=text]{flex:1;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:5px;color:#fff;font-size:10px}
+button.primary-btn{background:#7c3aed;color:#fff;border:none;padding:7px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px}
 button.primary-btn:hover{background:#6d28d9}
-button.danger-btn{background:#dc2626;color:#fff;border:none;padding:7px;border-radius:7px;font-weight:700;cursor:pointer;font-size:11px;width:100%}
+button.danger-btn{background:#dc2626;color:#fff;border:none;padding:7px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;width:100%}
 button.danger-btn.scanning{background:#ea580c}
-button.secondary-btn{background:#334155;color:#f1f5f9;border:none;padding:7px;border-radius:7px;font-weight:600;cursor:pointer;font-size:11px}
-#viewer-container{flex:1;position:relative;background:radial-gradient(circle at center,#0f172a 0%,#030712 100%)}
+button.secondary-btn{background:#334155;color:#f1f5f9;border:none;padding:7px;border-radius:6px;font-weight:600;cursor:pointer;font-size:10px}
+button:disabled{opacity:.5;cursor:not-allowed}
+#viewer-container{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 70%)}
 canvas{display:block;width:100%;height:100%}
-.stats-overlay{position:absolute;top:14px;right:14px;background:rgba(3,7,18,.88);backdrop-filter:blur(8px);padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:#94a3b8;z-index:5}
+.stats-overlay{position:absolute;top:12px;right:12px;background:rgba(3,7,18,.92);backdrop-filter:blur(10px);padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:10px;color:#94a3b8;z-index:5;line-height:1.5}
 .stats-overlay span{color:#a855f7;font-weight:700}
-.progress-bar{height:3px;background:#1e293b;border-radius:1.5px;overflow:hidden;margin-top:2px}
-.progress-fill{height:100%;background:#a855f7;width:0%;transition:width .2s}
-.vault-item{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:4px 6px;border-radius:5px;font-size:10px}
+.progress-bar{height:3px;background:#1e293b;border-radius:1.5px;overflow:hidden;margin-top:3px}
+.progress-fill{height:100%;background:#a855f7;width:0%;transition:width .15s}
+.vault-item{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:4px 6px;border-radius:4px;font-size:9px}
 #webcam-video{display:none}
+.layer-toggles{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.layer-chip{font-size:9px;padding:3px 7px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer;user-select:none}
+.layer-chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
+.btn-row{display:flex;gap:4px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -47,7 +52,7 @@ canvas{display:block;width:100%;height:100%}
 </head>
 <body>
 <div id="sidebar">
-  <div class="brand">HYPERSTREAM XD<br><span>ADVANCED SPATIAL DIMENSIONAL ENGINE</span></div>
+  <div class="brand">HYPERSTREAM XD<br><span>DIMENSIONAL VOLUMETRIC VIDEO</span></div>
 
   <div class="action-toggle-row">
     <button id="btn-tab-capture" class="tab-btn active" onclick="switchMode('capture')">📡 Capture</button>
@@ -55,72 +60,78 @@ canvas{display:block;width:100%;height:100%}
     <button id="btn-tab-paste" class="tab-btn" onclick="switchMode('paste')">📋 Paste</button>
   </div>
 
-  <!-- CAPTURE PANEL -->
   <div id="panel-capture" class="section-card">
-    <div class="card-title">Live Dense Volumetric Capture (Webcam → 4D/5D)</div>
-    <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START INFINITE STREAM</button>
-    <div class="layer-control-row"><span>Node Density</span><input type="range" id="density-step" min="2" max="12" step="1" value="4" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">4px</span></div>
-    <div class="layer-control-row"><span>Depth Amplitude</span><input type="range" id="depth-z" min="1" max="30" step="0.5" value="12" oninput="depthMultiplier=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.01" max="0.12" step="0.005" value="0.03" oninput="currentPointSize=parseFloat(this.value);if(spatialObject&&currentRenderMode==='points')spatialObject.material.size=currentPointSize"></div>
-    <div style="font-size:10px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> | Frames: <span id="frame-counter">0</span></div>
-    <button class="primary-btn" style="background:#059669" onclick="exportRecordedJSON()">Export Recorded JSON</button>
-    <button class="secondary-btn" onclick="copyJSONToClipboard()">Copy JSON Clipboard</button>
-    <textarea id="json-output-box" readonly placeholder="Recorded HyperStream payload appears here..."></textarea>
+    <div class="card-title">Live Dimensional Video Capture → Multi-Layer 5D+</div>
+    <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
+    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="6" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
+    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="70" step="0.5" value="38" oninput="depthMultiplier=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.006" max="0.09" step="0.002" value="0.028" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
+    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="6" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">6</span></div>
+    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.1" step="0.01" value="0.55" oninput="layerSpread=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.62" oninput="smoothFactor=parseFloat(this.value)"></div>
+    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">6</span></div>
+    <div class="btn-row">
+      <button class="primary-btn" style="background:#059669;flex:1" onclick="exportRecordedJSON()">Export JSON</button>
+      <button class="secondary-btn" style="flex:1" onclick="copyJSONToClipboard()">Copy JSON</button>
+    </div>
+    <textarea id="json-output-box" readonly placeholder="Dimensional HyperStream payload..."></textarea>
   </div>
 
-  <!-- LOAD PANEL -->
   <div id="panel-load" class="section-card" style="display:none">
-    <div class="card-title">Load HyperStream 4D / 5D Payload</div>
+    <div class="card-title">Load HyperStream Dimensional Payload</div>
     <div id="drop-zone" class="upload-section" onclick="document.getElementById('file-input').click()">
-      Drop JSON or click to browse<br><small style="opacity:.55">Supports HyperStream4D / HyperStream5D</small>
+      Drop JSON or click<br><small style="opacity:.55">HyperStream5D / MultiLayer</small>
       <input type="file" id="file-input" accept=".json" onchange="handleFileUpload(event)">
     </div>
-    <div style="display:flex;gap:5px">
+    <div class="btn-row">
       <button class="secondary-btn" style="flex:1" onclick="clearScene()">Clear</button>
       <button class="secondary-btn" style="flex:1" onclick="loadVaultList()">Vault</button>
     </div>
   </div>
 
-  <!-- PASTE PANEL -->
   <div id="panel-paste" class="section-card" style="display:none">
-    <div class="card-title">Paste HyperStream Node</div>
-    <textarea id="json-paste-box" placeholder='{"HyperStream5D":[{"v":[...],"c":[...],"meta":0.5}]}'></textarea>
+    <div class="card-title">Paste HyperStream Matrix</div>
+    <textarea id="json-paste-box" placeholder='{"HyperStream5D":[...]}'></textarea>
     <button class="primary-btn" onclick="handleCodePaste()">Process Matrix</button>
   </div>
 
-  <!-- CONTROLS -->
   <div class="section-card">
-    <div class="card-title">Volumetric • Temporal • Meta Controls</div>
-    <div class="layer-control-row"><span>Render Mode</span>
+    <div class="card-title">Dimensional · Temporal · Meta Controls</div>
+    <div class="layer-control-row"><span>Render</span>
       <select id="render-mode-select" onchange="updateRenderMode(this.value)">
-        <option value="points">Glowing Nodes</option>
-        <option value="solid" selected>Solid Mesh</option>
+        <option value="points" selected>Glowing Volumetric</option>
+        <option value="solid">Solid Mesh</option>
         <option value="wireframe">Wireframe</option>
       </select>
     </div>
-    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="0" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.00</span></div>
+    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
     <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
-    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="1" max="30" step="1" value="18" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">18</span></div>
+    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="4" max="30" step="1" value="16" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">16</span></div>
+    <div class="btn-row">
+      <button class="secondary-btn" style="flex:1" id="play-pause-btn" onclick="togglePlayPause()">⏸ Pause</button>
+      <button class="secondary-btn" style="flex:1" onclick="resetCamera()">↺ Camera</button>
+    </div>
     <div class="layer-control-row"><span>Grid</span><input type="checkbox" id="grid-toggle" checked onchange="toggleGrid(this.checked)"></div>
-    <div class="layer-control-row"><span>Spatial Pins</span><button class="primary-btn" style="padding:3px 7px;font-size:10px" id="map-mode-btn" onclick="toggleMappingMode()">Enable Pinning</button></div>
-    <div style="font-size:10px;color:#94a3b8">Active Nodes: <span id="node-counter-main">0</span>
+    <div class="layer-control-row"><span>Auto Orbit</span><input type="checkbox" id="orbit-toggle" checked onchange="autoOrbit=this.checked"></div>
+    <div class="layer-control-row"><span>Layer Pulse</span><input type="checkbox" id="pulse-toggle" checked onchange="layerPulse=this.checked"></div>
+    <div class="layer-control-row"><span>Pins</span><button class="primary-btn" style="padding:3px 7px;font-size:9px" id="map-mode-btn" onclick="toggleMappingMode()">Enable Pinning</button></div>
+    <div class="card-title" style="margin-top:5px">Active Dimensional Layers</div>
+    <div id="layer-chips" class="layer-toggles"></div>
+    <div style="font-size:9px;color:#94a3b8;margin-top:4px">Active Nodes: <span id="node-counter-main">0</span>
       <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
     </div>
   </div>
 
-  <!-- PINS -->
   <div class="section-card">
     <div class="card-title">Mapped Spatial Pins</div>
-    <div id="pins-list" style="display:flex;flex-direction:column;gap:4px;max-height:60px;overflow-y:auto"><small style="color:#64748b">No anchors</small></div>
+    <div id="pins-list" style="display:flex;flex-direction:column;gap:3px;max-height:52px;overflow-y:auto"><small style="color:#64748b">No anchors</small></div>
   </div>
 
-  <!-- VAULT -->
   <div class="section-card">
     <div class="card-title">Vaulted Cores</div>
-    <div id="vault-list" style="display:flex;flex-direction:column;gap:4px;max-height:60px;overflow-y:auto"><small style="color:#64748b">Empty</small></div>
+    <div id="vault-list" style="display:flex;flex-direction:column;gap:3px;max-height:52px;overflow-y:auto"><small style="color:#64748b">Empty</small></div>
   </div>
 
-  <!-- EXPORT -->
   <div class="section-card">
     <div class="card-title">Render & Export</div>
     <div style="display:flex;flex-direction:column;gap:4px">
@@ -130,11 +141,10 @@ canvas{display:block;width:100%;height:100%}
     </div>
   </div>
 
-  <!-- CONSOLE -->
-  <div class="section-card" style="flex:1">
+  <div class="section-card" style="flex:1;min-height:90px">
     <div class="card-title">Systems Console</div>
-    <div id="chat-container"><div class="chat-message system">HyperStream XD engine online. Ready for capture or payload.</div></div>
-    <div style="display:flex;gap:5px;margin-top:2px">
+    <div id="chat-container"><div class="chat-message system">Dimensional Volumetric Video engine online.</div></div>
+    <div style="display:flex;gap:4px;margin-top:3px">
       <input type="text" id="chat-input" placeholder="Query matrix..." onkeypress="if(event.key==='Enter')sendChatMessage()">
       <button class="primary-btn" onclick="sendChatMessage()">Send</button>
     </div>
@@ -144,55 +154,79 @@ canvas{display:block;width:100%;height:100%}
 <div id="viewer-container">
   <div class="stats-overlay">
     Status: <span id="render-status">Idle</span><br>
-    <span id="bbox-info" style="font-size:10px;color:#64748b"></span><br>
-    FPS: <span id="fps-display">—</span>
+    <span id="bbox-info" style="font-size:9px;color:#64748b"></span><br>
+    FPS: <span id="fps-display">—</span> · Nodes: <span id="stats-nodes">0</span>
   </div>
   <video id="webcam-video" autoplay playsinline muted></video>
   <canvas id="three-canvas"></canvas>
 </div>
 
 <script>
-/* ========== CORE STATE ========== */
-let scene, camera, renderer, controls, gridHelper, spatialObject = null;
+let scene, camera, renderer, controls, gridHelper;
+let spatialLayers = [];
 let video, canvas2D, ctx2D;
 let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
-let stepSize = 4, depthMultiplier = 12, currentPointSize = 0.03;
-let currentRenderMode = 'solid', currentMetaValue = 0, currentFPS = 18;
+let stepSize = 2, depthMultiplier = 38, currentPointSize = 0.028;
+let layerCount = 6, layerSpread = 0.55, smoothFactor = 0.62;
+let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 16;
 let isPlayMode = true, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
 let rawSourceFrames = [];
 let isMappingActive = false, mappedPins = [];
 let frameCount = 0, fpsTimer = 0;
-const VAULT_KEY = 'hyperstream_xd_vault_v1';
+let autoOrbit = true, layerPulse = true;
+let layerVisibility = [];
+const VAULT_KEY = 'hyperstream_xd_vault_v4';
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let prevLayerPos = [];
+let timePhase = 0;
+let webcamReady = false;
 
-/* ========== INIT ========== */
 window.addEventListener('DOMContentLoaded', () => {
   init3D();
   initWebcam();
   setupDragDrop();
   loadVaultList();
+  rebuildLayerChips();
 });
 
 function init3D() {
   const c = document.getElementById('viewer-container');
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(55, c.clientWidth / c.clientHeight, 0.05, 2000);
-  camera.position.set(0, 0.25, 3.4);
+  scene.fog = new THREE.FogExp2(0x030712, 0.028);
+  camera = new THREE.PerspectiveCamera(48, c.clientWidth / c.clientHeight, 0.02, 4000);
+  camera.position.set(0, 0.25, 3.6);
+
   const canvas = document.getElementById('three-canvas');
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: false,
+    preserveDrawingBuffer: true,
+    powerPreference: 'high-performance'
+  });
   renderer.setSize(c.clientWidth, c.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
   renderer.setClearColor(0x030712);
+
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.07;
-  gridHelper = new THREE.GridHelper(28, 28, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -1.4;
+  controls.dampingFactor = 0.06;
+  controls.rotateSpeed = 0.55;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.65;
+  controls.target.set(0, 0, 0);
+
+  gridHelper = new THREE.GridHelper(42, 42, 0x1e293b, 0x0f172a);
+  gridHelper.position.y = -1.85;
   scene.add(gridHelper);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const d1 = new THREE.DirectionalLight(0xffffff, 1.0); d1.position.set(2, 4, 5); scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xa855f7, 0.45); d2.position.set(-5, -2, -3); scene.add(d2);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const d1 = new THREE.DirectionalLight(0xffffff, 1.05); d1.position.set(2.8, 5.2, 5.5); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0xa855f7, 0.5); d2.position.set(-4.5, -1.2, -3.5); scene.add(d2);
+  const d3 = new THREE.DirectionalLight(0x38bdf8, 0.32); d3.position.set(0, 3.5, -5); scene.add(d3);
+  const d4 = new THREE.PointLight(0xc084fc, 0.4, 14); d4.position.set(0, 1.6, 2.2); scene.add(d4);
+
   window.addEventListener('resize', onWindowResize);
   renderer.domElement.addEventListener('click', handleCanvasClick);
   animate();
@@ -202,9 +236,18 @@ function initWebcam() {
   video = document.getElementById('webcam-video');
   canvas2D = document.createElement('canvas');
   ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
-  navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } } })
-    .then(stream => { video.srcObject = stream; video.play(); appendChat('Webcam linked.', 'system'); })
-    .catch(err => appendChat('Webcam error: ' + err.message, 'error'));
+
+  navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
+  }).then(stream => {
+    video.srcObject = stream;
+    video.play().then(() => {
+      webcamReady = true;
+      appendChat('Webcam linked · dimensional video ready.', 'system');
+    });
+  }).catch(err => {
+    appendChat('Webcam error: ' + (err.message || err), 'error');
+  });
 }
 
 function onWindowResize() {
@@ -215,125 +258,312 @@ function onWindowResize() {
   renderer.setSize(c.clientWidth, c.clientHeight);
 }
 
-/* ========== ANIMATION LOOP ========== */
+function resetCamera() {
+  if (!camera || !controls) return;
+  camera.position.set(0, 0.25, 3.6);
+  controls.target.set(0, 0, 0);
+  controls.update();
+  appendChat('Camera reset.', 'system');
+}
+
 function animate(now) {
   requestAnimationFrame(animate);
   if (controls) controls.update();
+  timePhase = now * 0.001;
 
-  // FPS counter
+  if (autoOrbit && controls) {
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.75;
+  } else if (controls) {
+    controls.autoRotate = false;
+  }
+
   frameCount++;
   if (now - fpsTimer > 1000) {
     document.getElementById('fps-display').innerText = Math.round((frameCount * 1000) / (now - fpsTimer));
-    frameCount = 0; fpsTimer = now;
+    frameCount = 0;
+    fpsTimer = now;
   }
 
-  // Live capture sampling
-  if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
-    const vw = video.videoWidth, vh = video.videoHeight;
-    if (canvas2D.width !== vw || canvas2D.height !== vh) { canvas2D.width = vw; canvas2D.height = vh; }
+  // Only sample webcam when capturing or no loaded sequence is present
+  const shouldSampleWebcam = webcamReady && video && video.readyState >= video.HAVE_CURRENT_DATA &&
+    (isInfiniteScanning || rawSourceFrames.length === 0);
+
+  if (shouldSampleWebcam) {
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    if (canvas2D.width !== vw || canvas2D.height !== vh) {
+      canvas2D.width = vw;
+      canvas2D.height = vh;
+    }
     ctx2D.drawImage(video, 0, 0, vw, vh);
     const pixels = ctx2D.getImageData(0, 0, vw, vh).data;
-    const positions = [], colors = [];
-    const tVal = frameIndex;
+    const basePos = [];
+    const baseCol = [];
+    const aspect = vw / Math.max(1, vh);
+    const scaleX = 1.28 * Math.min(aspect, 1.6);
+    const scaleY = 1.28;
+    const cx = vw * 0.5, cy = vh * 0.5;
+    const maxR = Math.sqrt(cx * cx + cy * cy) || 1;
+
     for (let y = 0; y < vh; y += stepSize) {
       for (let x = 0; x < vw; x += stepSize) {
         const idx = (y * vw + x) * 4;
         const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
+        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        if (lum < 0.04) continue;
+
         const nx = ((vw - x) / vw) * 2 - 1;
         const ny = -((y / vh) * 2 - 1);
-        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-        const nz = (lum - 0.5) * (depthMultiplier * 0.18);
-        positions.push(nx * 1.7, ny * 1.7, nz);
-        colors.push(r, g, b);
+        const depthCurve = Math.pow(Math.max(0.001, lum), 0.46);
+        const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
+        const rad2 = dx * dx + dy * dy;
+
+        let nz = (depthCurve - 0.28) * (depthMultiplier * 0.26);
+        nz -= rad2 * 0.58;
+        nz -= nx * nx * 0.18;
+
+        const px = nx * scaleX * (1 - rad2 * 0.07);
+        const py = ny * scaleY * (1 - rad2 * 0.05);
+        basePos.push(px, py, nz);
+
+        const sat = 1.15, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.35);
+        baseCol.push(
+          Math.min(1, avg + (r - avg) * sat + rim * 0.03),
+          Math.min(1, avg + (g - avg) * sat + rim * 0.07),
+          Math.min(1, avg + (b - avg) * sat + rim * 0.16)
+        );
       }
     }
-    // Live preview as points
-    if (!rawSourceFrames.length || isInfiniteScanning) {
-      updateLivePoints(positions, colors);
-      document.getElementById('node-counter').innerText = (positions.length / 3).toLocaleString();
-      document.getElementById('node-counter-main').innerText = (positions.length / 3).toLocaleString();
+
+    const nodeCount = basePos.length / 3;
+    document.getElementById('node-counter').innerText = nodeCount.toLocaleString();
+    document.getElementById('stats-nodes').innerText = (nodeCount * layerCount).toLocaleString();
+    document.getElementById('live-layers').innerText = layerCount;
+
+    if (isInfiniteScanning || rawSourceFrames.length === 0) {
+      updateLiveMultiLayers(basePos, baseCol);
+      document.getElementById('node-counter-main').innerText = (nodeCount * layerCount).toLocaleString();
     }
+
     if (isInfiniteScanning) {
       const condensedV = [];
-      for (let i = 0; i < positions.length; i += 3) {
-        condensedV.push(+positions[i].toFixed(4), +positions[i + 1].toFixed(4), +positions[i + 2].toFixed(4), tVal);
+      for (let i = 0; i < basePos.length; i += 3) {
+        condensedV.push(+basePos[i].toFixed(4), +basePos[i + 1].toFixed(4), +basePos[i + 2].toFixed(4), frameIndex);
       }
-      recorded4DFrames.push({ v: condensedV, c: colors.map(v => +v.toFixed(2)), meta: Math.random() * 0.3 + 0.35 });
+      recorded4DFrames.push({
+        v: condensedV,
+        c: baseCol.map(v => +v.toFixed(2)),
+        meta: 0.32 + Math.random() * 0.28,
+        layers: layerCount,
+        spread: layerSpread
+      });
       frameIndex++;
       document.getElementById('frame-counter').innerText = recorded4DFrames.length;
-      updateJSONTextBox();
+      if (frameIndex % 6 === 0) updateJSONTextBox();
     }
   }
 
-  // Playback
-  if (isPlayMode && playbackFrames.length > 0 && spatialObject && now - lastFrameTime > (1000 / currentFPS)) {
+  if (layerPulse && spatialLayers.length && currentRenderMode === 'points') {
+    for (let L = 0; L < spatialLayers.length; L++) {
+      const obj = spatialLayers[L];
+      if (!obj || !obj.visible) continue;
+      const breath = 1 + Math.sin(timePhase * 1.05 + L * 0.52) * 0.011;
+      obj.scale.set(breath, breath, breath);
+    }
+  }
+
+  if (isPlayMode && playbackFrames.length > 0 && now - lastFrameTime > (1000 / currentFPS)) {
     applyFrameAndRender(playbackFrameIndex, currentMetaValue);
     playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
     const scrub = document.getElementById('t-scrub-range');
     if (scrub) scrub.value = playbackFrameIndex;
-    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${Math.max(0, playbackFrames.length - 1)}`;
     lastFrameTime = now;
   }
 
   if (renderer && scene && camera) renderer.render(scene, camera);
 }
 
-function updateLivePoints(positions, colors) {
-  if (spatialObject) { scene.remove(spatialObject); spatialObject.geometry.dispose(); spatialObject.material.dispose(); }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-  const mat = new THREE.PointsMaterial({ size: currentPointSize, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.92 });
-  spatialObject = new THREE.Points(g, mat);
-  scene.add(spatialObject);
+function clearSpatialLayers() {
+  for (const obj of spatialLayers) {
+    scene.remove(obj);
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+      else obj.material.dispose();
+    }
+  }
+  spatialLayers = [];
+  prevLayerPos = [];
 }
 
-/* ========== CAPTURE CONTROLS ========== */
+function updateLiveMultiLayers(basePos, baseCol) {
+  while (spatialLayers.length > layerCount) {
+    const obj = spatialLayers.pop();
+    scene.remove(obj);
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+    prevLayerPos.pop();
+  }
+
+  const nodeCount = basePos.length / 3;
+  if (nodeCount < 6) return;
+
+  const metaOffset = currentMetaValue * 0.32;
+  const maxL = Math.max(1, layerCount - 1);
+
+  for (let L = 0; L < layerCount; L++) {
+    const t = L / maxL;
+    const ease = t * t * (3 - 2 * t);
+    const signed = ease - 0.5;
+    const depthOffset = signed * layerSpread * 3.7;
+    const yOffset = signed * layerSpread * 0.17;
+    const xParallax = signed * layerSpread * 0.11;
+    const scale = 1 + signed * 0.065;
+    const frontness = 1 - t;
+    const warm = 0.94 + frontness * 0.11;
+    const cool = 0.8 + (1 - frontness) * 0.42;
+
+    const pos = new Float32Array(nodeCount * 3);
+    const col = new Float32Array(nodeCount * 3);
+
+    for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
+      let px = basePos[j] * scale + xParallax;
+      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.42 + L * 0.035);
+      let pz = basePos[j + 2] * scale + depthOffset;
+
+      if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.01) {
+        const prev = prevLayerPos[L];
+        const s = smoothFactor;
+        px = px * (1 - s) + prev[j] * s;
+        py = py * (1 - s) + prev[j + 1] * s;
+        pz = pz * (1 - s) + prev[j + 2] * s;
+      }
+
+      pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
+      col[j] = Math.min(1, baseCol[j] * warm);
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.97 + L * 0.012));
+      col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
+    }
+
+    prevLayerPos[L] = pos;
+    const sizeMul = 1.07 - L * 0.048;
+    const opac = Math.max(0.25, 0.92 - L * 0.085);
+
+    let obj = spatialLayers[L];
+    if (!obj) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const mat = new THREE.PointsMaterial({
+        size: currentPointSize * sizeMul,
+        sizeAttenuation: true,
+        vertexColors: true,
+        transparent: true,
+        opacity: opac,
+        depthWrite: false,
+        blending: THREE.NormalBlending
+      });
+      obj = new THREE.Points(g, mat);
+      scene.add(obj);
+      spatialLayers[L] = obj;
+    } else {
+      const oldCount = obj.geometry.attributes.position ? obj.geometry.attributes.position.count : 0;
+      if (oldCount !== nodeCount) {
+        obj.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        obj.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      } else {
+        obj.geometry.attributes.position.array.set(pos);
+        obj.geometry.attributes.color.array.set(col);
+        obj.geometry.attributes.position.needsUpdate = true;
+        obj.geometry.attributes.color.needsUpdate = true;
+      }
+      if (obj.material.size !== undefined) {
+        obj.material.size = currentPointSize * sizeMul;
+        obj.material.opacity = opac;
+      }
+    }
+    obj.visible = layerVisibility[L] !== false;
+  }
+  rebuildLayerChips();
+}
+
+function updatePointSizes() {
+  spatialLayers.forEach((obj, L) => {
+    if (obj && obj.material && obj.material.size !== undefined) {
+      obj.material.size = currentPointSize * (1.07 - L * 0.048);
+    }
+  });
+}
+
 function toggleInfiniteScanning() {
   isInfiniteScanning = !isInfiniteScanning;
   const btn = document.getElementById('scan-toggle-btn');
   if (isInfiniteScanning) {
-    recorded4DFrames = []; frameIndex = 0;
-    btn.innerText = 'HALT & FINISH STREAM';
+    recorded4DFrames = [];
+    frameIndex = 0;
+    btn.innerText = 'HALT DIMENSIONAL STREAM';
     btn.classList.add('scanning');
-    appendChat('Infinite 4D/5D recording started…', 'system');
+    appendChat(`Dimensional stream started · ${layerCount} layers · depth ${layerSpread.toFixed(2)}`, 'system');
     document.getElementById('render-status').innerText = 'Recording';
   } else {
-    btn.innerText = 'START INFINITE STREAM';
+    btn.innerText = 'START DIMENSIONAL STREAM';
     btn.classList.remove('scanning');
-    appendChat(`Recording finished. ${recorded4DFrames.length} frames captured.`, 'system');
+    appendChat(`Stream finished · ${recorded4DFrames.length} frames captured.`, 'system');
     document.getElementById('render-status').innerText = 'Capture Ready';
     updateJSONTextBox();
     if (recorded4DFrames.length > 0) {
-      processEnvironmentData({ HyperStream5D: recorded4DFrames });
+      processEnvironmentData({
+        HyperStream5D: recorded4DFrames,
+        multiLayer: true,
+        layers: layerCount,
+        spread: layerSpread
+      });
     }
   }
 }
 
 function updateJSONTextBox() {
-  document.getElementById('json-output-box').value = JSON.stringify({ HyperStream5D: recorded4DFrames });
+  document.getElementById('json-output-box').value = JSON.stringify({
+    HyperStream5D: recorded4DFrames,
+    multiLayer: true,
+    layers: layerCount,
+    spread: layerSpread
+  });
 }
 
 function exportRecordedJSON() {
-  if (!recorded4DFrames.length) { alert('No frames recorded.'); return; }
-  const payload = { HyperStream5D: recorded4DFrames };
+  if (!recorded4DFrames.length) {
+    appendChat('No frames recorded.', 'error');
+    return;
+  }
+  const payload = {
+    HyperStream5D: recorded4DFrames,
+    multiLayer: true,
+    layers: layerCount,
+    spread: layerSpread
+  };
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `hyperstream_xd_${Date.now()}.json`;
+  a.download = `hyperstream_xd_dim_${Date.now()}.json`;
   a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 800);
-  appendChat('JSON exported.', 'system');
+  setTimeout(() => URL.revokeObjectURL(a.href), 900);
+  appendChat('Dimensional JSON exported.', 'system');
 }
 
 function copyJSONToClipboard() {
   const t = document.getElementById('json-output-box').value;
-  if (!t) { alert('Nothing to copy.'); return; }
-  navigator.clipboard.writeText(t).then(() => appendChat('JSON copied to clipboard.', 'system'))
+  if (!t) {
+    appendChat('Nothing to copy.', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(t)
+    .then(() => appendChat('JSON copied.', 'system'))
     .catch(e => appendChat('Copy failed: ' + e, 'error'));
 }
 
-/* ========== MODE SWITCH ========== */
 function switchMode(m) {
   ['capture', 'load', 'paste'].forEach(x => {
     document.getElementById('btn-tab-' + x)?.classList.remove('active');
@@ -343,7 +573,6 @@ function switchMode(m) {
   document.getElementById('panel-' + m).style.display = 'flex';
 }
 
-/* ========== DATA PROCESSING ========== */
 function toNumberArray(arr) {
   if (!arr) return [];
   const out = [];
@@ -362,23 +591,34 @@ function extractSequence(data) {
     if (key) raw = data[key];
   }
   if (!raw) return null;
+
   return raw.map(f => {
     let v = f.v || f.vertices || f.vertices4D || [];
     let c = f.c || f.colors || [];
     let meta = f.meta !== undefined ? f.meta : (f.m !== undefined ? f.m : 0.5);
-    return { vertices: toNumberArray(v), colors: toNumberArray(c), meta: typeof meta === 'number' ? meta : 0.5 };
+    let layers = f.layers || data.layers || layerCount;
+    let spread = f.spread !== undefined ? f.spread : (data.spread || layerSpread);
+    return {
+      vertices: toNumberArray(v),
+      colors: toNumberArray(c),
+      meta: typeof meta === 'number' ? meta : 0.5,
+      layers,
+      spread
+    };
   }).filter(f => f.vertices.length > 0);
 }
 
 function getMeshIndices(count) {
+  // Approximate grid triangulation – works reasonably for ordered scans
   const indices = [];
   const side = Math.round(Math.sqrt(count));
-  if (side > 4) {
-    for (let i = 0; i < count - side - 1; i++) {
-      if ((i + 1) % side !== 0) {
-        indices.push(i, i + 1, i + side);
-        indices.push(i + 1, i + side + 1, i + side);
-      }
+  if (side < 5) return indices;
+  for (let y = 0; y < side - 1; y++) {
+    for (let x = 0; x < side - 1; x++) {
+      const i = y * side + x;
+      if (i + side + 1 >= count) continue;
+      indices.push(i, i + 1, i + side);
+      indices.push(i + 1, i + side + 1, i + side);
     }
   }
   return indices;
@@ -389,63 +629,97 @@ function applyFrameAndRender(frameIdx, metaBlend) {
   const target = rawSourceFrames[frameIdx % rawSourceFrames.length];
   const src = target.vertices;
   const cols = target.colors;
-  const filteredPos = [], filteredCol = [];
+  const Lcount = target.layers || layerCount;
+  const spread = target.spread !== undefined ? target.spread : layerSpread;
   const tupleSize = (src.length % 4 === 0) ? 4 : 3;
+
+  const basePos = [];
+  const baseCol = [];
   for (let i = 0; i < src.length; i += tupleSize) {
-    const metaOffset = (target.meta || 0.5) * metaBlend * 0.38;
-    filteredPos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
+    const metaOffset = (target.meta || 0.5) * metaBlend * 0.36;
+    basePos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
     const ci = (i / tupleSize) * 3;
-    if (cols.length >= ci + 3) filteredCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
-    else filteredCol.push(0.62, 0.42, 0.88);
+    if (cols.length >= ci + 3) baseCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
+    else baseCol.push(0.55, 0.42, 0.88);
   }
-  const posArr = new Float32Array(filteredPos);
-  const colArr = new Float32Array(filteredCol);
-  if (spatialObject) { scene.remove(spatialObject); spatialObject.geometry.dispose(); spatialObject.material.dispose(); }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-  g.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
-  if (currentRenderMode === 'solid' || currentRenderMode === 'wireframe') {
-    const indices = getMeshIndices(filteredPos.length / 3);
+
+  const prevCount = layerCount, prevSpread = layerSpread;
+  layerCount = Lcount;
+  layerSpread = spread;
+
+  if (currentRenderMode === 'points') {
+    updateLiveMultiLayers(basePos, baseCol);
+  } else {
+    clearSpatialLayers();
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(basePos), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(baseCol), 3));
+    const indices = getMeshIndices(basePos.length / 3);
     if (indices.length) g.setIndex(indices);
     g.computeVertexNormals();
     const mat = new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.35, metalness: 0.18,
-      wireframe: currentRenderMode === 'wireframe', side: THREE.DoubleSide
+      vertexColors: true,
+      roughness: 0.28,
+      metalness: 0.16,
+      wireframe: currentRenderMode === 'wireframe',
+      side: THREE.DoubleSide
     });
-    spatialObject = new THREE.Mesh(g, mat);
-  } else {
-    const mat = new THREE.PointsMaterial({
-      size: currentPointSize, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.94
-    });
-    spatialObject = new THREE.Points(g, mat);
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.rotation.y = Math.PI;
+    scene.add(mesh);
+    spatialLayers = [mesh];
   }
-  spatialObject.rotation.y = Math.PI;
-  scene.add(spatialObject);
-  document.getElementById('node-counter-main').innerText = (filteredPos.length / 3).toLocaleString();
+
+  layerCount = prevCount;
+  layerSpread = prevSpread;
+  const n = (basePos.length / 3) * Lcount;
+  document.getElementById('node-counter-main').innerText = n.toLocaleString();
+  document.getElementById('stats-nodes').innerText = n.toLocaleString();
 }
 
 function processEnvironmentData(data) {
   try {
     setProgress(12);
-    appendChat('Injecting spatial stream…', 'system');
+    appendChat('Injecting dimensional stream…', 'system');
     const seq = extractSequence(data);
     if (seq && seq.length) {
       rawSourceFrames = seq;
       playbackFrames = seq;
       playbackFrameIndex = 0;
       isPlayMode = true;
+      document.getElementById('play-pause-btn').innerText = '⏸ Pause';
+
+      if (data.layers) layerCount = data.layers;
+      if (data.spread) layerSpread = data.spread;
+      document.getElementById('layer-count').value = layerCount;
+      document.getElementById('layer-val').innerText = layerCount;
+      document.getElementById('layer-spread').value = layerSpread;
+
       const scrub = document.getElementById('t-scrub-range');
-      if (scrub) { scrub.max = seq.length - 1; scrub.value = 0; }
-      document.getElementById('t-scrub-val').innerText = `0 / ${seq.length - 1}`;
+      if (scrub) {
+        scrub.max = Math.max(0, seq.length - 1);
+        scrub.value = 0;
+      }
+      document.getElementById('t-scrub-val').innerText = `0 / ${Math.max(0, seq.length - 1)}`;
+
       applyFrameAndRender(0, currentMetaValue);
       setProgress(100);
-      document.getElementById('render-status').innerText = 'Stream Active';
-      document.getElementById('bbox-info').innerText = `${seq.length} temporal frames`;
-      appendChat(`✓ ${seq.length} frames mapped.`, 'system');
-      if (seq.length < 180) saveToVault(`CORE_${Date.now()}`, { HyperStream5D: seq });
+      document.getElementById('render-status').innerText = 'Dimensional Active';
+      document.getElementById('bbox-info').innerText = `${seq.length} frames · ${layerCount} layers`;
+      appendChat(`✓ ${seq.length} frames · ${layerCount} dimensional layers.`, 'system');
+
+      if (seq.length < 120) {
+        saveToVault(`CORE_DIM_${Date.now()}`, {
+          HyperStream5D: seq,
+          multiLayer: true,
+          layers: layerCount,
+          spread: layerSpread
+        });
+      }
+      rebuildLayerChips();
       return;
     }
-    appendChat('Unrecognized payload format.', 'error');
+    appendChat('Unrecognized payload.', 'error');
     setProgress(0);
   } catch (e) {
     appendChat('Parse error: ' + e.message, 'error');
@@ -453,8 +727,28 @@ function processEnvironmentData(data) {
   }
 }
 
-/* ========== UI HELPERS ========== */
-function setProgress(p) { document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, p)) + '%'; }
+function rebuildLayerChips() {
+  const container = document.getElementById('layer-chips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let L = 0; L < layerCount; L++) {
+    if (layerVisibility[L] === undefined) layerVisibility[L] = true;
+    const chip = document.createElement('div');
+    chip.className = 'layer-chip' + (layerVisibility[L] ? ' on' : '');
+    chip.innerText = `L${L + 1}`;
+    chip.onclick = () => {
+      layerVisibility[L] = !layerVisibility[L];
+      if (spatialLayers[L]) spatialLayers[L].visible = layerVisibility[L];
+      chip.classList.toggle('on', layerVisibility[L]);
+    };
+    container.appendChild(chip);
+  }
+}
+
+function setProgress(p) {
+  document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, p)) + '%';
+}
+
 function appendChat(t, s = '') {
   const b = document.getElementById('chat-container');
   const d = document.createElement('div');
@@ -462,133 +756,210 @@ function appendChat(t, s = '') {
   d.innerText = t;
   b.appendChild(d);
   b.scrollTop = b.scrollHeight;
+  while (b.children.length > 40) b.removeChild(b.firstChild);
 }
+
 function clearScene() {
-  isPlayMode = false; playbackFrames = []; playbackFrameIndex = 0; rawSourceFrames = [];
+  isPlayMode = false;
+  playbackFrames = [];
+  playbackFrameIndex = 0;
+  rawSourceFrames = [];
   clearPins();
-  if (spatialObject) { scene.remove(spatialObject); spatialObject.geometry.dispose(); spatialObject.material.dispose(); spatialObject = null; }
+  clearSpatialLayers();
   document.getElementById('node-counter-main').innerText = '0';
+  document.getElementById('stats-nodes').innerText = '0';
   document.getElementById('render-status').innerText = 'Cleared';
   document.getElementById('bbox-info').innerText = '';
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   setProgress(0);
+  appendChat('Scene cleared.', 'system');
 }
-function updateRenderMode(m) { currentRenderMode = m; if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue); }
+
+function updateRenderMode(m) {
+  currentRenderMode = m;
+  if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
+}
+
 function updateMetaDimension(val) {
   currentMetaValue = parseFloat(val) / 100;
   document.getElementById('e-meta-val').innerText = currentMetaValue.toFixed(2);
   isPlayMode = false;
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
 }
+
 function updateTScrubs(val) {
-  playbackFrameIndex = parseInt(val);
+  playbackFrameIndex = parseInt(val) || 0;
   isPlayMode = false;
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   if (rawSourceFrames.length) {
     applyFrameAndRender(playbackFrameIndex, currentMetaValue);
-    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${Math.max(0, playbackFrames.length - 1)}`;
   }
 }
-function toggleGrid(v) { if (gridHelper) gridHelper.visible = v; }
 
-/* ========== FILE / PASTE ========== */
+function togglePlayPause() {
+  if (!playbackFrames.length) {
+    appendChat('No sequence loaded.', 'error');
+    return;
+  }
+  isPlayMode = !isPlayMode;
+  document.getElementById('play-pause-btn').innerText = isPlayMode ? '⏸ Pause' : '▶ Play';
+}
+
+function toggleGrid(v) {
+  if (gridHelper) gridHelper.visible = v;
+}
+
 function setupDragDrop() {
   const dz = document.getElementById('drop-zone');
   if (!dz) return;
-  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
-  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
-  dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
+    e.preventDefault();
+    dz.classList.add('dragover');
+  }));
+  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+  }));
+  dz.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) readFile(f);
+  });
 }
+
 function readFile(file) {
   const r = new FileReader();
-  r.onload = ev => { try { processEnvironmentData(JSON.parse(ev.target.result)); } catch (err) { appendChat('Invalid JSON: ' + err.message, 'error'); } };
+  r.onload = ev => {
+    try {
+      processEnvironmentData(JSON.parse(ev.target.result));
+    } catch (err) {
+      appendChat('Invalid JSON: ' + err.message, 'error');
+    }
+  };
   r.readAsText(file);
 }
-function handleFileUpload(e) { const f = e.target.files[0]; if (f) readFile(f); }
+
+function handleFileUpload(e) {
+  const f = e.target.files[0];
+  if (f) readFile(f);
+}
+
 function handleCodePaste() {
   const t = document.getElementById('json-paste-box').value.trim();
   if (!t) return;
-  try { processEnvironmentData(JSON.parse(t)); } catch (err) { appendChat('Paste error: ' + err.message, 'error'); }
+  try {
+    processEnvironmentData(JSON.parse(t));
+  } catch (err) {
+    appendChat('Paste error: ' + err.message, 'error');
+  }
 }
 
-/* ========== SPATIAL PINS ========== */
 function toggleMappingMode() {
   isMappingActive = !isMappingActive;
   const btn = document.getElementById('map-mode-btn');
   if (isMappingActive) {
     btn.style.background = '#059669';
     btn.innerText = 'Pinning Active';
-    appendChat('Click surface to place spatial anchors.', 'system');
+    appendChat('Click surface to place anchors.', 'system');
   } else {
     btn.style.background = '#7c3aed';
     btn.innerText = 'Enable Pinning';
   }
 }
+
 function handleCanvasClick(event) {
-  if (!isMappingActive || !spatialObject) return;
+  if (!isMappingActive || !spatialLayers.length) return;
   const rect = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObject(spatialObject);
+  const hits = raycaster.intersectObjects(spatialLayers.filter(o => o.visible), true);
   if (hits.length) addSpatialPin(hits[0].point);
 }
+
 function addSpatialPin(vec) {
   const id = mappedPins.length + 1;
-  mappedPins.push({ id, vector: vec, meta: currentMetaValue });
+  mappedPins.push({ id, vector: vec.clone(), meta: currentMetaValue });
   renderPinsList();
   appendChat(`Pin #${id} @ [${vec.x.toFixed(2)}, ${vec.y.toFixed(2)}, ${vec.z.toFixed(2)}]`, 'system');
 }
-function clearPins() { mappedPins = []; renderPinsList(); }
+
+function clearPins() {
+  mappedPins = [];
+  renderPinsList();
+}
+
 function renderPinsList() {
   const list = document.getElementById('pins-list');
-  if (!mappedPins.length) { list.innerHTML = '<small style="color:#64748b">No anchors</small>'; return; }
+  if (!mappedPins.length) {
+    list.innerHTML = '<small style="color:#64748b">No anchors</small>';
+    return;
+  }
   list.innerHTML = '';
   mappedPins.forEach(p => {
     const d = document.createElement('div');
     d.className = 'vault-item';
     d.innerHTML = `<span>📌 #${p.id} <small style="color:#38bdf8">[${p.vector.x.toFixed(1)},${p.vector.y.toFixed(1)}]</small></span>
-      <button onclick="removePin(${p.id})" style="background:#dc2626;color:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:9px">X</button>`;
+      <button onclick="removePin(${p.id})" style="background:#dc2626;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>`;
     list.appendChild(d);
   });
 }
-function removePin(id) { mappedPins = mappedPins.filter(p => p.id !== id); renderPinsList(); }
 
-/* ========== VAULT ========== */
+function removePin(id) {
+  mappedPins = mappedPins.filter(p => p.id !== id);
+  renderPinsList();
+}
+
 function saveToVault(name, payload) {
   try {
     const raw = JSON.stringify(payload);
-    if (raw.length > 4500000) { appendChat('Vault limit >4.5 MB', 'error'); return; }
+    if (raw.length > 4500000) {
+      appendChat('Vault limit >4.5 MB', 'error');
+      return;
+    }
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     vault.unshift({ id: Date.now(), name, size: raw.length, payload });
     if (vault.length > 12) vault.pop();
     localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
     loadVaultList();
-  } catch (e) {}
+  } catch (e) {
+    appendChat('Vault write failed.', 'error');
+  }
 }
+
 function loadVaultList() {
   try {
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     const list = document.getElementById('vault-list');
-    if (!vault.length) { list.innerHTML = '<small style="color:#64748b">Empty</small>'; return; }
+    if (!vault.length) {
+      list.innerHTML = '<small style="color:#64748b">Empty</small>';
+      return;
+    }
     list.innerHTML = '';
     vault.forEach(it => {
       const d = document.createElement('div');
       d.className = 'vault-item';
       d.innerHTML = `<span>📦 ${it.name} <small style="color:#64748b">${(it.size / 1024).toFixed(0)}KB</small></span>
         <span>
-          <button onclick="loadFromVault(${it.id})" style="background:#7c3aed;color:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:9px;margin-right:3px">Boot</button>
-          <button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:9px">X</button>
+          <button onclick="loadFromVault(${it.id})" style="background:#7c3aed;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;margin-right:2px">Boot</button>
+          <button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>
         </span>`;
       list.appendChild(d);
     });
   } catch (e) {}
 }
+
 function loadFromVault(id) {
   try {
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     const it = vault.find(v => v.id === id);
     if (it) processEnvironmentData(it.payload);
-  } catch (e) {}
+  } catch (e) {
+    appendChat('Vault load failed.', 'error');
+  }
 }
+
 function deleteFromVault(id) {
   let vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
   vault = vault.filter(v => v.id !== id);
@@ -596,35 +967,54 @@ function deleteFromVault(id) {
   loadVaultList();
 }
 
-/* ========== EXPORTS ========== */
 function exportCurrentPNG() {
-  if (!spatialObject) { appendChat('Nothing rendered', 'error'); return; }
+  if (!spatialLayers.length) {
+    appendChat('Nothing rendered', 'error');
+    return;
+  }
   renderer.render(scene, camera);
   const url = document.getElementById('three-canvas').toDataURL('image/png');
   const a = document.createElement('a');
-  a.href = url; a.download = `hyperstream_xd_${Date.now()}.png`; a.click();
+  a.href = url;
+  a.download = `hyperstream_xd_${Date.now()}.png`;
+  a.click();
   appendChat('PNG exported.', 'system');
 }
 
 function exportOrbitGIF() {
-  if (!spatialObject) { appendChat('No model', 'error'); return; }
-  appendChat('Rendering orbit GIF…', 'system');
-  const gif = new GIF({ workers: 2, quality: 12, width: 640, height: 480, workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js' });
+  if (!spatialLayers.length) {
+    appendChat('No model', 'error');
+    return;
+  }
+  appendChat('Rendering orbit GIF… (this can take a moment)', 'system');
+  const gif = new GIF({
+    workers: 2,
+    quality: 11,
+    width: 640,
+    height: 480,
+    workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
+  });
   const orig = camera.position.clone();
-  let f = 0; const total = 36; const rad = camera.position.distanceTo(controls.target);
+  let f = 0;
+  const total = 32;
+  const rad = camera.position.distanceTo(controls.target);
+
   function cap() {
     const ang = (f / total) * Math.PI * 2;
     camera.position.x = Math.sin(ang) * rad;
     camera.position.z = Math.cos(ang) * rad;
     camera.lookAt(controls.target);
     renderer.render(scene, camera);
-    const c = document.createElement('canvas'); c.width = 640; c.height = 480;
+    const c = document.createElement('canvas');
+    c.width = 640;
+    c.height = 480;
     c.getContext('2d').drawImage(renderer.domElement, 0, 0, 640, 480);
-    gif.addFrame(c, { delay: 70 });
+    gif.addFrame(c, { delay: 80 });
     f++;
     if (f < total) requestAnimationFrame(cap);
     else {
-      camera.position.copy(orig); controls.update();
+      camera.position.copy(orig);
+      controls.update();
       gif.on('finished', blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -639,19 +1029,34 @@ function exportOrbitGIF() {
 }
 
 function exportWebMVideo() {
-  if (!renderer || !spatialObject) { appendChat('No stream to encode.', 'error'); return; }
-  const btn = document.getElementById('export-video-btn');
-  btn.disabled = true; btn.style.opacity = '0.55';
-  appendChat('Encoding WebM…', 'system');
-  const recordedChunks = [];
-  const stream = document.getElementById('three-canvas').captureStream(30);
-  let mediaRecorder;
-  try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' }); }
-  catch (e) {
-    try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); }
-    catch (err) { appendChat('Codec unsupported.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
+  if (!renderer || !spatialLayers.length) {
+    appendChat('No stream to encode.', 'error');
+    return;
   }
-  mediaRecorder.ondataavailable = e => { if (e.data?.size) recordedChunks.push(e.data); };
+  const btn = document.getElementById('export-video-btn');
+  btn.disabled = true;
+  btn.style.opacity = '0.55';
+  appendChat('Encoding WebM…', 'system');
+
+  const recordedChunks = [];
+  const stream = document.getElementById('three-canvas').captureStream(20);
+  let mediaRecorder;
+  try {
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  } catch (e) {
+    try {
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    } catch (err) {
+      appendChat('Codec unsupported in this browser.', 'error');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      return;
+    }
+  }
+
+  mediaRecorder.ondataavailable = e => {
+    if (e.data && e.data.size) recordedChunks.push(e.data);
+  };
   mediaRecorder.onstop = () => {
     const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const a = document.createElement('a');
@@ -660,30 +1065,40 @@ function exportWebMVideo() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
     appendChat('WebM exported.', 'system');
-    btn.disabled = false; btn.style.opacity = '1';
+    btn.disabled = false;
+    btn.style.opacity = '1';
     setProgress(0);
   };
+
   mediaRecorder.start();
   let frameCounter = 0;
-  const totalFrames = Math.max(90, playbackFrames.length || 90);
+  const totalFrames = Math.max(64, (playbackFrames.length || 64));
   const originalPos = camera.position.clone();
+
   function loop() {
     frameCounter++;
     renderer.render(scene, camera);
     setProgress((frameCounter / totalFrames) * 100);
     if (frameCounter < totalFrames) requestAnimationFrame(loop);
-    else { camera.position.copy(originalPos); controls.update(); mediaRecorder.stop(); }
+    else {
+      camera.position.copy(originalPos);
+      controls.update();
+      mediaRecorder.stop();
+    }
   }
   loop();
 }
 
-/* ========== CHAT ========== */
 function sendChatMessage() {
   const i = document.getElementById('chat-input');
   const t = i.value.trim();
   if (!t) return;
   appendChat(t);
   i.value = '';
+  // Simple echo / status replies
+  if (/help|status|info/i.test(t)) {
+    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Frames loaded: ${rawSourceFrames.length}`, 'system');
+  }
 }
 </script>
 </body>
