@@ -65,14 +65,15 @@ canvas{display:block;width:100%;height:100%}
     <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
     <div class="btn-row" style="margin-top:2px">
       <button class="secondary-btn" style="flex:1" id="camera-switch-btn" onclick="switchCamera()">📷 Front Cam</button>
+      <button class="secondary-btn" style="flex:1" id="perf-btn" onclick="togglePerfMode()">⚡ Perf Mode</button>
     </div>
-    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="1" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">1px</span></div>
-    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="80" step="0.5" value="42" oninput="depthMultiplier=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.004" max="0.08" step="0.001" value="0.022" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
-    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="10" step="1" value="7" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">7</span></div>
-    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.2" step="0.01" value="0.62" oninput="layerSpread=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.58" oninput="smoothFactor=parseFloat(this.value)"></div>
-    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">7</span></div>
+    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
+    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="70" step="0.5" value="38" oninput="depthMultiplier=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.006" max="0.08" step="0.002" value="0.026" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
+    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="5" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">5</span></div>
+    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.0" step="0.01" value="0.52" oninput="layerSpread=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.9" step="0.02" value="0.55" oninput="smoothFactor=parseFloat(this.value)"></div>
+    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">5</span></div>
     <div class="btn-row">
       <button class="primary-btn" style="background:#059669;flex:1" onclick="exportRecordedJSON()">Export JSON</button>
       <button class="secondary-btn" style="flex:1" onclick="copyJSONToClipboard()">Copy JSON</button>
@@ -107,9 +108,9 @@ canvas{display:block;width:100%;height:100%}
         <option value="wireframe">Wireframe</option>
       </select>
     </div>
-    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="14" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.14</span></div>
+    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
     <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
-    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="4" max="30" step="1" value="16" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">16</span></div>
+    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="4" max="30" step="1" value="14" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">14</span></div>
     <div class="btn-row">
       <button class="secondary-btn" style="flex:1" id="play-pause-btn" onclick="togglePlayPause()">▶ Play</button>
       <button class="secondary-btn" style="flex:1" onclick="resetCamera()">↺ Camera</button>
@@ -146,7 +147,7 @@ canvas{display:block;width:100%;height:100%}
 
   <div class="section-card" style="flex:1;min-height:90px">
     <div class="card-title">Systems Console</div>
-    <div id="chat-container"><div class="chat-message system">Dimensional Volumetric Video engine online.</div></div>
+    <div id="chat-container"><div class="chat-message system">Dimensional Volumetric Video engine online · optimized.</div></div>
     <div style="display:flex;gap:4px;margin-top:3px">
       <input type="text" id="chat-input" placeholder="Query matrix..." onkeypress="if(event.key==='Enter')sendChatMessage()">
       <button class="primary-btn" onclick="sendChatMessage()">Send</button>
@@ -169,24 +170,27 @@ let scene, camera, renderer, controls, gridHelper;
 let spatialLayers = [];
 let video, canvas2D, ctx2D;
 let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
-let stepSize = 1, depthMultiplier = 42, currentPointSize = 0.022;
-let layerCount = 7, layerSpread = 0.62, smoothFactor = 0.58;
-let currentRenderMode = 'points', currentMetaValue = 0.14, currentFPS = 16;
+let stepSize = 2, depthMultiplier = 38, currentPointSize = 0.026;
+let layerCount = 5, layerSpread = 0.52, smoothFactor = 0.55;
+let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 14;
 let isPlayMode = false, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
 let rawSourceFrames = [];
 let isMappingActive = false, mappedPins = [];
 let frameCount = 0, fpsTimer = 0;
 let autoOrbit = true, layerPulse = true;
 let layerVisibility = [];
-const VAULT_KEY = 'hyperstream_xd_vault_v5';
+const VAULT_KEY = 'hyperstream_xd_vault_v6';
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points = { threshold: 0.12 };
+raycaster.params.Points = { threshold: 0.14 };
 const mouse = new THREE.Vector2();
 let prevLayerPos = [];
 let timePhase = 0;
 let webcamReady = false;
-let currentFacingMode = 'user'; // 'user' = front, 'environment' = back
+let currentFacingMode = 'user';
 let currentStream = null;
+let perfMode = false;
+let lastVolUpdate = 0;
+const VOL_UPDATE_MS = 45; // ~22 updates/sec max for live volumetric
 
 window.addEventListener('DOMContentLoaded', () => {
   init3D();
@@ -199,43 +203,39 @@ window.addEventListener('DOMContentLoaded', () => {
 function init3D() {
   const c = document.getElementById('viewer-container');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.026);
-  camera = new THREE.PerspectiveCamera(48, c.clientWidth / c.clientHeight, 0.02, 4000);
-  camera.position.set(0, 0.25, 3.6);
+  scene.fog = new THREE.FogExp2(0x030712, 0.028);
+  camera = new THREE.PerspectiveCamera(48, c.clientWidth / c.clientHeight, 0.02, 3000);
+  camera.position.set(0, 0.25, 3.5);
 
   const canvas = document.getElementById('three-canvas');
   renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
+    antialias: false,               // off for speed
     alpha: false,
     preserveDrawingBuffer: true,
     powerPreference: 'high-performance'
   });
   renderer.setSize(c.clientWidth, c.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25)); // capped
   renderer.setClearColor(0x030712);
 
   if (typeof THREE.OrbitControls === 'function') {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.rotateSpeed = 0.55;
+    controls.dampingFactor = 0.07;
+    controls.rotateSpeed = 0.5;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.65;
+    controls.autoRotateSpeed = 0.6;
     controls.target.set(0, 0, 0);
-  } else {
-    appendChat('OrbitControls failed to load – orbit disabled.', 'error');
   }
 
-  gridHelper = new THREE.GridHelper(42, 42, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -1.85;
+  gridHelper = new THREE.GridHelper(40, 40, 0x1e293b, 0x0f172a);
+  gridHelper.position.y = -1.8;
   scene.add(gridHelper);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const d1 = new THREE.DirectionalLight(0xffffff, 1.05); d1.position.set(2.8, 5.2, 5.5); scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xa855f7, 0.5); d2.position.set(-4.5, -1.2, -3.5); scene.add(d2);
-  const d3 = new THREE.DirectionalLight(0x38bdf8, 0.32); d3.position.set(0, 3.5, -5); scene.add(d3);
-  const d4 = new THREE.PointLight(0xc084fc, 0.4, 14); d4.position.set(0, 1.6, 2.2); scene.add(d4);
+  const d1 = new THREE.DirectionalLight(0xffffff, 0.95); d1.position.set(2.5, 5, 5); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0xa855f7, 0.4); d2.position.set(-4, -1, -3); scene.add(d2);
 
   window.addEventListener('resize', onWindowResize);
   renderer.domElement.addEventListener('click', handleCanvasClick);
@@ -256,7 +256,7 @@ function initWebcam(facing = 'user') {
   ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    appendChat('Webcam API not available in this browser.', 'error');
+    appendChat('Webcam API not available.', 'error');
     return;
   }
 
@@ -265,9 +265,9 @@ function initWebcam(facing = 'user') {
   const constraints = {
     video: {
       facingMode: { ideal: facing },
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-      frameRate: { ideal: 30 }
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      frameRate: { ideal: 24 }
     },
     audio: false
   };
@@ -279,15 +279,13 @@ function initWebcam(facing = 'user') {
       video.srcObject = stream;
       video.play().then(() => {
         webcamReady = true;
-        const label = facing === 'environment' ? 'Back' : 'Front';
         document.getElementById('camera-switch-btn').innerText = facing === 'environment' ? '📷 Back Cam' : '📷 Front Cam';
-        appendChat(`${label} camera linked · high-density dimensional video ready.`, 'system');
-      }).catch(e => appendChat('Video play failed: ' + e.message, 'error'));
+        appendChat((facing === 'environment' ? 'Back' : 'Front') + ' camera ready.', 'system');
+      });
     })
     .catch(err => {
-      // Fallback without facingMode if device doesn't support it
       if (facing !== 'user') {
-        appendChat('Back camera not available, trying front…', 'error');
+        appendChat('Back camera unavailable, using front.', 'error');
         initWebcam('user');
         return;
       }
@@ -301,6 +299,38 @@ function switchCamera() {
   initWebcam(next);
 }
 
+function togglePerfMode() {
+  perfMode = !perfMode;
+  const btn = document.getElementById('perf-btn');
+  if (perfMode) {
+    stepSize = 3;
+    layerCount = 4;
+    currentPointSize = 0.032;
+    document.getElementById('density-step').value = 3;
+    document.getElementById('density-val').innerText = '3px';
+    document.getElementById('layer-count').value = 4;
+    document.getElementById('layer-val').innerText = '4';
+    document.getElementById('point-size').value = 0.032;
+    btn.style.background = '#059669';
+    btn.innerText = '⚡ Perf ON';
+    appendChat('Performance mode ON – fewer nodes, smoother.', 'system');
+  } else {
+    stepSize = 2;
+    layerCount = 5;
+    currentPointSize = 0.026;
+    document.getElementById('density-step').value = 2;
+    document.getElementById('density-val').innerText = '2px';
+    document.getElementById('layer-count').value = 5;
+    document.getElementById('layer-val').innerText = '5';
+    document.getElementById('point-size').value = 0.026;
+    btn.style.background = '';
+    btn.innerText = '⚡ Perf Mode';
+    appendChat('Performance mode OFF.', 'system');
+  }
+  rebuildLayerChips();
+  updatePointSizes();
+}
+
 function onWindowResize() {
   const c = document.getElementById('viewer-container');
   if (!c || !camera || !renderer) return;
@@ -311,7 +341,7 @@ function onWindowResize() {
 
 function resetCamera() {
   if (!camera) return;
-  camera.position.set(0, 0.25, 3.6);
+  camera.position.set(0, 0.25, 3.5);
   if (controls) {
     controls.target.set(0, 0, 0);
     controls.update();
@@ -322,12 +352,8 @@ function resetCamera() {
 function animate(now) {
   requestAnimationFrame(animate);
   if (controls) {
-    if (autoOrbit) {
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.75;
-    } else {
-      controls.autoRotate = false;
-    }
+    controls.autoRotate = !!autoOrbit;
+    if (autoOrbit) controls.autoRotateSpeed = 0.65;
     controls.update();
   }
   timePhase = now * 0.001;
@@ -340,10 +366,14 @@ function animate(now) {
     fpsTimer = now;
   }
 
-  const shouldSampleWebcam = webcamReady && video && video.readyState >= 2 &&
+  const shouldSample = webcamReady && video && video.readyState >= 2 &&
     (isInfiniteScanning || rawSourceFrames.length === 0);
 
-  if (shouldSampleWebcam) {
+  // Throttle volumetric rebuild
+  const doVolUpdate = shouldSample && (now - lastVolUpdate > VOL_UPDATE_MS);
+
+  if (doVolUpdate) {
+    lastVolUpdate = now;
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 480;
     if (canvas2D.width !== vw || canvas2D.height !== vh) {
@@ -356,40 +386,42 @@ function animate(now) {
       const basePos = [];
       const baseCol = [];
       const aspect = vw / Math.max(1, vh);
-      const scaleX = 1.32 * Math.min(aspect, 1.7);
-      const scaleY = 1.32;
+      const scaleX = 1.25 * Math.min(aspect, 1.55);
+      const scaleY = 1.25;
       const cx = vw * 0.5, cy = vh * 0.5;
       const maxR = Math.sqrt(cx * cx + cy * cy) || 1;
+      const maxPoints = perfMode ? 45000 : 70000;
 
-      // Dense sampling – stepSize 1 = maximum nodes
       for (let y = 0; y < vh; y += stepSize) {
         for (let x = 0; x < vw; x += stepSize) {
+          if (basePos.length / 3 >= maxPoints) break;
           const idx = (y * vw + x) * 4;
           const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
           const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-          if (lum < 0.028) continue; // lower threshold = more points
+          if (lum < 0.045) continue;
 
           const nx = ((vw - x) / vw) * 2 - 1;
           const ny = -((y / vh) * 2 - 1);
-          const depthCurve = Math.pow(Math.max(0.001, lum), 0.44);
+          const depthCurve = Math.pow(Math.max(0.001, lum), 0.47);
           const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
           const rad2 = dx * dx + dy * dy;
 
-          let nz = (depthCurve - 0.26) * (depthMultiplier * 0.27);
-          nz -= rad2 * 0.62;
-          nz -= nx * nx * 0.16;
+          let nz = (depthCurve - 0.28) * (depthMultiplier * 0.26);
+          nz -= rad2 * 0.55;
+          nz -= nx * nx * 0.18;
 
-          const px = nx * scaleX * (1 - rad2 * 0.065);
-          const py = ny * scaleY * (1 - rad2 * 0.045);
+          const px = nx * scaleX * (1 - rad2 * 0.07);
+          const py = ny * scaleY * (1 - rad2 * 0.05);
           basePos.push(px, py, nz);
 
-          const sat = 1.18, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.4);
+          const sat = 1.12, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.3);
           baseCol.push(
-            Math.min(1, avg + (r - avg) * sat + rim * 0.035),
-            Math.min(1, avg + (g - avg) * sat + rim * 0.075),
-            Math.min(1, avg + (b - avg) * sat + rim * 0.17)
+            Math.min(1, avg + (r - avg) * sat + rim * 0.03),
+            Math.min(1, avg + (g - avg) * sat + rim * 0.06),
+            Math.min(1, avg + (b - avg) * sat + rim * 0.14)
           );
         }
+        if (basePos.length / 3 >= maxPoints) break;
       }
 
       const nodeCount = basePos.length / 3;
@@ -405,30 +437,28 @@ function animate(now) {
       if (isInfiniteScanning) {
         const condensedV = [];
         for (let i = 0; i < basePos.length; i += 3) {
-          condensedV.push(+basePos[i].toFixed(4), +basePos[i + 1].toFixed(4), +basePos[i + 2].toFixed(4), frameIndex);
+          condensedV.push(+basePos[i].toFixed(3), +basePos[i + 1].toFixed(3), +basePos[i + 2].toFixed(3), frameIndex);
         }
         recorded4DFrames.push({
           v: condensedV,
           c: baseCol.map(v => +v.toFixed(2)),
-          meta: 0.30 + Math.random() * 0.30,
+          meta: 0.32 + Math.random() * 0.25,
           layers: layerCount,
           spread: layerSpread
         });
         frameIndex++;
         document.getElementById('frame-counter').innerText = recorded4DFrames.length;
-        if (frameIndex % 5 === 0) updateJSONTextBox();
+        if (frameIndex % 8 === 0) updateJSONTextBox();
       }
-    } catch (e) {
-      // silent frame skip
-    }
+    } catch (e) {}
   }
 
   if (layerPulse && spatialLayers.length && currentRenderMode === 'points') {
     for (let L = 0; L < spatialLayers.length; L++) {
       const obj = spatialLayers[L];
       if (!obj || !obj.visible) continue;
-      const breath = 1 + Math.sin(timePhase * 1.05 + L * 0.52) * 0.010;
-      obj.scale.set(breath, breath, breath);
+      const breath = 1 + Math.sin(timePhase * 1.0 + L * 0.5) * 0.009;
+      obj.scale.setScalar(breath);
     }
   }
 
@@ -470,32 +500,32 @@ function updateLiveMultiLayers(basePos, baseCol) {
   }
 
   const nodeCount = basePos.length / 3;
-  if (nodeCount < 8) return;
+  if (nodeCount < 6) return;
 
-  const metaOffset = currentMetaValue * 0.34;
+  const metaOffset = currentMetaValue * 0.30;
   const maxL = Math.max(1, layerCount - 1);
 
   for (let L = 0; L < layerCount; L++) {
     const t = L / maxL;
     const ease = t * t * (3 - 2 * t);
     const signed = ease - 0.5;
-    const depthOffset = signed * layerSpread * 3.9;
-    const yOffset = signed * layerSpread * 0.19;
-    const xParallax = signed * layerSpread * 0.13;
-    const scale = 1 + signed * 0.07;
+    const depthOffset = signed * layerSpread * 3.5;
+    const yOffset = signed * layerSpread * 0.16;
+    const xParallax = signed * layerSpread * 0.10;
+    const scale = 1 + signed * 0.06;
     const frontness = 1 - t;
-    const warm = 0.93 + frontness * 0.12;
-    const cool = 0.78 + (1 - frontness) * 0.45;
+    const warm = 0.94 + frontness * 0.10;
+    const cool = 0.82 + (1 - frontness) * 0.40;
 
     const pos = new Float32Array(nodeCount * 3);
     const col = new Float32Array(nodeCount * 3);
 
     for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
       let px = basePos[j] * scale + xParallax;
-      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.44 + L * 0.038);
+      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.40 + L * 0.03);
       let pz = basePos[j + 2] * scale + depthOffset;
 
-      if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.01) {
+      if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.02) {
         const prev = prevLayerPos[L];
         const s = smoothFactor;
         px = px * (1 - s) + prev[j] * s;
@@ -505,13 +535,13 @@ function updateLiveMultiLayers(basePos, baseCol) {
 
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
       col[j] = Math.min(1, baseCol[j] * warm);
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.96 + L * 0.014));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.97 + L * 0.01));
       col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
     }
 
     prevLayerPos[L] = pos;
-    const sizeMul = 1.06 - L * 0.045;
-    const opac = Math.max(0.22, 0.93 - L * 0.08);
+    const sizeMul = 1.05 - L * 0.04;
+    const opac = Math.max(0.28, 0.90 - L * 0.09);
 
     let obj = spatialLayers[L];
     if (!obj) {
@@ -524,8 +554,7 @@ function updateLiveMultiLayers(basePos, baseCol) {
         vertexColors: true,
         transparent: true,
         opacity: opac,
-        depthWrite: false,
-        blending: THREE.NormalBlending
+        depthWrite: false
       });
       obj = new THREE.Points(g, mat);
       scene.add(obj);
@@ -541,7 +570,7 @@ function updateLiveMultiLayers(basePos, baseCol) {
         obj.geometry.attributes.position.needsUpdate = true;
         obj.geometry.attributes.color.needsUpdate = true;
       }
-      if (obj.material && obj.material.size !== undefined) {
+      if (obj.material) {
         obj.material.size = currentPointSize * sizeMul;
         obj.material.opacity = opac;
       }
@@ -554,7 +583,7 @@ function updateLiveMultiLayers(basePos, baseCol) {
 function updatePointSizes() {
   spatialLayers.forEach((obj, L) => {
     if (obj && obj.material && obj.material.size !== undefined) {
-      obj.material.size = currentPointSize * (1.06 - L * 0.045);
+      obj.material.size = currentPointSize * (1.05 - L * 0.04);
     }
   });
 }
@@ -567,12 +596,12 @@ function toggleInfiniteScanning() {
     frameIndex = 0;
     btn.innerText = 'HALT DIMENSIONAL STREAM';
     btn.classList.add('scanning');
-    appendChat(`Dimensional stream started · ${layerCount} layers · high density`, 'system');
+    appendChat(`Stream started · ${layerCount} layers`, 'system');
     document.getElementById('render-status').innerText = 'Recording';
   } else {
     btn.innerText = 'START DIMENSIONAL STREAM';
     btn.classList.remove('scanning');
-    appendChat(`Stream finished · ${recorded4DFrames.length} frames captured.`, 'system');
+    appendChat(`Finished · ${recorded4DFrames.length} frames`, 'system');
     document.getElementById('render-status').innerText = 'Capture Ready';
     updateJSONTextBox();
     if (recorded4DFrames.length > 0) {
@@ -588,58 +617,39 @@ function toggleInfiniteScanning() {
 
 function updateJSONTextBox() {
   const el = document.getElementById('json-output-box');
-  if (el) {
-    el.value = JSON.stringify({
-      HyperStream5D: recorded4DFrames,
-      multiLayer: true,
-      layers: layerCount,
-      spread: layerSpread
-    });
-  }
-}
-
-function exportRecordedJSON() {
-  if (!recorded4DFrames.length) {
-    appendChat('No frames recorded.', 'error');
-    return;
-  }
-  const payload = {
+  if (el) el.value = JSON.stringify({
     HyperStream5D: recorded4DFrames,
     multiLayer: true,
     layers: layerCount,
     spread: layerSpread
-  };
+  });
+}
+
+function exportRecordedJSON() {
+  if (!recorded4DFrames.length) { appendChat('No frames recorded.', 'error'); return; }
+  const payload = { HyperStream5D: recorded4DFrames, multiLayer: true, layers: layerCount, spread: layerSpread };
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `hyperstream_xd_dim_${Date.now()}.json`;
+  a.download = `hyperstream_xd_${Date.now()}.json`;
   a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 900);
-  appendChat('Dimensional JSON exported.', 'system');
+  setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  appendChat('JSON exported.', 'system');
 }
 
 function copyJSONToClipboard() {
   const t = document.getElementById('json-output-box').value;
-  if (!t) {
-    appendChat('Nothing to copy.', 'error');
-    return;
-  }
-  navigator.clipboard.writeText(t)
-    .then(() => appendChat('JSON copied.', 'system'))
-    .catch(e => appendChat('Copy failed: ' + e, 'error'));
+  if (!t) { appendChat('Nothing to copy.', 'error'); return; }
+  navigator.clipboard.writeText(t).then(() => appendChat('JSON copied.', 'system')).catch(e => appendChat('Copy failed', 'error'));
 }
 
 function switchMode(m) {
   ['capture', 'load', 'paste'].forEach(x => {
-    const btn = document.getElementById('btn-tab-' + x);
-    const panel = document.getElementById('panel-' + x);
-    if (btn) btn.classList.remove('active');
-    if (panel) panel.style.display = 'none';
+    document.getElementById('btn-tab-' + x)?.classList.remove('active');
+    document.getElementById('panel-' + x).style.display = 'none';
   });
-  const btn = document.getElementById('btn-tab-' + m);
-  const panel = document.getElementById('panel-' + m);
-  if (btn) btn.classList.add('active');
-  if (panel) panel.style.display = 'flex';
+  document.getElementById('btn-tab-' + m)?.classList.add('active');
+  document.getElementById('panel-' + m).style.display = 'flex';
 }
 
 function toNumberArray(arr) {
@@ -660,20 +670,13 @@ function extractSequence(data) {
     if (key) raw = data[key];
   }
   if (!raw) return null;
-
   return raw.map(f => {
     let v = f.v || f.vertices || f.vertices4D || [];
     let c = f.c || f.colors || [];
     let meta = f.meta !== undefined ? f.meta : (f.m !== undefined ? f.m : 0.5);
     let layers = f.layers || data.layers || layerCount;
     let spread = f.spread !== undefined ? f.spread : (data.spread || layerSpread);
-    return {
-      vertices: toNumberArray(v),
-      colors: toNumberArray(c),
-      meta: typeof meta === 'number' ? meta : 0.5,
-      layers,
-      spread
-    };
+    return { vertices: toNumberArray(v), colors: toNumberArray(c), meta: typeof meta === 'number' ? meta : 0.5, layers, spread };
   }).filter(f => f.vertices.length > 0);
 }
 
@@ -704,11 +707,11 @@ function applyFrameAndRender(frameIdx, metaBlend) {
   const basePos = [];
   const baseCol = [];
   for (let i = 0; i < src.length; i += tupleSize) {
-    const metaOffset = (target.meta || 0.5) * metaBlend * 0.38;
+    const metaOffset = (target.meta || 0.5) * metaBlend * 0.34;
     basePos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
     const ci = (i / tupleSize) * 3;
     if (cols.length >= ci + 3) baseCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
-    else baseCol.push(0.55, 0.42, 0.88);
+    else baseCol.push(0.55, 0.4, 0.9);
   }
 
   const prevCount = layerCount, prevSpread = layerSpread;
@@ -726,11 +729,8 @@ function applyFrameAndRender(frameIdx, metaBlend) {
     if (indices.length) g.setIndex(indices);
     g.computeVertexNormals();
     const mat = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.28,
-      metalness: 0.16,
-      wireframe: currentRenderMode === 'wireframe',
-      side: THREE.DoubleSide
+      vertexColors: true, roughness: 0.3, metalness: 0.15,
+      wireframe: currentRenderMode === 'wireframe', side: THREE.DoubleSide
     });
     const mesh = new THREE.Mesh(g, mat);
     mesh.rotation.y = Math.PI;
@@ -747,16 +747,15 @@ function applyFrameAndRender(frameIdx, metaBlend) {
 
 function processEnvironmentData(data) {
   try {
-    setProgress(12);
-    appendChat('Injecting dimensional stream…', 'system');
+    setProgress(10);
+    appendChat('Injecting stream…', 'system');
     const seq = extractSequence(data);
     if (seq && seq.length) {
       rawSourceFrames = seq;
       playbackFrames = seq;
       playbackFrameIndex = 0;
       isPlayMode = true;
-      const btn = document.getElementById('play-pause-btn');
-      if (btn) btn.innerText = '⏸ Pause';
+      document.getElementById('play-pause-btn').innerText = '⏸ Pause';
 
       if (data.layers) layerCount = data.layers;
       if (data.spread) layerSpread = data.spread;
@@ -765,25 +764,17 @@ function processEnvironmentData(data) {
       document.getElementById('layer-spread').value = layerSpread;
 
       const scrub = document.getElementById('t-scrub-range');
-      if (scrub) {
-        scrub.max = Math.max(0, seq.length - 1);
-        scrub.value = 0;
-      }
+      if (scrub) { scrub.max = Math.max(0, seq.length - 1); scrub.value = 0; }
       document.getElementById('t-scrub-val').innerText = `0 / ${Math.max(0, seq.length - 1)}`;
 
       applyFrameAndRender(0, currentMetaValue);
       setProgress(100);
       document.getElementById('render-status').innerText = 'Dimensional Active';
       document.getElementById('bbox-info').innerText = `${seq.length} frames · ${layerCount} layers`;
-      appendChat(`✓ ${seq.length} frames · ${layerCount} dimensional layers.`, 'system');
+      appendChat(`✓ ${seq.length} frames · ${layerCount} layers`, 'system');
 
-      if (seq.length < 100) {
-        saveToVault(`CORE_DIM_${Date.now()}`, {
-          HyperStream5D: seq,
-          multiLayer: true,
-          layers: layerCount,
-          spread: layerSpread
-        });
+      if (seq.length < 80) {
+        saveToVault(`CORE_${Date.now()}`, { HyperStream5D: seq, multiLayer: true, layers: layerCount, spread: layerSpread });
       }
       rebuildLayerChips();
       return;
@@ -827,7 +818,7 @@ function appendChat(t, s = '') {
   d.innerText = t;
   b.appendChild(d);
   b.scrollTop = b.scrollHeight;
-  while (b.children.length > 40) b.removeChild(b.firstChild);
+  while (b.children.length > 35) b.removeChild(b.firstChild);
 }
 
 function clearScene() {
@@ -841,8 +832,7 @@ function clearScene() {
   document.getElementById('stats-nodes').innerText = '0';
   document.getElementById('render-status').innerText = 'Cleared';
   document.getElementById('bbox-info').innerText = '';
-  const btn = document.getElementById('play-pause-btn');
-  if (btn) btn.innerText = '▶ Play';
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   setProgress(0);
   appendChat('Scene cleared.', 'system');
 }
@@ -856,16 +846,14 @@ function updateMetaDimension(val) {
   currentMetaValue = parseFloat(val) / 100;
   document.getElementById('e-meta-val').innerText = currentMetaValue.toFixed(2);
   isPlayMode = false;
-  const btn = document.getElementById('play-pause-btn');
-  if (btn) btn.innerText = '▶ Play';
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
 }
 
 function updateTScrubs(val) {
   playbackFrameIndex = parseInt(val) || 0;
   isPlayMode = false;
-  const btn = document.getElementById('play-pause-btn');
-  if (btn) btn.innerText = '▶ Play';
+  document.getElementById('play-pause-btn').innerText = '▶ Play';
   if (rawSourceFrames.length) {
     applyFrameAndRender(playbackFrameIndex, currentMetaValue);
     document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${Math.max(0, playbackFrames.length - 1)}`;
@@ -873,62 +861,37 @@ function updateTScrubs(val) {
 }
 
 function togglePlayPause() {
-  if (!playbackFrames.length) {
-    appendChat('No sequence loaded.', 'error');
-    return;
-  }
+  if (!playbackFrames.length) { appendChat('No sequence loaded.', 'error'); return; }
   isPlayMode = !isPlayMode;
-  const btn = document.getElementById('play-pause-btn');
-  if (btn) btn.innerText = isPlayMode ? '⏸ Pause' : '▶ Play';
+  document.getElementById('play-pause-btn').innerText = isPlayMode ? '⏸ Pause' : '▶ Play';
 }
 
-function toggleGrid(v) {
-  if (gridHelper) gridHelper.visible = !!v;
-}
+function toggleGrid(v) { if (gridHelper) gridHelper.visible = !!v; }
 
 function setupDragDrop() {
   const dz = document.getElementById('drop-zone');
   if (!dz) return;
-  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
-    e.preventDefault();
-    dz.classList.add('dragover');
-  }));
-  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
-    e.preventDefault();
-    dz.classList.remove('dragover');
-  }));
-  dz.addEventListener('drop', e => {
-    const f = e.dataTransfer.files[0];
-    if (f) readFile(f);
-  });
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
 }
 
 function readFile(file) {
   const r = new FileReader();
   r.onload = ev => {
-    try {
-      processEnvironmentData(JSON.parse(ev.target.result));
-    } catch (err) {
-      appendChat('Invalid JSON: ' + err.message, 'error');
-    }
+    try { processEnvironmentData(JSON.parse(ev.target.result)); }
+    catch (err) { appendChat('Invalid JSON', 'error'); }
   };
-  r.onerror = () => appendChat('File read failed.', 'error');
   r.readAsText(file);
 }
 
-function handleFileUpload(e) {
-  const f = e.target.files[0];
-  if (f) readFile(f);
-}
+function handleFileUpload(e) { const f = e.target.files[0]; if (f) readFile(f); }
 
 function handleCodePaste() {
   const t = document.getElementById('json-paste-box').value.trim();
   if (!t) return;
-  try {
-    processEnvironmentData(JSON.parse(t));
-  } catch (err) {
-    appendChat('Paste error: ' + err.message, 'error');
-  }
+  try { processEnvironmentData(JSON.parse(t)); }
+  catch (err) { appendChat('Paste error', 'error'); }
 }
 
 function toggleMappingMode() {
@@ -937,7 +900,7 @@ function toggleMappingMode() {
   if (isMappingActive) {
     btn.style.background = '#059669';
     btn.innerText = 'Pinning Active';
-    appendChat('Click surface to place anchors.', 'system');
+    appendChat('Click to place pins.', 'system');
   } else {
     btn.style.background = '#7c3aed';
     btn.innerText = 'Enable Pinning';
@@ -945,7 +908,7 @@ function toggleMappingMode() {
 }
 
 function handleCanvasClick(event) {
-  if (!isMappingActive || !spatialLayers.length || !renderer) return;
+  if (!isMappingActive || !spatialLayers.length) return;
   const rect = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -958,13 +921,10 @@ function addSpatialPin(vec) {
   const id = mappedPins.length + 1;
   mappedPins.push({ id, vector: vec.clone(), meta: currentMetaValue });
   renderPinsList();
-  appendChat(`Pin #${id} @ [${vec.x.toFixed(2)}, ${vec.y.toFixed(2)}, ${vec.z.toFixed(2)}]`, 'system');
+  appendChat(`Pin #${id}`, 'system');
 }
 
-function clearPins() {
-  mappedPins = [];
-  renderPinsList();
-}
+function clearPins() { mappedPins = []; renderPinsList(); }
 
 function renderPinsList() {
   const list = document.getElementById('pins-list');
@@ -977,32 +937,24 @@ function renderPinsList() {
   mappedPins.forEach(p => {
     const d = document.createElement('div');
     d.className = 'vault-item';
-    d.innerHTML = `<span>📌 #${p.id} <small style="color:#38bdf8">[${p.vector.x.toFixed(1)},${p.vector.y.toFixed(1)}]</small></span>
+    d.innerHTML = `<span>📌 #${p.id}</span>
       <button onclick="removePin(${p.id})" style="background:#dc2626;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>`;
     list.appendChild(d);
   });
 }
 
-function removePin(id) {
-  mappedPins = mappedPins.filter(p => p.id !== id);
-  renderPinsList();
-}
+function removePin(id) { mappedPins = mappedPins.filter(p => p.id !== id); renderPinsList(); }
 
 function saveToVault(name, payload) {
   try {
     const raw = JSON.stringify(payload);
-    if (raw.length > 4500000) {
-      appendChat('Vault limit >4.5 MB', 'error');
-      return;
-    }
+    if (raw.length > 4000000) { appendChat('Vault too large', 'error'); return; }
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     vault.unshift({ id: Date.now(), name, size: raw.length, payload });
-    if (vault.length > 12) vault.pop();
+    if (vault.length > 10) vault.pop();
     localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
     loadVaultList();
-  } catch (e) {
-    appendChat('Vault write failed.', 'error');
-  }
+  } catch (e) {}
 }
 
 function loadVaultList() {
@@ -1010,15 +962,12 @@ function loadVaultList() {
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     const list = document.getElementById('vault-list');
     if (!list) return;
-    if (!vault.length) {
-      list.innerHTML = '<small style="color:#64748b">Empty</small>';
-      return;
-    }
+    if (!vault.length) { list.innerHTML = '<small style="color:#64748b">Empty</small>'; return; }
     list.innerHTML = '';
     vault.forEach(it => {
       const d = document.createElement('div');
       d.className = 'vault-item';
-      d.innerHTML = `<span>📦 ${it.name} <small style="color:#64748b">${(it.size / 1024).toFixed(0)}KB</small></span>
+      d.innerHTML = `<span>📦 ${it.name}</span>
         <span>
           <button onclick="loadFromVault(${it.id})" style="background:#7c3aed;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;margin-right:2px">Boot</button>
           <button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>
@@ -1033,9 +982,7 @@ function loadFromVault(id) {
     const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
     const it = vault.find(v => v.id === id);
     if (it) processEnvironmentData(it.payload);
-  } catch (e) {
-    appendChat('Vault load failed.', 'error');
-  }
+  } catch (e) {}
 }
 
 function deleteFromVault(id) {
@@ -1048,54 +995,33 @@ function deleteFromVault(id) {
 }
 
 function exportCurrentPNG() {
-  if (!spatialLayers.length) {
-    appendChat('Nothing rendered', 'error');
-    return;
-  }
+  if (!spatialLayers.length) { appendChat('Nothing rendered', 'error'); return; }
   renderer.render(scene, camera);
-  const url = document.getElementById('three-canvas').toDataURL('image/png');
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `hyperstream_xd_${Date.now()}.png`;
+  a.href = document.getElementById('three-canvas').toDataURL('image/png');
+  a.download = `hyperstream_${Date.now()}.png`;
   a.click();
   appendChat('PNG exported.', 'system');
 }
 
 function exportOrbitGIF() {
-  if (!spatialLayers.length) {
-    appendChat('No model', 'error');
-    return;
-  }
-  if (typeof GIF === 'undefined') {
-    appendChat('GIF library not loaded.', 'error');
-    return;
-  }
-  appendChat('Rendering orbit GIF… (this can take a moment)', 'system');
+  if (!spatialLayers.length || typeof GIF === 'undefined') { appendChat('Cannot export GIF', 'error'); return; }
+  appendChat('Rendering GIF…', 'system');
   try {
-    const gif = new GIF({
-      workers: 2,
-      quality: 11,
-      width: 640,
-      height: 480,
-      workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
-    });
+    const gif = new GIF({ workers: 2, quality: 12, width: 480, height: 360, workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js' });
     const orig = camera.position.clone();
-    let f = 0;
-    const total = 32;
+    let f = 0; const total = 24;
     const rad = camera.position.distanceTo(controls ? controls.target : new THREE.Vector3());
-
     function cap() {
       const ang = (f / total) * Math.PI * 2;
       camera.position.x = Math.sin(ang) * rad;
       camera.position.z = Math.cos(ang) * rad;
-      if (controls) camera.lookAt(controls.target);
-      else camera.lookAt(0, 0, 0);
+      camera.lookAt(controls ? controls.target : new THREE.Vector3());
       renderer.render(scene, camera);
       const c = document.createElement('canvas');
-      c.width = 640;
-      c.height = 480;
-      c.getContext('2d').drawImage(renderer.domElement, 0, 0, 640, 480);
-      gif.addFrame(c, { delay: 80 });
+      c.width = 480; c.height = 360;
+      c.getContext('2d').drawImage(renderer.domElement, 0, 0, 480, 360);
+      gif.addFrame(c, { delay: 90 });
       f++;
       if (f < total) requestAnimationFrame(cap);
       else {
@@ -1104,87 +1030,58 @@ function exportOrbitGIF() {
         gif.on('finished', blob => {
           const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          a.download = `hyperstream_orbit_${Date.now()}.gif`;
+          a.download = `orbit_${Date.now()}.gif`;
           a.click();
-          appendChat('Orbit GIF complete.', 'system');
+          appendChat('GIF done.', 'system');
         });
         gif.render();
       }
     }
     cap();
-  } catch (e) {
-    appendChat('GIF export failed: ' + e.message, 'error');
-  }
+  } catch (e) { appendChat('GIF failed', 'error'); }
 }
 
 function exportWebMVideo() {
-  if (!renderer || !spatialLayers.length) {
-    appendChat('No stream to encode.', 'error');
-    return;
-  }
+  if (!renderer || !spatialLayers.length) { appendChat('Nothing to encode', 'error'); return; }
   const btn = document.getElementById('export-video-btn');
-  btn.disabled = true;
-  btn.style.opacity = '0.55';
+  btn.disabled = true; btn.style.opacity = '0.5';
   appendChat('Encoding WebM…', 'system');
-
-  const recordedChunks = [];
-  let stream;
   try {
-    stream = document.getElementById('three-canvas').captureStream(20);
-  } catch (e) {
-    appendChat('captureStream not supported.', 'error');
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    return;
-  }
-
-  let mediaRecorder;
-  try {
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-  } catch (e) {
-    try {
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-    } catch (err) {
-      appendChat('Codec unsupported in this browser.', 'error');
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      return;
+    const stream = document.getElementById('three-canvas').captureStream(15);
+    let mediaRecorder;
+    try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' }); }
+    catch (e) { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); }
+    const chunks = [];
+    mediaRecorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `hyperstream_${Date.now()}.webm`;
+      a.click();
+      appendChat('WebM exported.', 'system');
+      btn.disabled = false; btn.style.opacity = '1';
+      setProgress(0);
+    };
+    mediaRecorder.start();
+    let n = 0; const total = 48;
+    const orig = camera.position.clone();
+    function loop() {
+      n++;
+      renderer.render(scene, camera);
+      setProgress((n / total) * 100);
+      if (n < total) requestAnimationFrame(loop);
+      else {
+        camera.position.copy(orig);
+        if (controls) controls.update();
+        mediaRecorder.stop();
+      }
     }
+    loop();
+  } catch (e) {
+    appendChat('WebM failed', 'error');
+    btn.disabled = false; btn.style.opacity = '1';
   }
-
-  mediaRecorder.ondataavailable = e => {
-    if (e.data && e.data.size) recordedChunks.push(e.data);
-  };
-  mediaRecorder.onstop = () => {
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `hyperstream_xd_${Date.now()}.webm`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-    appendChat('WebM exported.', 'system');
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    setProgress(0);
-  };
-
-  mediaRecorder.start();
-  let frameCounter = 0;
-  const totalFrames = Math.max(64, (playbackFrames.length || 64));
-  const originalPos = camera.position.clone();
-
-  function loop() {
-    frameCounter++;
-    renderer.render(scene, camera);
-    setProgress((frameCounter / totalFrames) * 100);
-    if (frameCounter < totalFrames) requestAnimationFrame(loop);
-    else {
-      camera.position.copy(originalPos);
-      if (controls) controls.update();
-      mediaRecorder.stop();
-    }
-  }
-  loop();
 }
 
 function sendChatMessage() {
@@ -1193,8 +1090,8 @@ function sendChatMessage() {
   if (!t) return;
   appendChat(t);
   i.value = '';
-  if (/help|status|info/i.test(t)) {
-    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Frames loaded: ${rawSourceFrames.length} · Camera: ${currentFacingMode}`, 'system');
+  if (/help|status/i.test(t)) {
+    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Perf: ${perfMode ? 'ON' : 'OFF'}`, 'system');
   }
 }
 </script>
