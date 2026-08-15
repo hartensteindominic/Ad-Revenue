@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Holographic Volumetric Engine</title>
+<title>HyperStream XD • Holographic Volumetric Engine (Improved)</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#030712;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
@@ -37,6 +37,7 @@ input[type=file]{display:none}
 select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;font-size:10px;padding:2px 4px}
 .prog{height:4px;background:#1e293b;border-radius:2px;overflow:hidden;margin-top:2px}
 .prog>div{height:100%;background:#a855f7;width:0%;transition:width .12s}
+.hint{font-size:9px;color:#64748b;line-height:1.3}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -58,7 +59,7 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
       <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Front</button>
       <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Fast</button>
     </div>
-    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="4" value="2" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">2</span></div>
+    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="5" value="2" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">2</span></div>
     <div class="row"><span>Depth</span><input type="range" id="depth" min="10" max="55" value="34" step="1" oninput="depthMul=+this.value"></div>
     <div class="row"><span>Size</span><input type="range" id="psize" min="0.01" max="0.055" value="0.025" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
     <div class="row"><span>Layers</span><input type="range" id="layers" min="1" max="6" value="4" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">4</span></div>
@@ -96,7 +97,7 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
     </div>
     <div class="row"><span>Meta E</span><input type="range" id="meta" min="0" max="100" value="8" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.08</span></div>
     <div class="row"><span>Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
-    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="20" value="12" oninput="playFPS=+this.value"></div>
+    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="24" value="12" oninput="playFPS=+this.value"></div>
     <div style="display:flex;gap:4px">
       <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play</button>
       <button class="btn-s" style="flex:1" onclick="resetCam()">↺ View</button>
@@ -112,7 +113,7 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
     <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 PNG Frame</button>
     <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Download Dimensional Video</button>
     <div class="prog"><div id="progFill"></div></div>
-    <div style="font-size:9px;color:#64748b" id="expStatus">Records the holographic sequence as WebM</div>
+    <div class="hint" id="expStatus">Records the holographic sequence as WebM (VP9/VP8). Best in Chrome/Edge.</div>
   </div>
 </div>
 
@@ -133,13 +134,13 @@ let layers = [], prevPos = [];
 let video, c2d, ctx;
 let scanning = false, rec = [], fIdx = 0;
 let stepSize = 2, depthMul = 34, ptSize = 0.025;
-let layerN = 4, layerSp = 0.45, smooth = 0.50;
+let layerN = 4, layerSp = 0.45, smooth = 0.55;
 let rMode = 'points', metaV = 0.08, playFPS = 12;
 let isPlay = false, frames = [], playIdx = 0, lastT = 0;
 let autoOrbit = true, doPulse = true, vis = [];
 let facing = 'user', stream = null, ready = false;
 let perf = false, lastVol = 0;
-const VOL_MS = 48;
+const VOL_MS = 42;
 let fc = 0, ft = 0, phase = 0;
 let exporting = false;
 
@@ -161,10 +162,11 @@ function init3() {
     canvas: $('c3'),
     antialias: false,
     powerPreference: 'high-performance',
-    preserveDrawingBuffer: true
+    preserveDrawingBuffer: true,
+    alpha: false
   });
   ren.setSize(box.clientWidth, box.clientHeight);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.2));
+  ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
   ren.setClearColor(0x030712);
 
   if (typeof THREE.OrbitControls === 'function') {
@@ -289,7 +291,9 @@ function loop(now = performance.now()) {
     fc = 0; ft = now;
   }
 
-  const needSample = ready && video && video.readyState >= 2 && (scanning || frames.length === 0) && !exporting;
+  const needSample = ready && video && video.readyState >= 2 &&
+    (scanning || frames.length === 0) && !exporting && !isPlay;
+
   if (needSample && (now - lastVol > VOL_MS)) {
     lastVol = now;
     sample();
@@ -332,41 +336,42 @@ function sample() {
   const maxR = Math.hypot(cx, cy) || 1;
   const sx = 1.18 * Math.min(w / Math.max(h, 1), 1.45);
   const sy = 1.18;
-  const maxP = perf ? 26000 : 42000;
+  const maxP = perf ? 22000 : 38000;
   const thr = 0.048;
+  const step = Math.max(1, stepSize | 0);
 
-  for (let y = 0; y < h && pos.length / 3 < maxP; y += stepSize) {
-    for (let x = 0; x < w && pos.length / 3 < maxP; x += stepSize) {
+  for (let y = 0; y < h && pos.length / 3 < maxP; y += step) {
+    for (let x = 0; x < w && pos.length / 3 < maxP; x += step) {
       const i = (y * w + x) * 4;
-      const r = pix[i]/255, g = pix[i+1]/255, b = pix[i+2]/255;
-      const lum = 0.299*r + 0.587*g + 0.114*b;
+      const r = pix[i] / 255, g = pix[i + 1] / 255, b = pix[i + 2] / 255;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
       if (lum < thr) continue;
 
       let edge = 0;
-      if (x >= stepSize && x < w - stepSize) {
-        const l2 = 0.299*(pix[i-4]/255) + 0.587*(pix[i-3]/255) + 0.114*(pix[i-2]/255);
-        const r2 = 0.299*(pix[i+4]/255) + 0.587*(pix[i+5]/255) + 0.114*(pix[i+6]/255);
+      if (x >= step && x < w - step) {
+        const l2 = 0.299 * (pix[i - 4] / 255) + 0.587 * (pix[i - 3] / 255) + 0.114 * (pix[i - 2] / 255);
+        const r2 = 0.299 * (pix[i + 4] / 255) + 0.587 * (pix[i + 5] / 255) + 0.114 * (pix[i + 6] / 255);
         edge = Math.abs(l2 - r2);
       }
 
-      const nx = ((w - x)/w)*2 - 1;
-      const ny = -((y/h)*2 - 1);
-      const dx = (x-cx)/maxR, dy = (y-cy)/maxR;
-      const rad = dx*dx + dy*dy;
+      const nx = ((w - x) / w) * 2 - 1;
+      const ny = -((y / h) * 2 - 1);
+      const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
+      const rad = dx * dx + dy * dy;
 
-      let nz = (Math.pow(Math.max(0.001,lum), 0.40) - 0.20) * (depthMul * 0.23);
+      let nz = (Math.pow(Math.max(0.001, lum), 0.40) - 0.20) * (depthMul * 0.23);
       nz += edge * 0.55;
       nz -= rad * 0.42;
-      nz -= nx*nx * 0.10;
+      nz -= nx * nx * 0.10;
 
-      pos.push(nx*sx*(1-rad*0.045), ny*sy*(1-rad*0.035), nz);
+      pos.push(nx * sx * (1 - rad * 0.045), ny * sy * (1 - rad * 0.035), nz);
 
-      const rim = Math.min(1, rad*1.15);
-      const avg = (r+g+b)/3;
+      const rim = Math.min(1, rad * 1.15);
+      const avg = (r + g + b) / 3;
       col.push(
-        Math.min(1, avg+(r-avg)*1.05 + rim*0.02 + 0.04),
-        Math.min(1, avg+(g-avg)*1.08 + rim*0.07 + 0.10),
-        Math.min(1, avg+(b-avg)*1.18 + rim*0.20 + 0.22)
+        Math.min(1, avg + (r - avg) * 1.05 + rim * 0.02 + 0.04),
+        Math.min(1, avg + (g - avg) * 1.08 + rim * 0.07 + 0.10),
+        Math.min(1, avg + (b - avg) * 1.18 + rim * 0.20 + 0.22)
       );
     }
   }
@@ -380,15 +385,15 @@ function sample() {
   if (scanning) {
     const v = [];
     for (let i = 0; i < pos.length; i += 3)
-      v.push(+pos[i].toFixed(3), +pos[i+1].toFixed(3), +pos[i+2].toFixed(3));
+      v.push(+pos[i].toFixed(3), +pos[i + 1].toFixed(3), +pos[i + 2].toFixed(3));
     rec.push({
       v, c: col.map(x => +x.toFixed(2)),
-      meta: 0.28 + Math.random()*0.22,
+      meta: 0.28 + Math.random() * 0.22,
       layers: layerN, spread: layerSp
     });
     fIdx++;
     $('nFrm').textContent = rec.length;
-    if (fIdx % 12 === 0)
+    if (fIdx % 10 === 0)
       $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
   }
 }
@@ -426,7 +431,7 @@ function buildLayers(basePos, baseCol) {
 
   for (let L = 0; L < layerN; L++) {
     const t = L / maxL;
-    const e = t*t*(3-2*t);
+    const e = t * t * (3 - 2 * t);
     const s = e - 0.5;
     const zOff = s * layerSp * 3.0;
     const yOff = s * layerSp * 0.13;
@@ -438,25 +443,25 @@ function buildLayers(basePos, baseCol) {
     const col = new Float32Array(n * 3);
 
     for (let i = 0, j = 0; i < n; i++, j += 3) {
-      let px = basePos[j]*sc + xOff;
-      let py = basePos[j+1]*sc + yOff + mOff*(0.38 + L*0.028);
-      let pz = basePos[j+2]*sc + zOff;
+      let px = basePos[j] * sc + xOff;
+      let py = basePos[j + 1] * sc + yOff + mOff * (0.38 + L * 0.028);
+      let pz = basePos[j + 2] * sc + zOff;
 
       if (prevPos[L] && prevPos[L].length === pos.length && smooth > 0.04) {
         const p = prevPos[L], k = smooth;
-        px = px*(1-k) + p[j]*k;
-        py = py*(1-k) + p[j+1]*k;
-        pz = pz*(1-k) + p[j+2]*k;
+        px = px * (1 - k) + p[j] * k;
+        py = py * (1 - k) + p[j + 1] * k;
+        pz = pz * (1 - k) + p[j + 2] * k;
       }
-      pos[j]=px; pos[j+1]=py; pos[j+2]=pz;
-      col[j]   = Math.min(1, baseCol[j]   * (0.90 + front*0.12));
-      col[j+1] = Math.min(1, baseCol[j+1] * (0.94 + L*0.012));
-      col[j+2] = Math.min(1, baseCol[j+2] * (0.78 + (1-front)*0.38));
+      pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
+      col[j]     = Math.min(1, baseCol[j]     * (0.90 + front * 0.12));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.94 + L * 0.012));
+      col[j + 2] = Math.min(1, baseCol[j + 2] * (0.78 + (1 - front) * 0.38));
     }
 
     prevPos[L] = pos;
-    const size = ptSize * (1.03 - L*0.035);
-    const op = Math.max(0.32, 0.86 - L*0.095);
+    const size = ptSize * (1.03 - L * 0.035);
+    const op = Math.max(0.32, 0.86 - L * 0.095);
 
     let o = layers[L];
     if (!o) {
@@ -491,7 +496,7 @@ function buildLayers(basePos, baseCol) {
 function updSize() {
   layers.forEach((o, L) => {
     if (o?.material?.size !== undefined)
-      o.material.size = ptSize * (1.03 - L*0.035);
+      o.material.size = ptSize * (1.03 - L * 0.035);
   });
 }
 
@@ -500,6 +505,9 @@ function toggleScan() {
   const b = $('scanBtn');
   if (scanning) {
     rec = []; fIdx = 0;
+    frames = [];
+    isPlay = false;
+    $('playBtn').textContent = '▶';
     b.textContent = 'STOP HOLOGRAM';
     b.classList.add('on');
     $('status').textContent = 'Recording';
@@ -516,9 +524,9 @@ function toggleScan() {
 }
 
 function mode(m) {
-  ['cap','load','paste'].forEach(x => {
-    $('t-'+x).classList.toggle('on', x===m);
-    $('p-'+x).style.display = x===m ? 'flex' : 'none';
+  ['cap', 'load', 'paste'].forEach(x => {
+    $('t-' + x).classList.toggle('on', x === m);
+    $('p-' + x).style.display = x === m ? 'flex' : 'none';
   });
 }
 
@@ -530,7 +538,7 @@ function buildChips() {
     if (vis[i] === undefined) vis[i] = true;
     const d = document.createElement('div');
     d.className = 'chip' + (vis[i] ? ' on' : '');
-    d.textContent = 'L'+(i+1);
+    d.textContent = 'L' + (i + 1);
     d.onclick = () => {
       vis[i] = !vis[i];
       if (layers[i]) layers[i].visible = vis[i];
@@ -577,9 +585,9 @@ function drawFrame(idx, meta) {
 
   const pos = [], col = [];
   for (let i = 0; i < src.length; i += ts) {
-    pos.push(src[i], src[i+1] + (f.meta||0.5)*meta*0.30, src[i+2]);
-    const ci = (i/ts)*3;
-    if (cols.length >= ci+3) col.push(cols[ci], cols[ci+1], cols[ci+2]);
+    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.30, src[i + 2]);
+    const ci = (i / ts) * 3;
+    if (cols.length >= ci + 3) col.push(cols[ci], cols[ci + 1], cols[ci + 2]);
     else col.push(0.48, 0.42, 0.95);
   }
 
@@ -593,14 +601,14 @@ function drawFrame(idx, meta) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
-    const count = pos.length/3;
+    const count = pos.length / 3;
     const side = Math.floor(Math.sqrt(count));
     if (side > 4) {
       const idxArr = [];
-      for (let y=0; y<side-1; y++) for (let x=0; x<side-1; x++) {
-        const i = y*side + x;
-        if (i+side+1 < count) {
-          idxArr.push(i, i+1, i+side, i+1, i+side+1, i+side);
+      for (let y = 0; y < side - 1; y++) for (let x = 0; x < side - 1; x++) {
+        const i = y * side + x;
+        if (i + side + 1 < count) {
+          idxArr.push(i, i + 1, i + side, i + 1, i + side + 1, i + side);
         }
       }
       if (idxArr.length) g.setIndex(idxArr);
@@ -616,7 +624,7 @@ function drawFrame(idx, meta) {
   }
 
   layerN = prevN; layerSp = prevS;
-  $('nodesD').textContent = ((pos.length/3)*Lc).toLocaleString();
+  $('nodesD').textContent = ((pos.length / 3) * Lc).toLocaleString();
 }
 
 function loadData(data) {
@@ -636,9 +644,9 @@ function loadData(data) {
   $('layV').textContent = layerN;
   $('spread').value = layerSp;
 
-  $('scrub').max = Math.max(0, seq.length-1);
+  $('scrub').max = Math.max(0, seq.length - 1);
   $('scrub').value = 0;
-  $('scrubV').textContent = '0/' + Math.max(0, seq.length-1);
+  $('scrubV').textContent = '0/' + Math.max(0, seq.length - 1);
 
   drawFrame(0, metaV);
   $('status').textContent = 'Active · ' + seq.length + ' frames';
@@ -657,7 +665,7 @@ function clearAll() {
   $('playBtn').textContent = '▶';
   $('scrub').max = 0;
   $('scrubV').textContent = '0/0';
-  $('expStatus').textContent = 'Records the holographic sequence as WebM';
+  $('expStatus').textContent = 'Records the holographic sequence as WebM (VP9/VP8). Best in Chrome/Edge.';
   setProg(0);
 }
 
@@ -686,7 +694,7 @@ function expJSON() {
 
 function copyJSON() {
   const t = $('jsonOut').value;
-  if (t) navigator.clipboard.writeText(t).catch(()=>{});
+  if (t) navigator.clipboard.writeText(t).catch(() => {});
 }
 
 function expPNG() {
@@ -698,11 +706,32 @@ function expPNG() {
   a.click();
 }
 
-/* ========== DIMENSIONAL VIDEO EXPORT ========== */
+function pickMime() {
+  const candidates = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm'
+  ];
+  for (const m of candidates) {
+    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return '';
+}
+
 function expDimensionalVideo() {
   if (exporting) return;
   if (!layers.length && !frames.length) {
     $('expStatus').textContent = 'Nothing to record — capture or load first';
+    return;
+  }
+  if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+    $('expStatus').textContent = 'Recording not supported in this browser';
+    return;
+  }
+
+  const mime = pickMime();
+  if (!mime) {
+    $('expStatus').textContent = 'No supported WebM codec found';
     return;
   }
 
@@ -711,94 +740,146 @@ function expDimensionalVideo() {
   exporting = true;
   isPlay = false;
   $('playBtn').textContent = '▶';
-  $('expStatus').textContent = 'Encoding dimensional video…';
+  $('expStatus').textContent = 'Preparing dimensional video…';
   setProg(0);
 
   const wasOrbit = autoOrbit;
+  const wasPulse = doPulse;
   autoOrbit = false;
-  if (ctrl) ctrl.autoRotate = false;
+  doPulse = false;
+  if (ctrl) {
+    ctrl.autoRotate = false;
+    ctrl.enabled = false;
+  }
 
   const useFrames = frames.length > 0;
-  const total = useFrames ? Math.max(frames.length, 24) : 48;
-  const fps = 12;
+  const targetSec = useFrames ? Math.max(3.5, Math.min(8, frames.length / 10)) : 5;
+  const fps = 15;
+  const total = Math.round(targetSec * fps);
 
-  let stream, mr, chunks = [];
+  let canvasStream = null;
+  let mr = null;
+  const chunks = [];
+
   try {
-    stream = $('c3').captureStream(fps);
+    canvasStream = $('c3').captureStream(fps);
+    const opts = { mimeType: mime, videoBitsPerSecond: 3500000 };
     try {
-      mr = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 2500000 });
-    } catch {
-      mr = new MediaRecorder(stream, { mimeType: 'video/webm', videoBitsPerSecond: 2000000 });
+      mr = new MediaRecorder(canvasStream, opts);
+    } catch (e1) {
+      mr = new MediaRecorder(canvasStream, { mimeType: 'video/webm', videoBitsPerSecond: 2500000 });
     }
   } catch (e) {
-    $('expStatus').textContent = 'Recording not supported in this browser';
-    btn.disabled = false;
-    exporting = false;
-    autoOrbit = wasOrbit;
+    $('expStatus').textContent = 'Recording failed to start: ' + (e.message || e);
+    cleanupExport(btn, wasOrbit, wasPulse);
     return;
   }
 
-  mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  mr.ondataavailable = e => {
+    if (e.data && e.data.size > 0) chunks.push(e.data);
+  };
+
+  mr.onerror = e => {
+    $('expStatus').textContent = 'Recorder error';
+    cleanupExport(btn, wasOrbit, wasPulse);
+  };
+
   mr.onstop = () => {
+    if (chunks.length === 0) {
+      $('expStatus').textContent = 'No data recorded — try Chrome/Edge';
+      cleanupExport(btn, wasOrbit, wasPulse);
+      return;
+    }
     const blob = new Blob(chunks, { type: 'video/webm' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'dimensional_holo_' + Date.now() + '.webm';
     a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 
-    $('expStatus').textContent = 'Dimensional video downloaded';
+    $('expStatus').textContent = 'Dimensional video downloaded (' + (blob.size / 1024 | 0) + ' KB)';
     setProg(100);
-    btn.disabled = false;
-    exporting = false;
-    autoOrbit = wasOrbit;
-    if (ctrl) ctrl.autoRotate = autoOrbit;
+    cleanupExport(btn, wasOrbit, wasPulse);
 
-    // restore last frame
     if (useFrames) drawFrame(playIdx, metaV);
   };
 
-  mr.start(100);
+  ren.render(scene, cam);
+
+  try {
+    mr.start(100);
+  } catch (e) {
+    $('expStatus').textContent = 'MediaRecorder.start failed';
+    cleanupExport(btn, wasOrbit, wasPulse);
+    return;
+  }
+
+  const origPos = cam.position.clone();
+  const target = ctrl ? ctrl.target.clone() : new THREE.Vector3(0, 0.05, 0);
+  const radius = cam.position.distanceTo(target) || 3.15;
 
   let n = 0;
-  const origPos = cam.position.clone();
-  const radius = cam.position.distanceTo(ctrl ? ctrl.target : new THREE.Vector3());
+  const frameInterval = 1000 / fps;
 
   function tick() {
-    if (!exporting) return;
+    if (!exporting || !mr || mr.state === 'inactive') return;
 
-    // gentle orbit while recording so the hologram is dimensional
-    const ang = (n / total) * Math.PI * 2 * 0.85;
+    const ang = (n / total) * Math.PI * 2 * 0.9;
     cam.position.x = Math.sin(ang) * radius;
     cam.position.z = Math.cos(ang) * radius;
-    cam.lookAt(ctrl ? ctrl.target : new THREE.Vector3(0, 0.05, 0));
+    cam.position.y = origPos.y + Math.sin(ang * 0.5) * 0.12;
+    cam.lookAt(target);
 
     if (useFrames) {
       const idx = Math.floor((n / total) * frames.length) % frames.length;
       drawFrame(idx, metaV);
+    } else if (ready && video && video.readyState >= 2) {
+      sample();
     }
 
     ren.render(scene, cam);
-    setProg((n / total) * 100);
-    $('expStatus').textContent = 'Encoding… ' + Math.round((n/total)*100) + '%';
+
+    const pct = Math.min(99, (n / total) * 100);
+    setProg(pct);
+    $('expStatus').textContent = 'Encoding… ' + Math.round(pct) + '%';
 
     n++;
     if (n < total) {
-      requestAnimationFrame(tick);
+      setTimeout(tick, frameInterval);
     } else {
-      cam.position.copy(origPos);
-      if (ctrl) ctrl.update();
-      mr.stop();
+      ren.render(scene, cam);
+      setTimeout(() => {
+        try {
+          if (mr && mr.state !== 'inactive') mr.stop();
+        } catch (_) {}
+        cam.position.copy(origPos);
+        if (ctrl) {
+          ctrl.target.copy(target);
+          ctrl.update();
+        }
+      }, 180);
     }
   }
-  tick();
+
+  setTimeout(tick, 120);
+}
+
+function cleanupExport(btn, wasOrbit, wasPulse) {
+  exporting = false;
+  btn.disabled = false;
+  autoOrbit = wasOrbit;
+  doPulse = wasPulse;
+  if (ctrl) {
+    ctrl.autoRotate = autoOrbit;
+    ctrl.enabled = true;
+  }
 }
 
 function dropInit() {
   const d = $('drop');
   if (!d) return;
-  ['dragenter','dragover'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.add('over'); }));
-  ['dragleave','drop'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.remove('over'); }));
+  ['dragenter', 'dragover'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.remove('over'); }));
   d.addEventListener('drop', e => {
     const f = e.dataTransfer.files[0];
     if (f) readF(f);
