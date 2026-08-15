@@ -6,11 +6,11 @@
 <title>HyperStream XD • Holographic Volumetric Engine</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#030712;color:#e2e8f0;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
+body{background:#030712;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
 #sidebar{width:340px;min-width:260px;background:#0b0f19;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;z-index:10}
 .brand{font-size:12px;font-weight:800;letter-spacing:.8px;color:#38bdf8;line-height:1.2}
 .brand span{background:linear-gradient(90deg,#38bdf8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.card{background:rgba(15,23,42,.9);border:1px solid #1e293b;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.card{background:rgba(15,23,42,.92);border:1px solid #1e293b;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
 .title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:10px;gap:6px;color:#94a3b8}
 input[type=range]{accent-color:#a855f7;width:100px;cursor:pointer}
@@ -23,16 +23,17 @@ button{border:none;border-radius:6px;padding:7px 8px;font-size:10px;font-weight:
 .tab.on{background:#7c3aed;color:#fff;border-color:#6d28d9}
 #viewer{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 75%)}
 canvas{display:block;width:100%;height:100%}
-.stats{position:absolute;top:10px;right:10px;background:rgba(3,7,18,.9);padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06);font-size:10px;color:#94a3b8;line-height:1.45;z-index:5}
+.stats{position:absolute;top:10px;right:10px;background:rgba(3,7,18,.92);padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.07);font-size:10px;color:#94a3b8;line-height:1.45;z-index:5}
 .stats b{color:#a855f7}
 .chips{display:flex;flex-wrap:wrap;gap:3px}
-.chip{font-size:9px;padding:2px 6px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer}
+.chip{font-size:9px;padding:2px 6px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer;user-select:none}
 .chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
-textarea{width:100%;height:40px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:9px;padding:4px;resize:none}
-.drop{border:1.5px dashed #334155;padding:8px;border-radius:6px;text-align:center;font-size:10px;cursor:pointer;color:#64748b}
-.drop.over{border-color:#a855f7;background:rgba(168,85,247,.08)}
+textarea{width:100%;height:42px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:9px;padding:5px;resize:none;font-family:ui-monospace,monospace}
+.drop{border:1.5px dashed #334155;padding:10px;border-radius:6px;text-align:center;font-size:10px;cursor:pointer;color:#64748b}
+.drop.over{border-color:#a855f7;background:rgba(168,85,247,.1)}
 input[type=file]{display:none}
 #vid{display:none}
+select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;font-size:10px;padding:2px 4px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -54,11 +55,11 @@ input[type=file]{display:none}
       <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Front</button>
       <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Fast</button>
     </div>
-    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="4" value="2" oninput="stepSize=+this.value;document.getElementById('stepV').textContent=this.value"><span id="stepV">2</span></div>
-    <div class="row"><span>Depth</span><input type="range" id="depth" min="8" max="60" value="36" step="1" oninput="depthMul=+this.value"></div>
-    <div class="row"><span>Size</span><input type="range" id="psize" min="0.008" max="0.06" value="0.024" step="0.002" oninput="ptSize=+this.value;updSize()"></div>
-    <div class="row"><span>Layers</span><input type="range" id="layers" min="1" max="6" value="4" oninput="layerN=+this.value;document.getElementById('layV').textContent=this.value;buildChips()"><span id="layV">4</span></div>
-    <div class="row"><span>Spread</span><input type="range" id="spread" min="0.15" max="0.9" value="0.48" step="0.01" oninput="layerSp=+this.value"></div>
+    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="4" value="2" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">2</span></div>
+    <div class="row"><span>Depth</span><input type="range" id="depth" min="10" max="55" value="34" step="1" oninput="depthMul=+this.value"></div>
+    <div class="row"><span>Size</span><input type="range" id="psize" min="0.01" max="0.055" value="0.025" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
+    <div class="row"><span>Layers</span><input type="range" id="layers" min="1" max="6" value="4" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">4</span></div>
+    <div class="row"><span>Spread</span><input type="range" id="spread" min="0.2" max="0.85" value="0.45" step="0.01" oninput="layerSp=+this.value"></div>
     <div style="font-size:9px;color:#64748b">Nodes <b id="nLive">0</b> · Frames <b id="nFrm">0</b></div>
     <div style="display:flex;gap:4px">
       <button class="btn-p" style="flex:1;background:#059669" onclick="expJSON()">Export JSON</button>
@@ -69,7 +70,7 @@ input[type=file]{display:none}
 
   <div class="card" id="p-load" style="display:none">
     <div class="title">Load Payload</div>
-    <div class="drop" id="drop" onclick="document.getElementById('fi').click()">Drop JSON or click
+    <div class="drop" id="drop" onclick="$('fi').click()">Drop JSON or click
       <input type="file" id="fi" accept=".json" onchange="fileIn(event)">
     </div>
     <button class="btn-s" onclick="clearAll()">Clear Scene</button>
@@ -84,22 +85,22 @@ input[type=file]{display:none}
   <div class="card">
     <div class="title">Hologram Controls</div>
     <div class="row"><span>Mode</span>
-      <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)" style="background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;font-size:10px;padding:2px">
+      <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)">
         <option value="points">Volumetric</option>
         <option value="solid">Solid</option>
         <option value="wire">Wire</option>
       </select>
     </div>
-    <div class="row"><span>Meta E</span><input type="range" id="meta" min="0" max="100" value="10" oninput="metaV=this.value/100;document.getElementById('metaV').textContent=metaV.toFixed(2);isPlay=false;if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.10</span></div>
-    <div class="row"><span>Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;document.getElementById('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
-    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="24" value="12" oninput="playFPS=+this.value"></div>
+    <div class="row"><span>Meta E</span><input type="range" id="meta" min="0" max="100" value="8" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.08</span></div>
+    <div class="row"><span>Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
+    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="20" value="12" oninput="playFPS=+this.value"></div>
     <div style="display:flex;gap:4px">
       <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play</button>
       <button class="btn-s" style="flex:1" onclick="resetCam()">↺ View</button>
     </div>
     <div class="row"><span>Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
     <div class="row"><span>Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
-    <div class="title" style="margin-top:2px">Layers</div>
+    <div class="title" style="margin-top:3px">Layers</div>
     <div class="chips" id="chips"></div>
   </div>
 
@@ -123,65 +124,83 @@ input[type=file]{display:none}
 
 <script>
 const $ = id => document.getElementById(id);
+
 let scene, cam, ren, ctrl, grid;
 let layers = [], prevPos = [];
 let video, c2d, ctx;
 let scanning = false, rec = [], fIdx = 0;
-let stepSize = 2, depthMul = 36, ptSize = 0.024;
-let layerN = 4, layerSp = 0.48, smooth = 0.52;
-let rMode = 'points', metaV = 0.10, playFPS = 12;
+let stepSize = 2, depthMul = 34, ptSize = 0.025;
+let layerN = 4, layerSp = 0.45, smooth = 0.50;
+let rMode = 'points', metaV = 0.08, playFPS = 12;
 let isPlay = false, frames = [], playIdx = 0, lastT = 0;
 let autoOrbit = true, doPulse = true, vis = [];
 let facing = 'user', stream = null, ready = false;
 let perf = false, lastVol = 0;
-const VOL_MS = 50;
+const VOL_MS = 48;
 let fc = 0, ft = 0, phase = 0;
 
-window.onload = () => {
+window.addEventListener('DOMContentLoaded', () => {
   init3();
   initCam('user');
   dropInit();
   buildChips();
-};
+});
 
 function init3() {
   const box = $('viewer');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.03);
-  cam = new THREE.PerspectiveCamera(46, box.clientWidth / box.clientHeight, 0.05, 2000);
-  cam.position.set(0, 0.15, 3.2);
+  scene.fog = new THREE.FogExp2(0x030712, 0.029);
+  cam = new THREE.PerspectiveCamera(45, box.clientWidth / box.clientHeight, 0.05, 2000);
+  cam.position.set(0, 0.12, 3.15);
 
-  ren = new THREE.WebGLRenderer({ canvas: $('c3'), antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  ren = new THREE.WebGLRenderer({
+    canvas: $('c3'),
+    antialias: false,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: true
+  });
   ren.setSize(box.clientWidth, box.clientHeight);
-  ren.setPixelRatio(Math.min(devicePixelRatio || 1, 1.15));
+  ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.2));
   ren.setClearColor(0x030712);
 
-  if (THREE.OrbitControls) {
+  if (typeof THREE.OrbitControls === 'function') {
     ctrl = new THREE.OrbitControls(cam, ren.domElement);
     ctrl.enableDamping = true;
     ctrl.dampingFactor = 0.08;
+    ctrl.rotateSpeed = 0.5;
     ctrl.autoRotate = true;
-    ctrl.autoRotateSpeed = 0.55;
+    ctrl.autoRotateSpeed = 0.5;
+    ctrl.target.set(0, 0.05, 0);
   }
 
-  grid = new THREE.GridHelper(36, 36, 0x1e293b, 0x0f172a);
-  grid.position.y = -1.6;
+  grid = new THREE.GridHelper(34, 34, 0x1e293b, 0x0f172a);
+  grid.position.y = -1.55;
   scene.add(grid);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-  const l1 = new THREE.DirectionalLight(0xffffff, 0.9); l1.position.set(2, 4, 4); scene.add(l1);
-  const l2 = new THREE.DirectionalLight(0xa855f7, 0.35); l2.position.set(-3, -1, -2); scene.add(l2);
 
-  window.onresize = () => {
+  scene.add(new THREE.AmbientLight(0xffffff, 0.48));
+  const l1 = new THREE.DirectionalLight(0xffffff, 0.85);
+  l1.position.set(2.2, 4.5, 4);
+  scene.add(l1);
+  const l2 = new THREE.DirectionalLight(0xa855f7, 0.32);
+  l2.position.set(-3.5, -0.8, -2.5);
+  scene.add(l2);
+
+  window.addEventListener('resize', () => {
+    if (!box || !cam || !ren) return;
     cam.aspect = box.clientWidth / box.clientHeight;
     cam.updateProjectionMatrix();
     ren.setSize(box.clientWidth, box.clientHeight);
-  };
+  });
+
   loop();
 }
 
 function stopStream() {
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = null; ready = false;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  ready = false;
 }
 
 function initCam(face) {
@@ -189,96 +208,147 @@ function initCam(face) {
   c2d = document.createElement('canvas');
   ctx = c2d.getContext('2d', { willReadFrequently: true });
   stopStream();
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    $('status').textContent = 'No camera API';
+    return;
+  }
+
   navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: face }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } },
+    video: {
+      facingMode: { ideal: face },
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      frameRate: { ideal: 24 }
+    },
     audio: false
   }).then(s => {
-    stream = s; facing = face;
+    stream = s;
+    facing = face;
     video.srcObject = s;
-    video.play().then(() => {
-      ready = true;
-      $('camBtn').textContent = face === 'environment' ? '📷 Back' : '📷 Front';
-    });
+    return video.play();
+  }).then(() => {
+    ready = true;
+    $('camBtn').textContent = face === 'environment' ? '📷 Back' : '📷 Front';
+    $('status').textContent = 'Camera ready';
   }).catch(() => {
-    if (face !== 'user') initCam('user');
+    if (face !== 'user') {
+      initCam('user');
+    } else {
+      $('status').textContent = 'Camera error';
+    }
   });
 }
 
-function switchCam() { initCam(facing === 'user' ? 'environment' : 'user'); }
+function switchCam() {
+  initCam(facing === 'user' ? 'environment' : 'user');
+}
 
 function togglePerf() {
   perf = !perf;
   if (perf) {
-    stepSize = 3; layerN = 3; ptSize = 0.03;
-    $('step').value = 3; $('stepV').textContent = 3;
-    $('layers').value = 3; $('layV').textContent = 3;
-    $('psize').value = 0.03;
+    stepSize = 3;
+    layerN = 3;
+    ptSize = 0.032;
+    $('step').value = 3; $('stepV').textContent = '3';
+    $('layers').value = 3; $('layV').textContent = '3';
+    $('psize').value = 0.032;
     $('perfBtn').style.background = '#059669';
+    $('perfBtn').textContent = '⚡ ON';
   } else {
-    stepSize = 2; layerN = 4; ptSize = 0.024;
-    $('step').value = 2; $('stepV').textContent = 2;
-    $('layers').value = 4; $('layV').textContent = 4;
-    $('psize').value = 0.024;
+    stepSize = 2;
+    layerN = 4;
+    ptSize = 0.025;
+    $('step').value = 2; $('stepV').textContent = '2';
+    $('layers').value = 4; $('layV').textContent = '4';
+    $('psize').value = 0.025;
     $('perfBtn').style.background = '';
+    $('perfBtn').textContent = '⚡ Fast';
   }
-  buildChips(); updSize();
+  buildChips();
+  updSize();
 }
 
 function resetCam() {
-  cam.position.set(0, 0.15, 3.2);
-  if (ctrl) { ctrl.target.set(0, 0, 0); ctrl.update(); }
-}
-
-function loop(now = 0) {
-  requestAnimationFrame(loop);
+  cam.position.set(0, 0.12, 3.15);
   if (ctrl) {
-    ctrl.autoRotate = autoOrbit;
+    ctrl.target.set(0, 0.05, 0);
     ctrl.update();
   }
+}
+
+function loop(now = performance.now()) {
+  requestAnimationFrame(loop);
+
+  if (ctrl) {
+    ctrl.autoRotate = !!autoOrbit;
+    ctrl.update();
+  }
+
   phase = now * 0.001;
   fc++;
   if (now - ft > 1000) {
-    $('fpsD').textContent = Math.round(fc * 1000 / (now - ft));
-    fc = 0; ft = now;
+    $('fpsD').textContent = Math.round((fc * 1000) / (now - ft));
+    fc = 0;
+    ft = now;
   }
 
-  const need = ready && video.readyState >= 2 && (scanning || !frames.length);
-  if (need && now - lastVol > VOL_MS) {
+  const needSample = ready && video && video.readyState >= 2 && (scanning || frames.length === 0);
+  if (needSample && (now - lastVol > VOL_MS)) {
     lastVol = now;
     sample();
   }
 
   if (doPulse && layers.length && rMode === 'points') {
     for (let i = 0; i < layers.length; i++) {
-      if (layers[i]?.visible) {
-        const s = 1 + Math.sin(phase * 0.9 + i * 0.6) * 0.008;
-        layers[i].scale.setScalar(s);
+      const o = layers[i];
+      if (o && o.visible) {
+        const s = 1 + Math.sin(phase * 0.85 + i * 0.55) * 0.007;
+        o.scale.setScalar(s);
       }
     }
   }
 
-  if (isPlay && frames.length && now - lastT > 1000 / playFPS) {
+  if (isPlay && frames.length && (now - lastT > 1000 / playFPS)) {
     drawFrame(playIdx, metaV);
     playIdx = (playIdx + 1) % frames.length;
     $('scrub').value = playIdx;
-    $('scrubV').textContent = playIdx + '/' + (frames.length - 1);
+    $('scrubV').textContent = playIdx + '/' + Math.max(0, frames.length - 1);
     lastT = now;
   }
-  ren.render(scene, cam);
+
+  if (ren && scene && cam) ren.render(scene, cam);
 }
 
 function sample() {
-  const w = video.videoWidth || 640, h = video.videoHeight || 480;
-  if (c2d.width !== w) { c2d.width = w; c2d.height = h; }
-  ctx.drawImage(video, 0, 0, w, h);
-  let pix;
-  try { pix = ctx.getImageData(0, 0, w, h).data; } catch { return; }
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 480;
+  if (c2d.width !== w || c2d.height !== h) {
+    c2d.width = w;
+    c2d.height = h;
+  }
 
-  const pos = [], col = [];
-  const cx = w * 0.5, cy = h * 0.5, maxR = Math.hypot(cx, cy) || 1;
-  const sx = 1.2 * Math.min(w / h, 1.5), sy = 1.2;
-  const maxP = perf ? 28000 : 48000;
-  const thr = 0.05;
+  try {
+    ctx.drawImage(video, 0, 0, w, h);
+  } catch {
+    return;
+  }
+
+  let pix;
+  try {
+    pix = ctx.getImageData(0, 0, w, h).data;
+  } catch {
+    return;
+  }
+
+  const pos = [];
+  const col = [];
+  const cx = w * 0.5, cy = h * 0.5;
+  const maxR = Math.hypot(cx, cy) || 1;
+  const sx = 1.18 * Math.min(w / Math.max(h, 1), 1.45);
+  const sy = 1.18;
+  const maxP = perf ? 26000 : 42000;
+  const thr = 0.048;
 
   for (let y = 0; y < h && pos.length / 3 < maxP; y += stepSize) {
     for (let x = 0; x < w && pos.length / 3 < maxP; x += stepSize) {
@@ -287,11 +357,11 @@ function sample() {
       const lum = 0.299 * r + 0.587 * g + 0.114 * b;
       if (lum < thr) continue;
 
-      // Edge boost for stronger silhouette / hologram feel
+      // Simple horizontal edge for silhouette strength
       let edge = 0;
-      if (x > stepSize && x < w - stepSize && y > stepSize && y < h - stepSize) {
-        const l2 = 0.299 * pix[i - 4] + 0.587 * pix[i - 3] + 0.114 * pix[i - 2];
-        const r2 = 0.299 * pix[i + 4] + 0.587 * pix[i + 5] + 0.114 * pix[i + 6];
+      if (x >= stepSize && x < w - stepSize) {
+        const l2 = 0.299 * (pix[i - 4] / 255) + 0.587 * (pix[i - 3] / 255) + 0.114 * (pix[i - 2] / 255);
+        const r2 = 0.299 * (pix[i + 4] / 255) + 0.587 * (pix[i + 5] / 255) + 0.114 * (pix[i + 6] / 255);
         edge = Math.abs(l2 - r2);
       }
 
@@ -300,21 +370,25 @@ function sample() {
       const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
       const rad = dx * dx + dy * dy;
 
-      // Depth: luminance + edge → more holographic volume
-      let nz = (Math.pow(lum, 0.42) - 0.22) * (depthMul * 0.24);
-      nz += edge * 0.45;
-      nz -= rad * 0.48;
-      nz -= nx * nx * 0.12;
+      // Depth map tuned for a more solid holographic presence
+      let nz = (Math.pow(Math.max(0.001, lum), 0.40) - 0.20) * (depthMul * 0.23);
+      nz += edge * 0.55;
+      nz -= rad * 0.42;
+      nz -= nx * nx * 0.10;
 
-      pos.push(nx * sx * (1 - rad * 0.05), ny * sy * (1 - rad * 0.04), nz);
+      pos.push(
+        nx * sx * (1 - rad * 0.045),
+        ny * sy * (1 - rad * 0.035),
+        nz
+      );
 
-      // Cool holographic tint + slight rim
-      const rim = Math.min(1, rad * 1.2);
+      // Cool holographic color grade
+      const rim = Math.min(1, rad * 1.15);
       const avg = (r + g + b) / 3;
       col.push(
-        Math.min(1, avg + (r - avg) * 1.1 + rim * 0.02 + 0.05),
-        Math.min(1, avg + (g - avg) * 1.1 + rim * 0.06 + 0.08),
-        Math.min(1, avg + (b - avg) * 1.15 + rim * 0.18 + 0.18)
+        Math.min(1, avg + (r - avg) * 1.05 + rim * 0.02 + 0.04),
+        Math.min(1, avg + (g - avg) * 1.08 + rim * 0.07 + 0.10),
+        Math.min(1, avg + (b - avg) * 1.18 + rim * 0.20 + 0.22)
       );
     }
   }
@@ -323,71 +397,99 @@ function sample() {
   $('nLive').textContent = n.toLocaleString();
   $('nodesD').textContent = (n * layerN).toLocaleString();
 
-  if (scanning || !frames.length) {
+  if (scanning || frames.length === 0) {
     buildLayers(pos, col);
-    $('nLive').textContent = n.toLocaleString();
   }
 
   if (scanning) {
     const v = [];
-    for (let i = 0; i < pos.length; i += 3) v.push(+pos[i].toFixed(3), +pos[i + 1].toFixed(3), +pos[i + 2].toFixed(3));
-    rec.push({ v, c: col.map(x => +x.toFixed(2)), meta: 0.3 + Math.random() * 0.2, layers: layerN, spread: layerSp });
+    for (let i = 0; i < pos.length; i += 3) {
+      v.push(+pos[i].toFixed(3), +pos[i + 1].toFixed(3), +pos[i + 2].toFixed(3));
+    }
+    rec.push({
+      v,
+      c: col.map(x => +x.toFixed(2)),
+      meta: 0.28 + Math.random() * 0.22,
+      layers: layerN,
+      spread: layerSp
+    });
     fIdx++;
     $('nFrm').textContent = rec.length;
-    if (fIdx % 10 === 0) $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+    if (fIdx % 12 === 0) {
+      $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+    }
   }
 }
 
 function clearLayers() {
   for (const o of layers) {
+    if (!o) continue;
     scene.remove(o);
-    o.geometry?.dispose();
-    o.material?.dispose();
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) {
+      if (Array.isArray(o.material)) o.material.forEach(m => m && m.dispose());
+      else o.material.dispose();
+    }
   }
-  layers = []; prevPos = [];
+  layers = [];
+  prevPos = [];
 }
 
 function buildLayers(basePos, baseCol) {
   while (layers.length > layerN) {
     const o = layers.pop();
-    scene.remove(o); o.geometry.dispose(); o.material.dispose();
+    if (o) {
+      scene.remove(o);
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) o.material.dispose();
+    }
     prevPos.pop();
   }
+
   const n = basePos.length / 3;
-  if (n < 4) return;
+  if (n < 5) return;
+
   const maxL = Math.max(1, layerN - 1);
-  const mOff = metaV * 0.28;
+  const mOff = metaV * 0.26;
 
   for (let L = 0; L < layerN; L++) {
     const t = L / maxL;
     const e = t * t * (3 - 2 * t);
     const s = e - 0.5;
-    const zOff = s * layerSp * 3.2;
-    const yOff = s * layerSp * 0.14;
-    const xOff = s * layerSp * 0.09;
-    const sc = 1 + s * 0.05;
+    const zOff = s * layerSp * 3.0;
+    const yOff = s * layerSp * 0.13;
+    const xOff = s * layerSp * 0.08;
+    const sc = 1 + s * 0.045;
     const front = 1 - t;
 
     const pos = new Float32Array(n * 3);
     const col = new Float32Array(n * 3);
+
     for (let i = 0, j = 0; i < n; i++, j += 3) {
       let px = basePos[j] * sc + xOff;
-      let py = basePos[j + 1] * sc + yOff + mOff * (0.4 + L * 0.03);
+      let py = basePos[j + 1] * sc + yOff + mOff * (0.38 + L * 0.028);
       let pz = basePos[j + 2] * sc + zOff;
-      if (prevPos[L]?.length === pos.length && smooth > 0.05) {
-        const p = prevPos[L], k = smooth;
+
+      if (prevPos[L] && prevPos[L].length === pos.length && smooth > 0.04) {
+        const p = prevPos[L];
+        const k = smooth;
         px = px * (1 - k) + p[j] * k;
         py = py * (1 - k) + p[j + 1] * k;
         pz = pz * (1 - k) + p[j + 2] * k;
       }
-      pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
-      col[j] = Math.min(1, baseCol[j] * (0.92 + front * 0.1));
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.95 + L * 0.01));
-      col[j + 2] = Math.min(1, baseCol[j + 2] * (0.8 + (1 - front) * 0.35));
+
+      pos[j] = px;
+      pos[j + 1] = py;
+      pos[j + 2] = pz;
+
+      col[j]     = Math.min(1, baseCol[j]     * (0.90 + front * 0.12));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.94 + L * 0.012));
+      col[j + 2] = Math.min(1, baseCol[j + 2] * (0.78 + (1 - front) * 0.38));
     }
+
     prevPos[L] = pos;
-    const size = ptSize * (1.04 - L * 0.04);
-    const op = Math.max(0.3, 0.88 - L * 0.1);
+    const size = ptSize * (1.03 - L * 0.035);
+    const op = Math.max(0.32, 0.86 - L * 0.095);
 
     let o = layers[L];
     if (!o) {
@@ -395,13 +497,18 @@ function buildLayers(basePos, baseCol) {
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       g.setAttribute('color', new THREE.BufferAttribute(col, 3));
       o = new THREE.Points(g, new THREE.PointsMaterial({
-        size, sizeAttenuation: true, vertexColors: true,
-        transparent: true, opacity: op, depthWrite: false
+        size,
+        sizeAttenuation: true,
+        vertexColors: true,
+        transparent: true,
+        opacity: op,
+        depthWrite: false
       }));
       scene.add(o);
       layers[L] = o;
     } else {
-      if (o.geometry.attributes.position.count !== n) {
+      const oldN = o.geometry.attributes.position ? o.geometry.attributes.position.count : 0;
+      if (oldN !== n) {
         o.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
       } else {
@@ -419,14 +526,19 @@ function buildLayers(basePos, baseCol) {
 }
 
 function updSize() {
-  layers.forEach((o, L) => { if (o?.material) o.material.size = ptSize * (1.04 - L * 0.04); });
+  layers.forEach((o, L) => {
+    if (o && o.material && o.material.size !== undefined) {
+      o.material.size = ptSize * (1.03 - L * 0.035);
+    }
+  });
 }
 
 function toggleScan() {
   scanning = !scanning;
   const b = $('scanBtn');
   if (scanning) {
-    rec = []; fIdx = 0;
+    rec = [];
+    fIdx = 0;
     b.textContent = 'STOP HOLOGRAM';
     b.classList.add('on');
     $('status').textContent = 'Recording';
@@ -435,7 +547,9 @@ function toggleScan() {
     b.classList.remove('on');
     $('status').textContent = 'Ready';
     $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
-    if (rec.length) loadData({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+    if (rec.length) {
+      loadData({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+    }
   }
 }
 
@@ -448,6 +562,7 @@ function mode(m) {
 
 function buildChips() {
   const c = $('chips');
+  if (!c) return;
   c.innerHTML = '';
   for (let i = 0; i < layerN; i++) {
     if (vis[i] === undefined) vis[i] = true;
@@ -466,11 +581,15 @@ function buildChips() {
 function toNum(a) {
   if (!a) return [];
   const o = [];
-  for (let i = 0; i < a.length; i++) { const n = +a[i]; if (isFinite(n)) o.push(n); }
+  for (let i = 0; i < a.length; i++) {
+    const n = +a[i];
+    if (isFinite(n)) o.push(n);
+  }
   return o;
 }
 
 function extract(data) {
+  if (!data) return null;
   let raw = data.HyperStream5D || data.HyperStream4D || data.hyperStream || (Array.isArray(data) ? data : null);
   if (!raw) {
     const k = Object.keys(data).find(x => Array.isArray(data[x]));
@@ -480,82 +599,113 @@ function extract(data) {
   return raw.map(f => ({
     vertices: toNum(f.v || f.vertices || []),
     colors: toNum(f.c || f.colors || []),
-    meta: f.meta ?? 0.5,
+    meta: typeof f.meta === 'number' ? f.meta : 0.5,
     layers: f.layers || data.layers || layerN,
-    spread: f.spread ?? data.spread ?? layerSp
-  })).filter(f => f.vertices.length);
+    spread: f.spread !== undefined ? f.spread : (data.spread || layerSp)
+  })).filter(f => f.vertices.length > 0);
 }
 
 function drawFrame(idx, meta) {
   if (!frames.length) return;
   const f = frames[idx % frames.length];
-  const src = f.vertices, cols = f.colors;
-  const Lc = f.layers || layerN, sp = f.spread ?? layerSp;
-  const ts = src.length % 4 === 0 ? 4 : 3;
-  const pos = [], col = [];
+  const src = f.vertices;
+  const cols = f.colors;
+  const Lc = f.layers || layerN;
+  const sp = f.spread !== undefined ? f.spread : layerSp;
+  const ts = (src.length % 4 === 0) ? 4 : 3;
+
+  const pos = [];
+  const col = [];
   for (let i = 0; i < src.length; i += ts) {
-    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.32, src[i + 2]);
+    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.30, src[i + 2]);
     const ci = (i / ts) * 3;
     if (cols.length >= ci + 3) col.push(cols[ci], cols[ci + 1], cols[ci + 2]);
-    else col.push(0.5, 0.45, 0.95);
+    else col.push(0.48, 0.42, 0.95);
   }
-  const pc = layerN, ps = layerSp;
-  layerN = Lc; layerSp = sp;
-  if (rMode === 'points') buildLayers(pos, col);
-  else {
+
+  const prevN = layerN, prevS = layerSp;
+  layerN = Lc;
+  layerSp = sp;
+
+  if (rMode === 'points') {
+    buildLayers(pos, col);
+  } else {
     clearLayers();
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
-    const side = Math.floor(Math.sqrt(pos.length / 3));
+
+    const count = pos.length / 3;
+    const side = Math.floor(Math.sqrt(count));
     if (side > 4) {
-      const idx = [];
-      for (let y = 0; y < side - 1; y++) for (let x = 0; x < side - 1; x++) {
-        const i = y * side + x;
-        if (i + side + 1 < pos.length / 3) {
-          idx.push(i, i + 1, i + side, i + 1, i + side + 1, i + side);
+      const idxArr = [];
+      for (let y = 0; y < side - 1; y++) {
+        for (let x = 0; x < side - 1; x++) {
+          const i = y * side + x;
+          if (i + side + 1 < count) {
+            idxArr.push(i, i + 1, i + side);
+            idxArr.push(i + 1, i + side + 1, i + side);
+          }
         }
       }
-      if (idx.length) g.setIndex(idx);
+      if (idxArr.length) g.setIndex(idxArr);
     }
     g.computeVertexNormals();
+
     const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.3, metalness: 0.15,
-      wireframe: rMode === 'wire', side: THREE.DoubleSide
+      vertexColors: true,
+      roughness: 0.28,
+      metalness: 0.14,
+      wireframe: rMode === 'wire',
+      side: THREE.DoubleSide
     }));
     mesh.rotation.y = Math.PI;
     scene.add(mesh);
     layers = [mesh];
   }
-  layerN = pc; layerSp = ps;
+
+  layerN = prevN;
+  layerSp = prevS;
   $('nodesD').textContent = ((pos.length / 3) * Lc).toLocaleString();
 }
 
 function loadData(data) {
   const seq = extract(data);
-  if (!seq?.length) return;
+  if (!seq || !seq.length) {
+    $('status').textContent = 'Bad payload';
+    return;
+  }
   frames = seq;
   playIdx = 0;
   isPlay = true;
   $('playBtn').textContent = '⏸';
+
   if (data.layers) layerN = data.layers;
   if (data.spread) layerSp = data.spread;
-  $('layers').value = layerN; $('layV').textContent = layerN;
+  $('layers').value = layerN;
+  $('layV').textContent = layerN;
   $('spread').value = layerSp;
-  $('scrub').max = seq.length - 1;
+
+  $('scrub').max = Math.max(0, seq.length - 1);
   $('scrub').value = 0;
-  $('scrubV').textContent = '0/' + (seq.length - 1);
+  $('scrubV').textContent = '0/' + Math.max(0, seq.length - 1);
+
   drawFrame(0, metaV);
-  $('status').textContent = 'Active';
+  $('status').textContent = 'Active · ' + seq.length + ' frames';
   buildChips();
 }
 
 function clearAll() {
-  isPlay = false; frames = []; playIdx = 0;
+  isPlay = false;
+  frames = [];
+  playIdx = 0;
   clearLayers();
   $('nodesD').textContent = '0';
+  $('nLive').textContent = '0';
   $('status').textContent = 'Cleared';
   $('playBtn').textContent = '▶';
+  $('scrub').max = 0;
+  $('scrubV').textContent = '0/0';
 }
 
 function togglePlay() {
@@ -571,11 +721,12 @@ function expJSON() {
   a.href = URL.createObjectURL(blob);
   a.download = 'hologram_' + Date.now() + '.json';
   a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 600);
 }
 
 function copyJSON() {
   const t = $('jsonOut').value;
-  if (t) navigator.clipboard.writeText(t);
+  if (t) navigator.clipboard.writeText(t).catch(() => {});
 }
 
 function expPNG() {
@@ -593,9 +744,14 @@ function expWebM() {
   btn.disabled = true;
   try {
     const s = $('c3').captureStream(12);
-    const mr = new MediaRecorder(s, { mimeType: 'video/webm' });
+    let mr;
+    try {
+      mr = new MediaRecorder(s, { mimeType: 'video/webm;codecs=vp9' });
+    } catch {
+      mr = new MediaRecorder(s, { mimeType: 'video/webm' });
+    }
     const chunks = [];
-    mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     mr.onstop = () => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
@@ -608,7 +764,7 @@ function expWebM() {
     (function tick() {
       n++;
       ren.render(scene, cam);
-      if (n < 36) requestAnimationFrame(tick);
+      if (n < 40) requestAnimationFrame(tick);
       else mr.stop();
     })();
   } catch {
@@ -618,21 +774,43 @@ function expWebM() {
 
 function dropInit() {
   const d = $('drop');
-  ['dragenter', 'dragover'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.remove('over'); }));
-  d.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readF(f); });
+  if (!d) return;
+  ['dragenter', 'dragover'].forEach(e => d.addEventListener(e, ev => {
+    ev.preventDefault();
+    d.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach(e => d.addEventListener(e, ev => {
+    ev.preventDefault();
+    d.classList.remove('over');
+  }));
+  d.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) readF(f);
+  });
 }
 
 function readF(f) {
   const r = new FileReader();
-  r.onload = e => { try { loadData(JSON.parse(e.target.result)); } catch {} };
+  r.onload = e => {
+    try {
+      loadData(JSON.parse(e.target.result));
+    } catch {
+      $('status').textContent = 'Invalid JSON';
+    }
+  };
   r.readAsText(f);
 }
 
-function fileIn(e) { if (e.target.files[0]) readF(e.target.files[0]); }
+function fileIn(e) {
+  if (e.target.files[0]) readF(e.target.files[0]);
+}
 
 function pasteIn() {
-  try { loadData(JSON.parse($('jsonIn').value.trim())); } catch {}
+  try {
+    loadData(JSON.parse($('jsonIn').value.trim()));
+  } catch {
+    $('status').textContent = 'Paste error';
+  }
 }
 </script>
 </body>
