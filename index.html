@@ -3,1096 +3,636 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Dimensional Volumetric Video Engine</title>
+<title>HyperStream XD • Holographic Volumetric Engine</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:390px;min-width:280px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:10px;gap:7px;z-index:10;overflow-y:auto}
-.brand{font-size:13px;font-weight:800;letter-spacing:1px;color:#38bdf8;line-height:1.25}
-.brand span{background:linear-gradient(90deg,#38bdf8,#a855f7,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.section-card{background:rgba(17,24,39,.85);border:1px solid #1f2937;border-radius:9px;padding:9px;display:flex;flex-direction:column;gap:6px}
-.card-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8}
-.action-toggle-row{display:flex;gap:4px}
-.tab-btn{flex:1;padding:7px 2px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
-.tab-btn.active{background:#7c3aed;color:#fff;border-color:#6d28d9}
-.upload-section{border:2px dashed #334155;padding:10px;border-radius:7px;text-align:center;background:rgba(255,255,255,.02);cursor:pointer;font-size:10px}
-.upload-section.dragover{border-color:#a855f7;background:rgba(168,85,247,.1)}
-input[type=file]{display:none}
-textarea{width:100%;height:48px;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:5px;color:#e2e8f0;font-family:ui-monospace,monospace;font-size:9px;resize:vertical;min-height:40px}
-.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1;gap:6px}
-input[type=range]{accent-color:#a855f7;cursor:pointer;width:105px}
-select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;padding:3px 4px;font-size:10px}
-#chat-container{flex:1;min-height:42px;max-height:70px;background:#1e293b;border-radius:7px;padding:5px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;font-size:9px}
-.chat-message{padding:3px 6px;border-radius:4px;background:#334155;color:#e2e8f0;word-break:break-word}
-.chat-message.system{background:#581c87;color:#e9d5ff}
-.chat-message.error{background:#7f1d1d;color:#fecaca}
-input[type=text]{flex:1;background:#1e293b;border:1px solid #334155;padding:6px;border-radius:5px;color:#fff;font-size:10px}
-button.primary-btn{background:#7c3aed;color:#fff;border:none;padding:7px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px}
-button.primary-btn:hover{background:#6d28d9}
-button.danger-btn{background:#dc2626;color:#fff;border:none;padding:7px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;width:100%}
-button.danger-btn.scanning{background:#ea580c}
-button.secondary-btn{background:#334155;color:#f1f5f9;border:none;padding:7px;border-radius:6px;font-weight:600;cursor:pointer;font-size:10px}
-button:disabled{opacity:.5;cursor:not-allowed}
-#viewer-container{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 70%)}
+body{background:#030712;color:#e2e8f0;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
+#sidebar{width:340px;min-width:260px;background:#0b0f19;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;z-index:10}
+.brand{font-size:12px;font-weight:800;letter-spacing:.8px;color:#38bdf8;line-height:1.2}
+.brand span{background:linear-gradient(90deg,#38bdf8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:rgba(15,23,42,.9);border:1px solid #1e293b;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:10px;gap:6px;color:#94a3b8}
+input[type=range]{accent-color:#a855f7;width:100px;cursor:pointer}
+button{border:none;border-radius:6px;padding:7px 8px;font-size:10px;font-weight:700;cursor:pointer;color:#fff}
+.btn-p{background:#7c3aed}.btn-p:hover{background:#6d28d9}
+.btn-d{background:#dc2626;width:100%}.btn-d.on{background:#ea580c}
+.btn-s{background:#1e293b;color:#e2e8f0}
+.tabs{display:flex;gap:3px}
+.tab{flex:1;padding:6px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
+.tab.on{background:#7c3aed;color:#fff;border-color:#6d28d9}
+#viewer{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 75%)}
 canvas{display:block;width:100%;height:100%}
-.stats-overlay{position:absolute;top:12px;right:12px;background:rgba(3,7,18,.92);backdrop-filter:blur(10px);padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:10px;color:#94a3b8;z-index:5;line-height:1.5}
-.stats-overlay span{color:#a855f7;font-weight:700}
-.progress-bar{height:3px;background:#1e293b;border-radius:1.5px;overflow:hidden;margin-top:3px}
-.progress-fill{height:100%;background:#a855f7;width:0%;transition:width .15s}
-.vault-item{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:4px 6px;border-radius:4px;font-size:9px}
-#webcam-video{display:none}
-.layer-toggles{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-.layer-chip{font-size:9px;padding:3px 7px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer;user-select:none}
-.layer-chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
-.btn-row{display:flex;gap:4px}
+.stats{position:absolute;top:10px;right:10px;background:rgba(3,7,18,.9);padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06);font-size:10px;color:#94a3b8;line-height:1.45;z-index:5}
+.stats b{color:#a855f7}
+.chips{display:flex;flex-wrap:wrap;gap:3px}
+.chip{font-size:9px;padding:2px 6px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer}
+.chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
+textarea{width:100%;height:40px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:9px;padding:4px;resize:none}
+.drop{border:1.5px dashed #334155;padding:8px;border-radius:6px;text-align:center;font-size:10px;cursor:pointer;color:#64748b}
+.drop.over{border-color:#a855f7;background:rgba(168,85,247,.08)}
+input[type=file]{display:none}
+#vid{display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
 </head>
 <body>
 <div id="sidebar">
-  <div class="brand">HYPERSTREAM XD<br><span>DIMENSIONAL VOLUMETRIC VIDEO</span></div>
+  <div class="brand">HYPERSTREAM XD<br><span>HOLOGRAPHIC ENGINE</span></div>
 
-  <div class="action-toggle-row">
-    <button id="btn-tab-capture" class="tab-btn active" onclick="switchMode('capture')">📡 Capture</button>
-    <button id="btn-tab-load" class="tab-btn" onclick="switchMode('load')">📂 Load</button>
-    <button id="btn-tab-paste" class="tab-btn" onclick="switchMode('paste')">📋 Paste</button>
+  <div class="tabs">
+    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live</button>
+    <button class="tab" id="t-load" onclick="mode('load')">📂 Load</button>
+    <button class="tab" id="t-paste" onclick="mode('paste')">📋 Paste</button>
   </div>
 
-  <div id="panel-capture" class="section-card">
-    <div class="card-title">Live Dimensional Video Capture → Multi-Layer 5D+</div>
-    <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
-    <div class="btn-row" style="margin-top:2px">
-      <button class="secondary-btn" style="flex:1" id="camera-switch-btn" onclick="switchCamera()">📷 Front Cam</button>
-      <button class="secondary-btn" style="flex:1" id="perf-btn" onclick="togglePerfMode()">⚡ Perf Mode</button>
+  <div class="card" id="p-cap">
+    <div class="title">Live Hologram Capture</div>
+    <button class="btn-d" id="scanBtn" onclick="toggleScan()">START HOLOGRAM</button>
+    <div style="display:flex;gap:4px">
+      <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Front</button>
+      <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Fast</button>
     </div>
-    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
-    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="70" step="0.5" value="38" oninput="depthMultiplier=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.006" max="0.08" step="0.002" value="0.026" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
-    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="5" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">5</span></div>
-    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.0" step="0.01" value="0.52" oninput="layerSpread=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.9" step="0.02" value="0.55" oninput="smoothFactor=parseFloat(this.value)"></div>
-    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">5</span></div>
-    <div class="btn-row">
-      <button class="primary-btn" style="background:#059669;flex:1" onclick="exportRecordedJSON()">Export JSON</button>
-      <button class="secondary-btn" style="flex:1" onclick="copyJSONToClipboard()">Copy JSON</button>
+    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="4" value="2" oninput="stepSize=+this.value;document.getElementById('stepV').textContent=this.value"><span id="stepV">2</span></div>
+    <div class="row"><span>Depth</span><input type="range" id="depth" min="8" max="60" value="36" step="1" oninput="depthMul=+this.value"></div>
+    <div class="row"><span>Size</span><input type="range" id="psize" min="0.008" max="0.06" value="0.024" step="0.002" oninput="ptSize=+this.value;updSize()"></div>
+    <div class="row"><span>Layers</span><input type="range" id="layers" min="1" max="6" value="4" oninput="layerN=+this.value;document.getElementById('layV').textContent=this.value;buildChips()"><span id="layV">4</span></div>
+    <div class="row"><span>Spread</span><input type="range" id="spread" min="0.15" max="0.9" value="0.48" step="0.01" oninput="layerSp=+this.value"></div>
+    <div style="font-size:9px;color:#64748b">Nodes <b id="nLive">0</b> · Frames <b id="nFrm">0</b></div>
+    <div style="display:flex;gap:4px">
+      <button class="btn-p" style="flex:1;background:#059669" onclick="expJSON()">Export JSON</button>
+      <button class="btn-s" style="flex:1" onclick="copyJSON()">Copy</button>
     </div>
-    <textarea id="json-output-box" readonly placeholder="Dimensional HyperStream payload..."></textarea>
+    <textarea id="jsonOut" readonly placeholder="Hologram payload…"></textarea>
   </div>
 
-  <div id="panel-load" class="section-card" style="display:none">
-    <div class="card-title">Load HyperStream Dimensional Payload</div>
-    <div id="drop-zone" class="upload-section" onclick="document.getElementById('file-input').click()">
-      Drop JSON or click<br><small style="opacity:.55">HyperStream5D / MultiLayer</small>
-      <input type="file" id="file-input" accept=".json" onchange="handleFileUpload(event)">
+  <div class="card" id="p-load" style="display:none">
+    <div class="title">Load Payload</div>
+    <div class="drop" id="drop" onclick="document.getElementById('fi').click()">Drop JSON or click
+      <input type="file" id="fi" accept=".json" onchange="fileIn(event)">
     </div>
-    <div class="btn-row">
-      <button class="secondary-btn" style="flex:1" onclick="clearScene()">Clear</button>
-      <button class="secondary-btn" style="flex:1" onclick="loadVaultList()">Vault</button>
-    </div>
+    <button class="btn-s" onclick="clearAll()">Clear Scene</button>
   </div>
 
-  <div id="panel-paste" class="section-card" style="display:none">
-    <div class="card-title">Paste HyperStream Matrix</div>
-    <textarea id="json-paste-box" placeholder='{"HyperStream5D":[...]}'></textarea>
-    <button class="primary-btn" onclick="handleCodePaste()">Process Matrix</button>
+  <div class="card" id="p-paste" style="display:none">
+    <div class="title">Paste Matrix</div>
+    <textarea id="jsonIn" placeholder='{"HyperStream5D":[...]}'></textarea>
+    <button class="btn-p" onclick="pasteIn()">Process</button>
   </div>
 
-  <div class="section-card">
-    <div class="card-title">Dimensional · Temporal · Meta Controls</div>
-    <div class="layer-control-row"><span>Render</span>
-      <select id="render-mode-select" onchange="updateRenderMode(this.value)">
-        <option value="points" selected>Glowing Volumetric</option>
-        <option value="solid">Solid Mesh</option>
-        <option value="wireframe">Wireframe</option>
+  <div class="card">
+    <div class="title">Hologram Controls</div>
+    <div class="row"><span>Mode</span>
+      <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)" style="background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;font-size:10px;padding:2px">
+        <option value="points">Volumetric</option>
+        <option value="solid">Solid</option>
+        <option value="wire">Wire</option>
       </select>
     </div>
-    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
-    <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
-    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="4" max="30" step="1" value="14" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">14</span></div>
-    <div class="btn-row">
-      <button class="secondary-btn" style="flex:1" id="play-pause-btn" onclick="togglePlayPause()">▶ Play</button>
-      <button class="secondary-btn" style="flex:1" onclick="resetCamera()">↺ Camera</button>
+    <div class="row"><span>Meta E</span><input type="range" id="meta" min="0" max="100" value="10" oninput="metaV=this.value/100;document.getElementById('metaV').textContent=metaV.toFixed(2);isPlay=false;if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.10</span></div>
+    <div class="row"><span>Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;document.getElementById('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
+    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="24" value="12" oninput="playFPS=+this.value"></div>
+    <div style="display:flex;gap:4px">
+      <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play</button>
+      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ View</button>
     </div>
-    <div class="layer-control-row"><span>Grid</span><input type="checkbox" id="grid-toggle" checked onchange="toggleGrid(this.checked)"></div>
-    <div class="layer-control-row"><span>Auto Orbit</span><input type="checkbox" id="orbit-toggle" checked onchange="autoOrbit=this.checked"></div>
-    <div class="layer-control-row"><span>Layer Pulse</span><input type="checkbox" id="pulse-toggle" checked onchange="layerPulse=this.checked"></div>
-    <div class="layer-control-row"><span>Pins</span><button class="primary-btn" style="padding:3px 7px;font-size:9px" id="map-mode-btn" onclick="toggleMappingMode()">Enable Pinning</button></div>
-    <div class="card-title" style="margin-top:5px">Active Dimensional Layers</div>
-    <div id="layer-chips" class="layer-toggles"></div>
-    <div style="font-size:9px;color:#94a3b8;margin-top:4px">Active Nodes: <span id="node-counter-main">0</span>
-      <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
-    </div>
+    <div class="row"><span>Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
+    <div class="row"><span>Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
+    <div class="title" style="margin-top:2px">Layers</div>
+    <div class="chips" id="chips"></div>
   </div>
 
-  <div class="section-card">
-    <div class="card-title">Mapped Spatial Pins</div>
-    <div id="pins-list" style="display:flex;flex-direction:column;gap:3px;max-height:52px;overflow-y:auto"><small style="color:#64748b">No anchors</small></div>
-  </div>
-
-  <div class="section-card">
-    <div class="card-title">Vaulted Cores</div>
-    <div id="vault-list" style="display:flex;flex-direction:column;gap:3px;max-height:52px;overflow-y:auto"><small style="color:#64748b">Empty</small></div>
-  </div>
-
-  <div class="section-card">
-    <div class="card-title">Render & Export</div>
+  <div class="card">
+    <div class="title">Export</div>
     <div style="display:flex;flex-direction:column;gap:4px">
-      <button class="primary-btn" style="background:#0f766e" onclick="exportCurrentPNG()">📸 PNG Frame</button>
-      <button class="primary-btn" style="background:#7c3aed" onclick="exportOrbitGIF()">🖼 Orbit GIF</button>
-      <button class="primary-btn" style="background:#2563eb" id="export-video-btn" onclick="exportWebMVideo()">🎥 WebM Stream</button>
-    </div>
-  </div>
-
-  <div class="section-card" style="flex:1;min-height:90px">
-    <div class="card-title">Systems Console</div>
-    <div id="chat-container"><div class="chat-message system">Dimensional Volumetric Video engine online · optimized.</div></div>
-    <div style="display:flex;gap:4px;margin-top:3px">
-      <input type="text" id="chat-input" placeholder="Query matrix..." onkeypress="if(event.key==='Enter')sendChatMessage()">
-      <button class="primary-btn" onclick="sendChatMessage()">Send</button>
+      <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 PNG</button>
+      <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expWebM()">🎥 WebM</button>
     </div>
   </div>
 </div>
 
-<div id="viewer-container">
-  <div class="stats-overlay">
-    Status: <span id="render-status">Idle</span><br>
-    <span id="bbox-info" style="font-size:9px;color:#64748b"></span><br>
-    FPS: <span id="fps-display">—</span> · Nodes: <span id="stats-nodes">0</span>
+<div id="viewer">
+  <div class="stats">
+    <span id="status">Idle</span><br>
+    FPS <b id="fpsD">—</b> · Nodes <b id="nodesD">0</b>
   </div>
-  <video id="webcam-video" autoplay playsinline muted></video>
-  <canvas id="three-canvas"></canvas>
+  <video id="vid" autoplay playsinline muted></video>
+  <canvas id="c3"></canvas>
 </div>
 
 <script>
-let scene, camera, renderer, controls, gridHelper;
-let spatialLayers = [];
-let video, canvas2D, ctx2D;
-let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
-let stepSize = 2, depthMultiplier = 38, currentPointSize = 0.026;
-let layerCount = 5, layerSpread = 0.52, smoothFactor = 0.55;
-let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 14;
-let isPlayMode = false, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
-let rawSourceFrames = [];
-let isMappingActive = false, mappedPins = [];
-let frameCount = 0, fpsTimer = 0;
-let autoOrbit = true, layerPulse = true;
-let layerVisibility = [];
-const VAULT_KEY = 'hyperstream_xd_vault_v6';
-const raycaster = new THREE.Raycaster();
-raycaster.params.Points = { threshold: 0.14 };
-const mouse = new THREE.Vector2();
-let prevLayerPos = [];
-let timePhase = 0;
-let webcamReady = false;
-let currentFacingMode = 'user';
-let currentStream = null;
-let perfMode = false;
-let lastVolUpdate = 0;
-const VOL_UPDATE_MS = 45; // ~22 updates/sec max for live volumetric
+const $ = id => document.getElementById(id);
+let scene, cam, ren, ctrl, grid;
+let layers = [], prevPos = [];
+let video, c2d, ctx;
+let scanning = false, rec = [], fIdx = 0;
+let stepSize = 2, depthMul = 36, ptSize = 0.024;
+let layerN = 4, layerSp = 0.48, smooth = 0.52;
+let rMode = 'points', metaV = 0.10, playFPS = 12;
+let isPlay = false, frames = [], playIdx = 0, lastT = 0;
+let autoOrbit = true, doPulse = true, vis = [];
+let facing = 'user', stream = null, ready = false;
+let perf = false, lastVol = 0;
+const VOL_MS = 50;
+let fc = 0, ft = 0, phase = 0;
 
-window.addEventListener('DOMContentLoaded', () => {
-  init3D();
-  initWebcam('user');
-  setupDragDrop();
-  loadVaultList();
-  rebuildLayerChips();
-});
+window.onload = () => {
+  init3();
+  initCam('user');
+  dropInit();
+  buildChips();
+};
 
-function init3D() {
-  const c = document.getElementById('viewer-container');
+function init3() {
+  const box = $('viewer');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.028);
-  camera = new THREE.PerspectiveCamera(48, c.clientWidth / c.clientHeight, 0.02, 3000);
-  camera.position.set(0, 0.25, 3.5);
+  scene.fog = new THREE.FogExp2(0x030712, 0.03);
+  cam = new THREE.PerspectiveCamera(46, box.clientWidth / box.clientHeight, 0.05, 2000);
+  cam.position.set(0, 0.15, 3.2);
 
-  const canvas = document.getElementById('three-canvas');
-  renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: false,               // off for speed
-    alpha: false,
-    preserveDrawingBuffer: true,
-    powerPreference: 'high-performance'
-  });
-  renderer.setSize(c.clientWidth, c.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25)); // capped
-  renderer.setClearColor(0x030712);
+  ren = new THREE.WebGLRenderer({ canvas: $('c3'), antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  ren.setSize(box.clientWidth, box.clientHeight);
+  ren.setPixelRatio(Math.min(devicePixelRatio || 1, 1.15));
+  ren.setClearColor(0x030712);
 
-  if (typeof THREE.OrbitControls === 'function') {
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
-    controls.rotateSpeed = 0.5;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.6;
-    controls.target.set(0, 0, 0);
+  if (THREE.OrbitControls) {
+    ctrl = new THREE.OrbitControls(cam, ren.domElement);
+    ctrl.enableDamping = true;
+    ctrl.dampingFactor = 0.08;
+    ctrl.autoRotate = true;
+    ctrl.autoRotateSpeed = 0.55;
   }
 
-  gridHelper = new THREE.GridHelper(40, 40, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -1.8;
-  scene.add(gridHelper);
+  grid = new THREE.GridHelper(36, 36, 0x1e293b, 0x0f172a);
+  grid.position.y = -1.6;
+  scene.add(grid);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const l1 = new THREE.DirectionalLight(0xffffff, 0.9); l1.position.set(2, 4, 4); scene.add(l1);
+  const l2 = new THREE.DirectionalLight(0xa855f7, 0.35); l2.position.set(-3, -1, -2); scene.add(l2);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const d1 = new THREE.DirectionalLight(0xffffff, 0.95); d1.position.set(2.5, 5, 5); scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xa855f7, 0.4); d2.position.set(-4, -1, -3); scene.add(d2);
-
-  window.addEventListener('resize', onWindowResize);
-  renderer.domElement.addEventListener('click', handleCanvasClick);
-  animate();
-}
-
-function stopCurrentStream() {
-  if (currentStream) {
-    currentStream.getTracks().forEach(t => t.stop());
-    currentStream = null;
-  }
-  webcamReady = false;
-}
-
-function initWebcam(facing = 'user') {
-  video = document.getElementById('webcam-video');
-  canvas2D = document.createElement('canvas');
-  ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    appendChat('Webcam API not available.', 'error');
-    return;
-  }
-
-  stopCurrentStream();
-
-  const constraints = {
-    video: {
-      facingMode: { ideal: facing },
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      frameRate: { ideal: 24 }
-    },
-    audio: false
+  window.onresize = () => {
+    cam.aspect = box.clientWidth / box.clientHeight;
+    cam.updateProjectionMatrix();
+    ren.setSize(box.clientWidth, box.clientHeight);
   };
+  loop();
+}
 
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then(stream => {
-      currentStream = stream;
-      currentFacingMode = facing;
-      video.srcObject = stream;
-      video.play().then(() => {
-        webcamReady = true;
-        document.getElementById('camera-switch-btn').innerText = facing === 'environment' ? '📷 Back Cam' : '📷 Front Cam';
-        appendChat((facing === 'environment' ? 'Back' : 'Front') + ' camera ready.', 'system');
-      });
-    })
-    .catch(err => {
-      if (facing !== 'user') {
-        appendChat('Back camera unavailable, using front.', 'error');
-        initWebcam('user');
-        return;
-      }
-      appendChat('Webcam error: ' + (err.message || err), 'error');
+function stopStream() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; ready = false;
+}
+
+function initCam(face) {
+  video = $('vid');
+  c2d = document.createElement('canvas');
+  ctx = c2d.getContext('2d', { willReadFrequently: true });
+  stopStream();
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: face }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } },
+    audio: false
+  }).then(s => {
+    stream = s; facing = face;
+    video.srcObject = s;
+    video.play().then(() => {
+      ready = true;
+      $('camBtn').textContent = face === 'environment' ? '📷 Back' : '📷 Front';
     });
+  }).catch(() => {
+    if (face !== 'user') initCam('user');
+  });
 }
 
-function switchCamera() {
-  const next = currentFacingMode === 'user' ? 'environment' : 'user';
-  appendChat('Switching camera…', 'system');
-  initWebcam(next);
-}
+function switchCam() { initCam(facing === 'user' ? 'environment' : 'user'); }
 
-function togglePerfMode() {
-  perfMode = !perfMode;
-  const btn = document.getElementById('perf-btn');
-  if (perfMode) {
-    stepSize = 3;
-    layerCount = 4;
-    currentPointSize = 0.032;
-    document.getElementById('density-step').value = 3;
-    document.getElementById('density-val').innerText = '3px';
-    document.getElementById('layer-count').value = 4;
-    document.getElementById('layer-val').innerText = '4';
-    document.getElementById('point-size').value = 0.032;
-    btn.style.background = '#059669';
-    btn.innerText = '⚡ Perf ON';
-    appendChat('Performance mode ON – fewer nodes, smoother.', 'system');
+function togglePerf() {
+  perf = !perf;
+  if (perf) {
+    stepSize = 3; layerN = 3; ptSize = 0.03;
+    $('step').value = 3; $('stepV').textContent = 3;
+    $('layers').value = 3; $('layV').textContent = 3;
+    $('psize').value = 0.03;
+    $('perfBtn').style.background = '#059669';
   } else {
-    stepSize = 2;
-    layerCount = 5;
-    currentPointSize = 0.026;
-    document.getElementById('density-step').value = 2;
-    document.getElementById('density-val').innerText = '2px';
-    document.getElementById('layer-count').value = 5;
-    document.getElementById('layer-val').innerText = '5';
-    document.getElementById('point-size').value = 0.026;
-    btn.style.background = '';
-    btn.innerText = '⚡ Perf Mode';
-    appendChat('Performance mode OFF.', 'system');
+    stepSize = 2; layerN = 4; ptSize = 0.024;
+    $('step').value = 2; $('stepV').textContent = 2;
+    $('layers').value = 4; $('layV').textContent = 4;
+    $('psize').value = 0.024;
+    $('perfBtn').style.background = '';
   }
-  rebuildLayerChips();
-  updatePointSizes();
+  buildChips(); updSize();
 }
 
-function onWindowResize() {
-  const c = document.getElementById('viewer-container');
-  if (!c || !camera || !renderer) return;
-  camera.aspect = c.clientWidth / c.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(c.clientWidth, c.clientHeight);
+function resetCam() {
+  cam.position.set(0, 0.15, 3.2);
+  if (ctrl) { ctrl.target.set(0, 0, 0); ctrl.update(); }
 }
 
-function resetCamera() {
-  if (!camera) return;
-  camera.position.set(0, 0.25, 3.5);
-  if (controls) {
-    controls.target.set(0, 0, 0);
-    controls.update();
+function loop(now = 0) {
+  requestAnimationFrame(loop);
+  if (ctrl) {
+    ctrl.autoRotate = autoOrbit;
+    ctrl.update();
   }
-  appendChat('Camera reset.', 'system');
-}
-
-function animate(now) {
-  requestAnimationFrame(animate);
-  if (controls) {
-    controls.autoRotate = !!autoOrbit;
-    if (autoOrbit) controls.autoRotateSpeed = 0.65;
-    controls.update();
-  }
-  timePhase = now * 0.001;
-
-  frameCount++;
-  if (now - fpsTimer > 1000) {
-    const el = document.getElementById('fps-display');
-    if (el) el.innerText = Math.round((frameCount * 1000) / (now - fpsTimer));
-    frameCount = 0;
-    fpsTimer = now;
+  phase = now * 0.001;
+  fc++;
+  if (now - ft > 1000) {
+    $('fpsD').textContent = Math.round(fc * 1000 / (now - ft));
+    fc = 0; ft = now;
   }
 
-  const shouldSample = webcamReady && video && video.readyState >= 2 &&
-    (isInfiniteScanning || rawSourceFrames.length === 0);
+  const need = ready && video.readyState >= 2 && (scanning || !frames.length);
+  if (need && now - lastVol > VOL_MS) {
+    lastVol = now;
+    sample();
+  }
 
-  // Throttle volumetric rebuild
-  const doVolUpdate = shouldSample && (now - lastVolUpdate > VOL_UPDATE_MS);
-
-  if (doVolUpdate) {
-    lastVolUpdate = now;
-    const vw = video.videoWidth || 640;
-    const vh = video.videoHeight || 480;
-    if (canvas2D.width !== vw || canvas2D.height !== vh) {
-      canvas2D.width = vw;
-      canvas2D.height = vh;
+  if (doPulse && layers.length && rMode === 'points') {
+    for (let i = 0; i < layers.length; i++) {
+      if (layers[i]?.visible) {
+        const s = 1 + Math.sin(phase * 0.9 + i * 0.6) * 0.008;
+        layers[i].scale.setScalar(s);
+      }
     }
-    try {
-      ctx2D.drawImage(video, 0, 0, vw, vh);
-      const pixels = ctx2D.getImageData(0, 0, vw, vh).data;
-      const basePos = [];
-      const baseCol = [];
-      const aspect = vw / Math.max(1, vh);
-      const scaleX = 1.25 * Math.min(aspect, 1.55);
-      const scaleY = 1.25;
-      const cx = vw * 0.5, cy = vh * 0.5;
-      const maxR = Math.sqrt(cx * cx + cy * cy) || 1;
-      const maxPoints = perfMode ? 45000 : 70000;
+  }
 
-      for (let y = 0; y < vh; y += stepSize) {
-        for (let x = 0; x < vw; x += stepSize) {
-          if (basePos.length / 3 >= maxPoints) break;
-          const idx = (y * vw + x) * 4;
-          const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
-          const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-          if (lum < 0.045) continue;
+  if (isPlay && frames.length && now - lastT > 1000 / playFPS) {
+    drawFrame(playIdx, metaV);
+    playIdx = (playIdx + 1) % frames.length;
+    $('scrub').value = playIdx;
+    $('scrubV').textContent = playIdx + '/' + (frames.length - 1);
+    lastT = now;
+  }
+  ren.render(scene, cam);
+}
 
-          const nx = ((vw - x) / vw) * 2 - 1;
-          const ny = -((y / vh) * 2 - 1);
-          const depthCurve = Math.pow(Math.max(0.001, lum), 0.47);
-          const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
-          const rad2 = dx * dx + dy * dy;
+function sample() {
+  const w = video.videoWidth || 640, h = video.videoHeight || 480;
+  if (c2d.width !== w) { c2d.width = w; c2d.height = h; }
+  ctx.drawImage(video, 0, 0, w, h);
+  let pix;
+  try { pix = ctx.getImageData(0, 0, w, h).data; } catch { return; }
 
-          let nz = (depthCurve - 0.28) * (depthMultiplier * 0.26);
-          nz -= rad2 * 0.55;
-          nz -= nx * nx * 0.18;
+  const pos = [], col = [];
+  const cx = w * 0.5, cy = h * 0.5, maxR = Math.hypot(cx, cy) || 1;
+  const sx = 1.2 * Math.min(w / h, 1.5), sy = 1.2;
+  const maxP = perf ? 28000 : 48000;
+  const thr = 0.05;
 
-          const px = nx * scaleX * (1 - rad2 * 0.07);
-          const py = ny * scaleY * (1 - rad2 * 0.05);
-          basePos.push(px, py, nz);
+  for (let y = 0; y < h && pos.length / 3 < maxP; y += stepSize) {
+    for (let x = 0; x < w && pos.length / 3 < maxP; x += stepSize) {
+      const i = (y * w + x) * 4;
+      const r = pix[i] / 255, g = pix[i + 1] / 255, b = pix[i + 2] / 255;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum < thr) continue;
 
-          const sat = 1.12, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.3);
-          baseCol.push(
-            Math.min(1, avg + (r - avg) * sat + rim * 0.03),
-            Math.min(1, avg + (g - avg) * sat + rim * 0.06),
-            Math.min(1, avg + (b - avg) * sat + rim * 0.14)
-          );
-        }
-        if (basePos.length / 3 >= maxPoints) break;
+      // Edge boost for stronger silhouette / hologram feel
+      let edge = 0;
+      if (x > stepSize && x < w - stepSize && y > stepSize && y < h - stepSize) {
+        const l2 = 0.299 * pix[i - 4] + 0.587 * pix[i - 3] + 0.114 * pix[i - 2];
+        const r2 = 0.299 * pix[i + 4] + 0.587 * pix[i + 5] + 0.114 * pix[i + 6];
+        edge = Math.abs(l2 - r2);
       }
 
-      const nodeCount = basePos.length / 3;
-      document.getElementById('node-counter').innerText = nodeCount.toLocaleString();
-      document.getElementById('stats-nodes').innerText = (nodeCount * layerCount).toLocaleString();
-      document.getElementById('live-layers').innerText = layerCount;
+      const nx = ((w - x) / w) * 2 - 1;
+      const ny = -((y / h) * 2 - 1);
+      const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
+      const rad = dx * dx + dy * dy;
 
-      if (isInfiniteScanning || rawSourceFrames.length === 0) {
-        updateLiveMultiLayers(basePos, baseCol);
-        document.getElementById('node-counter-main').innerText = (nodeCount * layerCount).toLocaleString();
-      }
+      // Depth: luminance + edge → more holographic volume
+      let nz = (Math.pow(lum, 0.42) - 0.22) * (depthMul * 0.24);
+      nz += edge * 0.45;
+      nz -= rad * 0.48;
+      nz -= nx * nx * 0.12;
 
-      if (isInfiniteScanning) {
-        const condensedV = [];
-        for (let i = 0; i < basePos.length; i += 3) {
-          condensedV.push(+basePos[i].toFixed(3), +basePos[i + 1].toFixed(3), +basePos[i + 2].toFixed(3), frameIndex);
-        }
-        recorded4DFrames.push({
-          v: condensedV,
-          c: baseCol.map(v => +v.toFixed(2)),
-          meta: 0.32 + Math.random() * 0.25,
-          layers: layerCount,
-          spread: layerSpread
-        });
-        frameIndex++;
-        document.getElementById('frame-counter').innerText = recorded4DFrames.length;
-        if (frameIndex % 8 === 0) updateJSONTextBox();
-      }
-    } catch (e) {}
-  }
+      pos.push(nx * sx * (1 - rad * 0.05), ny * sy * (1 - rad * 0.04), nz);
 
-  if (layerPulse && spatialLayers.length && currentRenderMode === 'points') {
-    for (let L = 0; L < spatialLayers.length; L++) {
-      const obj = spatialLayers[L];
-      if (!obj || !obj.visible) continue;
-      const breath = 1 + Math.sin(timePhase * 1.0 + L * 0.5) * 0.009;
-      obj.scale.setScalar(breath);
+      // Cool holographic tint + slight rim
+      const rim = Math.min(1, rad * 1.2);
+      const avg = (r + g + b) / 3;
+      col.push(
+        Math.min(1, avg + (r - avg) * 1.1 + rim * 0.02 + 0.05),
+        Math.min(1, avg + (g - avg) * 1.1 + rim * 0.06 + 0.08),
+        Math.min(1, avg + (b - avg) * 1.15 + rim * 0.18 + 0.18)
+      );
     }
   }
 
-  if (isPlayMode && playbackFrames.length > 0 && now - lastFrameTime > (1000 / currentFPS)) {
-    applyFrameAndRender(playbackFrameIndex, currentMetaValue);
-    playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
-    const scrub = document.getElementById('t-scrub-range');
-    if (scrub) scrub.value = playbackFrameIndex;
-    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${Math.max(0, playbackFrames.length - 1)}`;
-    lastFrameTime = now;
+  const n = pos.length / 3;
+  $('nLive').textContent = n.toLocaleString();
+  $('nodesD').textContent = (n * layerN).toLocaleString();
+
+  if (scanning || !frames.length) {
+    buildLayers(pos, col);
+    $('nLive').textContent = n.toLocaleString();
   }
 
-  if (renderer && scene && camera) renderer.render(scene, camera);
+  if (scanning) {
+    const v = [];
+    for (let i = 0; i < pos.length; i += 3) v.push(+pos[i].toFixed(3), +pos[i + 1].toFixed(3), +pos[i + 2].toFixed(3));
+    rec.push({ v, c: col.map(x => +x.toFixed(2)), meta: 0.3 + Math.random() * 0.2, layers: layerN, spread: layerSp });
+    fIdx++;
+    $('nFrm').textContent = rec.length;
+    if (fIdx % 10 === 0) $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+  }
 }
 
-function clearSpatialLayers() {
-  for (const obj of spatialLayers) {
-    if (!obj) continue;
-    scene.remove(obj);
-    if (obj.geometry) obj.geometry.dispose();
-    if (obj.material) {
-      if (Array.isArray(obj.material)) obj.material.forEach(m => m && m.dispose());
-      else obj.material.dispose();
-    }
+function clearLayers() {
+  for (const o of layers) {
+    scene.remove(o);
+    o.geometry?.dispose();
+    o.material?.dispose();
   }
-  spatialLayers = [];
-  prevLayerPos = [];
+  layers = []; prevPos = [];
 }
 
-function updateLiveMultiLayers(basePos, baseCol) {
-  while (spatialLayers.length > layerCount) {
-    const obj = spatialLayers.pop();
-    if (obj) {
-      scene.remove(obj);
-      if (obj.geometry) obj.geometry.dispose();
-      if (obj.material) obj.material.dispose();
-    }
-    prevLayerPos.pop();
+function buildLayers(basePos, baseCol) {
+  while (layers.length > layerN) {
+    const o = layers.pop();
+    scene.remove(o); o.geometry.dispose(); o.material.dispose();
+    prevPos.pop();
   }
+  const n = basePos.length / 3;
+  if (n < 4) return;
+  const maxL = Math.max(1, layerN - 1);
+  const mOff = metaV * 0.28;
 
-  const nodeCount = basePos.length / 3;
-  if (nodeCount < 6) return;
-
-  const metaOffset = currentMetaValue * 0.30;
-  const maxL = Math.max(1, layerCount - 1);
-
-  for (let L = 0; L < layerCount; L++) {
+  for (let L = 0; L < layerN; L++) {
     const t = L / maxL;
-    const ease = t * t * (3 - 2 * t);
-    const signed = ease - 0.5;
-    const depthOffset = signed * layerSpread * 3.5;
-    const yOffset = signed * layerSpread * 0.16;
-    const xParallax = signed * layerSpread * 0.10;
-    const scale = 1 + signed * 0.06;
-    const frontness = 1 - t;
-    const warm = 0.94 + frontness * 0.10;
-    const cool = 0.82 + (1 - frontness) * 0.40;
+    const e = t * t * (3 - 2 * t);
+    const s = e - 0.5;
+    const zOff = s * layerSp * 3.2;
+    const yOff = s * layerSp * 0.14;
+    const xOff = s * layerSp * 0.09;
+    const sc = 1 + s * 0.05;
+    const front = 1 - t;
 
-    const pos = new Float32Array(nodeCount * 3);
-    const col = new Float32Array(nodeCount * 3);
-
-    for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
-      let px = basePos[j] * scale + xParallax;
-      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.40 + L * 0.03);
-      let pz = basePos[j + 2] * scale + depthOffset;
-
-      if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.02) {
-        const prev = prevLayerPos[L];
-        const s = smoothFactor;
-        px = px * (1 - s) + prev[j] * s;
-        py = py * (1 - s) + prev[j + 1] * s;
-        pz = pz * (1 - s) + prev[j + 2] * s;
+    const pos = new Float32Array(n * 3);
+    const col = new Float32Array(n * 3);
+    for (let i = 0, j = 0; i < n; i++, j += 3) {
+      let px = basePos[j] * sc + xOff;
+      let py = basePos[j + 1] * sc + yOff + mOff * (0.4 + L * 0.03);
+      let pz = basePos[j + 2] * sc + zOff;
+      if (prevPos[L]?.length === pos.length && smooth > 0.05) {
+        const p = prevPos[L], k = smooth;
+        px = px * (1 - k) + p[j] * k;
+        py = py * (1 - k) + p[j + 1] * k;
+        pz = pz * (1 - k) + p[j + 2] * k;
       }
-
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
-      col[j] = Math.min(1, baseCol[j] * warm);
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.97 + L * 0.01));
-      col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
+      col[j] = Math.min(1, baseCol[j] * (0.92 + front * 0.1));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.95 + L * 0.01));
+      col[j + 2] = Math.min(1, baseCol[j + 2] * (0.8 + (1 - front) * 0.35));
     }
+    prevPos[L] = pos;
+    const size = ptSize * (1.04 - L * 0.04);
+    const op = Math.max(0.3, 0.88 - L * 0.1);
 
-    prevLayerPos[L] = pos;
-    const sizeMul = 1.05 - L * 0.04;
-    const opac = Math.max(0.28, 0.90 - L * 0.09);
-
-    let obj = spatialLayers[L];
-    if (!obj) {
+    let o = layers[L];
+    if (!o) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      const mat = new THREE.PointsMaterial({
-        size: currentPointSize * sizeMul,
-        sizeAttenuation: true,
-        vertexColors: true,
-        transparent: true,
-        opacity: opac,
-        depthWrite: false
-      });
-      obj = new THREE.Points(g, mat);
-      scene.add(obj);
-      spatialLayers[L] = obj;
+      o = new THREE.Points(g, new THREE.PointsMaterial({
+        size, sizeAttenuation: true, vertexColors: true,
+        transparent: true, opacity: op, depthWrite: false
+      }));
+      scene.add(o);
+      layers[L] = o;
     } else {
-      const oldCount = obj.geometry.attributes.position ? obj.geometry.attributes.position.count : 0;
-      if (oldCount !== nodeCount) {
-        obj.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        obj.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      if (o.geometry.attributes.position.count !== n) {
+        o.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
       } else {
-        obj.geometry.attributes.position.array.set(pos);
-        obj.geometry.attributes.color.array.set(col);
-        obj.geometry.attributes.position.needsUpdate = true;
-        obj.geometry.attributes.color.needsUpdate = true;
+        o.geometry.attributes.position.array.set(pos);
+        o.geometry.attributes.color.array.set(col);
+        o.geometry.attributes.position.needsUpdate = true;
+        o.geometry.attributes.color.needsUpdate = true;
       }
-      if (obj.material) {
-        obj.material.size = currentPointSize * sizeMul;
-        obj.material.opacity = opac;
-      }
+      o.material.size = size;
+      o.material.opacity = op;
     }
-    obj.visible = layerVisibility[L] !== false;
+    o.visible = vis[L] !== false;
   }
-  rebuildLayerChips();
+  buildChips();
 }
 
-function updatePointSizes() {
-  spatialLayers.forEach((obj, L) => {
-    if (obj && obj.material && obj.material.size !== undefined) {
-      obj.material.size = currentPointSize * (1.05 - L * 0.04);
-    }
-  });
+function updSize() {
+  layers.forEach((o, L) => { if (o?.material) o.material.size = ptSize * (1.04 - L * 0.04); });
 }
 
-function toggleInfiniteScanning() {
-  isInfiniteScanning = !isInfiniteScanning;
-  const btn = document.getElementById('scan-toggle-btn');
-  if (isInfiniteScanning) {
-    recorded4DFrames = [];
-    frameIndex = 0;
-    btn.innerText = 'HALT DIMENSIONAL STREAM';
-    btn.classList.add('scanning');
-    appendChat(`Stream started · ${layerCount} layers`, 'system');
-    document.getElementById('render-status').innerText = 'Recording';
+function toggleScan() {
+  scanning = !scanning;
+  const b = $('scanBtn');
+  if (scanning) {
+    rec = []; fIdx = 0;
+    b.textContent = 'STOP HOLOGRAM';
+    b.classList.add('on');
+    $('status').textContent = 'Recording';
   } else {
-    btn.innerText = 'START DIMENSIONAL STREAM';
-    btn.classList.remove('scanning');
-    appendChat(`Finished · ${recorded4DFrames.length} frames`, 'system');
-    document.getElementById('render-status').innerText = 'Capture Ready';
-    updateJSONTextBox();
-    if (recorded4DFrames.length > 0) {
-      processEnvironmentData({
-        HyperStream5D: recorded4DFrames,
-        multiLayer: true,
-        layers: layerCount,
-        spread: layerSpread
-      });
-    }
+    b.textContent = 'START HOLOGRAM';
+    b.classList.remove('on');
+    $('status').textContent = 'Ready';
+    $('jsonOut').value = JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp });
+    if (rec.length) loadData({ HyperStream5D: rec, layers: layerN, spread: layerSp });
   }
 }
 
-function updateJSONTextBox() {
-  const el = document.getElementById('json-output-box');
-  if (el) el.value = JSON.stringify({
-    HyperStream5D: recorded4DFrames,
-    multiLayer: true,
-    layers: layerCount,
-    spread: layerSpread
+function mode(m) {
+  ['cap', 'load', 'paste'].forEach(x => {
+    $('t-' + x).classList.toggle('on', x === m);
+    $('p-' + x).style.display = x === m ? 'flex' : 'none';
   });
 }
 
-function exportRecordedJSON() {
-  if (!recorded4DFrames.length) { appendChat('No frames recorded.', 'error'); return; }
-  const payload = { HyperStream5D: recorded4DFrames, multiLayer: true, layers: layerCount, spread: layerSpread };
-  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `hyperstream_xd_${Date.now()}.json`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 800);
-  appendChat('JSON exported.', 'system');
-}
-
-function copyJSONToClipboard() {
-  const t = document.getElementById('json-output-box').value;
-  if (!t) { appendChat('Nothing to copy.', 'error'); return; }
-  navigator.clipboard.writeText(t).then(() => appendChat('JSON copied.', 'system')).catch(e => appendChat('Copy failed', 'error'));
-}
-
-function switchMode(m) {
-  ['capture', 'load', 'paste'].forEach(x => {
-    document.getElementById('btn-tab-' + x)?.classList.remove('active');
-    document.getElementById('panel-' + x).style.display = 'none';
-  });
-  document.getElementById('btn-tab-' + m)?.classList.add('active');
-  document.getElementById('panel-' + m).style.display = 'flex';
-}
-
-function toNumberArray(arr) {
-  if (!arr) return [];
-  const out = [];
-  for (let i = 0; i < arr.length; i++) {
-    const n = parseFloat(arr[i]);
-    if (isFinite(n)) out.push(n);
+function buildChips() {
+  const c = $('chips');
+  c.innerHTML = '';
+  for (let i = 0; i < layerN; i++) {
+    if (vis[i] === undefined) vis[i] = true;
+    const d = document.createElement('div');
+    d.className = 'chip' + (vis[i] ? ' on' : '');
+    d.textContent = 'L' + (i + 1);
+    d.onclick = () => {
+      vis[i] = !vis[i];
+      if (layers[i]) layers[i].visible = vis[i];
+      d.classList.toggle('on', vis[i]);
+    };
+    c.appendChild(d);
   }
-  return out;
 }
 
-function extractSequence(data) {
-  if (!data) return null;
-  let raw = data.HyperStream5D || data.HyperStream4D || data.hyperStream || data.condensedNodes || (Array.isArray(data) ? data : null);
+function toNum(a) {
+  if (!a) return [];
+  const o = [];
+  for (let i = 0; i < a.length; i++) { const n = +a[i]; if (isFinite(n)) o.push(n); }
+  return o;
+}
+
+function extract(data) {
+  let raw = data.HyperStream5D || data.HyperStream4D || data.hyperStream || (Array.isArray(data) ? data : null);
   if (!raw) {
-    const key = Object.keys(data).find(k => Array.isArray(data[k]));
-    if (key) raw = data[key];
+    const k = Object.keys(data).find(x => Array.isArray(data[x]));
+    if (k) raw = data[k];
   }
   if (!raw) return null;
-  return raw.map(f => {
-    let v = f.v || f.vertices || f.vertices4D || [];
-    let c = f.c || f.colors || [];
-    let meta = f.meta !== undefined ? f.meta : (f.m !== undefined ? f.m : 0.5);
-    let layers = f.layers || data.layers || layerCount;
-    let spread = f.spread !== undefined ? f.spread : (data.spread || layerSpread);
-    return { vertices: toNumberArray(v), colors: toNumberArray(c), meta: typeof meta === 'number' ? meta : 0.5, layers, spread };
-  }).filter(f => f.vertices.length > 0);
+  return raw.map(f => ({
+    vertices: toNum(f.v || f.vertices || []),
+    colors: toNum(f.c || f.colors || []),
+    meta: f.meta ?? 0.5,
+    layers: f.layers || data.layers || layerN,
+    spread: f.spread ?? data.spread ?? layerSp
+  })).filter(f => f.vertices.length);
 }
 
-function getMeshIndices(count) {
-  const indices = [];
-  const side = Math.floor(Math.sqrt(count));
-  if (side < 4) return indices;
-  for (let y = 0; y < side - 1; y++) {
-    for (let x = 0; x < side - 1; x++) {
-      const i = y * side + x;
-      if (i + side + 1 >= count) continue;
-      indices.push(i, i + 1, i + side);
-      indices.push(i + 1, i + side + 1, i + side);
-    }
+function drawFrame(idx, meta) {
+  if (!frames.length) return;
+  const f = frames[idx % frames.length];
+  const src = f.vertices, cols = f.colors;
+  const Lc = f.layers || layerN, sp = f.spread ?? layerSp;
+  const ts = src.length % 4 === 0 ? 4 : 3;
+  const pos = [], col = [];
+  for (let i = 0; i < src.length; i += ts) {
+    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.32, src[i + 2]);
+    const ci = (i / ts) * 3;
+    if (cols.length >= ci + 3) col.push(cols[ci], cols[ci + 1], cols[ci + 2]);
+    else col.push(0.5, 0.45, 0.95);
   }
-  return indices;
-}
-
-function applyFrameAndRender(frameIdx, metaBlend) {
-  if (!rawSourceFrames.length) return;
-  const target = rawSourceFrames[frameIdx % rawSourceFrames.length];
-  const src = target.vertices;
-  const cols = target.colors;
-  const Lcount = target.layers || layerCount;
-  const spread = target.spread !== undefined ? target.spread : layerSpread;
-  const tupleSize = (src.length % 4 === 0) ? 4 : 3;
-
-  const basePos = [];
-  const baseCol = [];
-  for (let i = 0; i < src.length; i += tupleSize) {
-    const metaOffset = (target.meta || 0.5) * metaBlend * 0.34;
-    basePos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
-    const ci = (i / tupleSize) * 3;
-    if (cols.length >= ci + 3) baseCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
-    else baseCol.push(0.55, 0.4, 0.9);
-  }
-
-  const prevCount = layerCount, prevSpread = layerSpread;
-  layerCount = Lcount;
-  layerSpread = spread;
-
-  if (currentRenderMode === 'points') {
-    updateLiveMultiLayers(basePos, baseCol);
-  } else {
-    clearSpatialLayers();
+  const pc = layerN, ps = layerSp;
+  layerN = Lc; layerSp = sp;
+  if (rMode === 'points') buildLayers(pos, col);
+  else {
+    clearLayers();
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(basePos), 3));
-    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(baseCol), 3));
-    const indices = getMeshIndices(basePos.length / 3);
-    if (indices.length) g.setIndex(indices);
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+    const side = Math.floor(Math.sqrt(pos.length / 3));
+    if (side > 4) {
+      const idx = [];
+      for (let y = 0; y < side - 1; y++) for (let x = 0; x < side - 1; x++) {
+        const i = y * side + x;
+        if (i + side + 1 < pos.length / 3) {
+          idx.push(i, i + 1, i + side, i + 1, i + side + 1, i + side);
+        }
+      }
+      if (idx.length) g.setIndex(idx);
+    }
     g.computeVertexNormals();
-    const mat = new THREE.MeshStandardMaterial({
+    const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
       vertexColors: true, roughness: 0.3, metalness: 0.15,
-      wireframe: currentRenderMode === 'wireframe', side: THREE.DoubleSide
-    });
-    const mesh = new THREE.Mesh(g, mat);
+      wireframe: rMode === 'wire', side: THREE.DoubleSide
+    }));
     mesh.rotation.y = Math.PI;
     scene.add(mesh);
-    spatialLayers = [mesh];
+    layers = [mesh];
   }
-
-  layerCount = prevCount;
-  layerSpread = prevSpread;
-  const n = (basePos.length / 3) * Lcount;
-  document.getElementById('node-counter-main').innerText = n.toLocaleString();
-  document.getElementById('stats-nodes').innerText = n.toLocaleString();
+  layerN = pc; layerSp = ps;
+  $('nodesD').textContent = ((pos.length / 3) * Lc).toLocaleString();
 }
 
-function processEnvironmentData(data) {
-  try {
-    setProgress(10);
-    appendChat('Injecting stream…', 'system');
-    const seq = extractSequence(data);
-    if (seq && seq.length) {
-      rawSourceFrames = seq;
-      playbackFrames = seq;
-      playbackFrameIndex = 0;
-      isPlayMode = true;
-      document.getElementById('play-pause-btn').innerText = '⏸ Pause';
-
-      if (data.layers) layerCount = data.layers;
-      if (data.spread) layerSpread = data.spread;
-      document.getElementById('layer-count').value = layerCount;
-      document.getElementById('layer-val').innerText = layerCount;
-      document.getElementById('layer-spread').value = layerSpread;
-
-      const scrub = document.getElementById('t-scrub-range');
-      if (scrub) { scrub.max = Math.max(0, seq.length - 1); scrub.value = 0; }
-      document.getElementById('t-scrub-val').innerText = `0 / ${Math.max(0, seq.length - 1)}`;
-
-      applyFrameAndRender(0, currentMetaValue);
-      setProgress(100);
-      document.getElementById('render-status').innerText = 'Dimensional Active';
-      document.getElementById('bbox-info').innerText = `${seq.length} frames · ${layerCount} layers`;
-      appendChat(`✓ ${seq.length} frames · ${layerCount} layers`, 'system');
-
-      if (seq.length < 80) {
-        saveToVault(`CORE_${Date.now()}`, { HyperStream5D: seq, multiLayer: true, layers: layerCount, spread: layerSpread });
-      }
-      rebuildLayerChips();
-      return;
-    }
-    appendChat('Unrecognized payload.', 'error');
-    setProgress(0);
-  } catch (e) {
-    appendChat('Parse error: ' + e.message, 'error');
-    setProgress(0);
-  }
+function loadData(data) {
+  const seq = extract(data);
+  if (!seq?.length) return;
+  frames = seq;
+  playIdx = 0;
+  isPlay = true;
+  $('playBtn').textContent = '⏸';
+  if (data.layers) layerN = data.layers;
+  if (data.spread) layerSp = data.spread;
+  $('layers').value = layerN; $('layV').textContent = layerN;
+  $('spread').value = layerSp;
+  $('scrub').max = seq.length - 1;
+  $('scrub').value = 0;
+  $('scrubV').textContent = '0/' + (seq.length - 1);
+  drawFrame(0, metaV);
+  $('status').textContent = 'Active';
+  buildChips();
 }
 
-function rebuildLayerChips() {
-  const container = document.getElementById('layer-chips');
-  if (!container) return;
-  container.innerHTML = '';
-  for (let L = 0; L < layerCount; L++) {
-    if (layerVisibility[L] === undefined) layerVisibility[L] = true;
-    const chip = document.createElement('div');
-    chip.className = 'layer-chip' + (layerVisibility[L] ? ' on' : '');
-    chip.innerText = `L${L + 1}`;
-    chip.onclick = () => {
-      layerVisibility[L] = !layerVisibility[L];
-      if (spatialLayers[L]) spatialLayers[L].visible = layerVisibility[L];
-      chip.classList.toggle('on', layerVisibility[L]);
-    };
-    container.appendChild(chip);
-  }
+function clearAll() {
+  isPlay = false; frames = []; playIdx = 0;
+  clearLayers();
+  $('nodesD').textContent = '0';
+  $('status').textContent = 'Cleared';
+  $('playBtn').textContent = '▶';
 }
 
-function setProgress(p) {
-  const el = document.getElementById('progress-fill');
-  if (el) el.style.width = Math.min(100, Math.max(0, p)) + '%';
+function togglePlay() {
+  if (!frames.length) return;
+  isPlay = !isPlay;
+  $('playBtn').textContent = isPlay ? '⏸' : '▶';
 }
 
-function appendChat(t, s = '') {
-  const b = document.getElementById('chat-container');
-  if (!b) return;
-  const d = document.createElement('div');
-  d.className = 'chat-message ' + s;
-  d.innerText = t;
-  b.appendChild(d);
-  b.scrollTop = b.scrollHeight;
-  while (b.children.length > 35) b.removeChild(b.firstChild);
-}
-
-function clearScene() {
-  isPlayMode = false;
-  playbackFrames = [];
-  playbackFrameIndex = 0;
-  rawSourceFrames = [];
-  clearPins();
-  clearSpatialLayers();
-  document.getElementById('node-counter-main').innerText = '0';
-  document.getElementById('stats-nodes').innerText = '0';
-  document.getElementById('render-status').innerText = 'Cleared';
-  document.getElementById('bbox-info').innerText = '';
-  document.getElementById('play-pause-btn').innerText = '▶ Play';
-  setProgress(0);
-  appendChat('Scene cleared.', 'system');
-}
-
-function updateRenderMode(m) {
-  currentRenderMode = m;
-  if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
-}
-
-function updateMetaDimension(val) {
-  currentMetaValue = parseFloat(val) / 100;
-  document.getElementById('e-meta-val').innerText = currentMetaValue.toFixed(2);
-  isPlayMode = false;
-  document.getElementById('play-pause-btn').innerText = '▶ Play';
-  if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
-}
-
-function updateTScrubs(val) {
-  playbackFrameIndex = parseInt(val) || 0;
-  isPlayMode = false;
-  document.getElementById('play-pause-btn').innerText = '▶ Play';
-  if (rawSourceFrames.length) {
-    applyFrameAndRender(playbackFrameIndex, currentMetaValue);
-    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${Math.max(0, playbackFrames.length - 1)}`;
-  }
-}
-
-function togglePlayPause() {
-  if (!playbackFrames.length) { appendChat('No sequence loaded.', 'error'); return; }
-  isPlayMode = !isPlayMode;
-  document.getElementById('play-pause-btn').innerText = isPlayMode ? '⏸ Pause' : '▶ Play';
-}
-
-function toggleGrid(v) { if (gridHelper) gridHelper.visible = !!v; }
-
-function setupDragDrop() {
-  const dz = document.getElementById('drop-zone');
-  if (!dz) return;
-  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
-  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
-  dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
-}
-
-function readFile(file) {
-  const r = new FileReader();
-  r.onload = ev => {
-    try { processEnvironmentData(JSON.parse(ev.target.result)); }
-    catch (err) { appendChat('Invalid JSON', 'error'); }
-  };
-  r.readAsText(file);
-}
-
-function handleFileUpload(e) { const f = e.target.files[0]; if (f) readFile(f); }
-
-function handleCodePaste() {
-  const t = document.getElementById('json-paste-box').value.trim();
-  if (!t) return;
-  try { processEnvironmentData(JSON.parse(t)); }
-  catch (err) { appendChat('Paste error', 'error'); }
-}
-
-function toggleMappingMode() {
-  isMappingActive = !isMappingActive;
-  const btn = document.getElementById('map-mode-btn');
-  if (isMappingActive) {
-    btn.style.background = '#059669';
-    btn.innerText = 'Pinning Active';
-    appendChat('Click to place pins.', 'system');
-  } else {
-    btn.style.background = '#7c3aed';
-    btn.innerText = 'Enable Pinning';
-  }
-}
-
-function handleCanvasClick(event) {
-  if (!isMappingActive || !spatialLayers.length) return;
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObjects(spatialLayers.filter(o => o && o.visible), true);
-  if (hits.length) addSpatialPin(hits[0].point);
-}
-
-function addSpatialPin(vec) {
-  const id = mappedPins.length + 1;
-  mappedPins.push({ id, vector: vec.clone(), meta: currentMetaValue });
-  renderPinsList();
-  appendChat(`Pin #${id}`, 'system');
-}
-
-function clearPins() { mappedPins = []; renderPinsList(); }
-
-function renderPinsList() {
-  const list = document.getElementById('pins-list');
-  if (!list) return;
-  if (!mappedPins.length) {
-    list.innerHTML = '<small style="color:#64748b">No anchors</small>';
-    return;
-  }
-  list.innerHTML = '';
-  mappedPins.forEach(p => {
-    const d = document.createElement('div');
-    d.className = 'vault-item';
-    d.innerHTML = `<span>📌 #${p.id}</span>
-      <button onclick="removePin(${p.id})" style="background:#dc2626;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>`;
-    list.appendChild(d);
-  });
-}
-
-function removePin(id) { mappedPins = mappedPins.filter(p => p.id !== id); renderPinsList(); }
-
-function saveToVault(name, payload) {
-  try {
-    const raw = JSON.stringify(payload);
-    if (raw.length > 4000000) { appendChat('Vault too large', 'error'); return; }
-    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
-    vault.unshift({ id: Date.now(), name, size: raw.length, payload });
-    if (vault.length > 10) vault.pop();
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-    loadVaultList();
-  } catch (e) {}
-}
-
-function loadVaultList() {
-  try {
-    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
-    const list = document.getElementById('vault-list');
-    if (!list) return;
-    if (!vault.length) { list.innerHTML = '<small style="color:#64748b">Empty</small>'; return; }
-    list.innerHTML = '';
-    vault.forEach(it => {
-      const d = document.createElement('div');
-      d.className = 'vault-item';
-      d.innerHTML = `<span>📦 ${it.name}</span>
-        <span>
-          <button onclick="loadFromVault(${it.id})" style="background:#7c3aed;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;margin-right:2px">Boot</button>
-          <button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px">X</button>
-        </span>`;
-      list.appendChild(d);
-    });
-  } catch (e) {}
-}
-
-function loadFromVault(id) {
-  try {
-    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
-    const it = vault.find(v => v.id === id);
-    if (it) processEnvironmentData(it.payload);
-  } catch (e) {}
-}
-
-function deleteFromVault(id) {
-  try {
-    let vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
-    vault = vault.filter(v => v.id !== id);
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-    loadVaultList();
-  } catch (e) {}
-}
-
-function exportCurrentPNG() {
-  if (!spatialLayers.length) { appendChat('Nothing rendered', 'error'); return; }
-  renderer.render(scene, camera);
+function expJSON() {
+  if (!rec.length) return;
+  const blob = new Blob([JSON.stringify({ HyperStream5D: rec, layers: layerN, spread: layerSp })], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = document.getElementById('three-canvas').toDataURL('image/png');
-  a.download = `hyperstream_${Date.now()}.png`;
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hologram_' + Date.now() + '.json';
   a.click();
-  appendChat('PNG exported.', 'system');
 }
 
-function exportOrbitGIF() {
-  if (!spatialLayers.length || typeof GIF === 'undefined') { appendChat('Cannot export GIF', 'error'); return; }
-  appendChat('Rendering GIF…', 'system');
-  try {
-    const gif = new GIF({ workers: 2, quality: 12, width: 480, height: 360, workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js' });
-    const orig = camera.position.clone();
-    let f = 0; const total = 24;
-    const rad = camera.position.distanceTo(controls ? controls.target : new THREE.Vector3());
-    function cap() {
-      const ang = (f / total) * Math.PI * 2;
-      camera.position.x = Math.sin(ang) * rad;
-      camera.position.z = Math.cos(ang) * rad;
-      camera.lookAt(controls ? controls.target : new THREE.Vector3());
-      renderer.render(scene, camera);
-      const c = document.createElement('canvas');
-      c.width = 480; c.height = 360;
-      c.getContext('2d').drawImage(renderer.domElement, 0, 0, 480, 360);
-      gif.addFrame(c, { delay: 90 });
-      f++;
-      if (f < total) requestAnimationFrame(cap);
-      else {
-        camera.position.copy(orig);
-        if (controls) controls.update();
-        gif.on('finished', blob => {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `orbit_${Date.now()}.gif`;
-          a.click();
-          appendChat('GIF done.', 'system');
-        });
-        gif.render();
-      }
-    }
-    cap();
-  } catch (e) { appendChat('GIF failed', 'error'); }
+function copyJSON() {
+  const t = $('jsonOut').value;
+  if (t) navigator.clipboard.writeText(t);
 }
 
-function exportWebMVideo() {
-  if (!renderer || !spatialLayers.length) { appendChat('Nothing to encode', 'error'); return; }
-  const btn = document.getElementById('export-video-btn');
-  btn.disabled = true; btn.style.opacity = '0.5';
-  appendChat('Encoding WebM…', 'system');
+function expPNG() {
+  if (!layers.length) return;
+  ren.render(scene, cam);
+  const a = document.createElement('a');
+  a.href = $('c3').toDataURL('image/png');
+  a.download = 'holo_' + Date.now() + '.png';
+  a.click();
+}
+
+function expWebM() {
+  if (!layers.length) return;
+  const btn = $('webmBtn');
+  btn.disabled = true;
   try {
-    const stream = document.getElementById('three-canvas').captureStream(15);
-    let mediaRecorder;
-    try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' }); }
-    catch (e) { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); }
+    const s = $('c3').captureStream(12);
+    const mr = new MediaRecorder(s, { mimeType: 'video/webm' });
     const chunks = [];
-    mediaRecorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
+    mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    mr.onstop = () => {
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `hyperstream_${Date.now()}.webm`;
+      a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
+      a.download = 'holo_' + Date.now() + '.webm';
       a.click();
-      appendChat('WebM exported.', 'system');
-      btn.disabled = false; btn.style.opacity = '1';
-      setProgress(0);
+      btn.disabled = false;
     };
-    mediaRecorder.start();
-    let n = 0; const total = 48;
-    const orig = camera.position.clone();
-    function loop() {
+    mr.start();
+    let n = 0;
+    (function tick() {
       n++;
-      renderer.render(scene, camera);
-      setProgress((n / total) * 100);
-      if (n < total) requestAnimationFrame(loop);
-      else {
-        camera.position.copy(orig);
-        if (controls) controls.update();
-        mediaRecorder.stop();
-      }
-    }
-    loop();
-  } catch (e) {
-    appendChat('WebM failed', 'error');
-    btn.disabled = false; btn.style.opacity = '1';
+      ren.render(scene, cam);
+      if (n < 36) requestAnimationFrame(tick);
+      else mr.stop();
+    })();
+  } catch {
+    btn.disabled = false;
   }
 }
 
-function sendChatMessage() {
-  const i = document.getElementById('chat-input');
-  const t = i.value.trim();
-  if (!t) return;
-  appendChat(t);
-  i.value = '';
-  if (/help|status/i.test(t)) {
-    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Perf: ${perfMode ? 'ON' : 'OFF'}`, 'system');
-  }
+function dropInit() {
+  const d = $('drop');
+  ['dragenter', 'dragover'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(e => d.addEventListener(e, ev => { ev.preventDefault(); d.classList.remove('over'); }));
+  d.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readF(f); });
+}
+
+function readF(f) {
+  const r = new FileReader();
+  r.onload = e => { try { loadData(JSON.parse(e.target.result)); } catch {} };
+  r.readAsText(f);
+}
+
+function fileIn(e) { if (e.target.files[0]) readF(e.target.files[0]); }
+
+function pasteIn() {
+  try { loadData(JSON.parse($('jsonIn').value.trim())); } catch {}
 }
 </script>
 </body>
