@@ -63,13 +63,16 @@ canvas{display:block;width:100%;height:100%}
   <div id="panel-capture" class="section-card">
     <div class="card-title">Live Dimensional Video Capture → Multi-Layer 5D+</div>
     <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
-    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="6" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
-    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="70" step="0.5" value="38" oninput="depthMultiplier=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.006" max="0.09" step="0.002" value="0.028" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
-    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="6" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">6</span></div>
-    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.1" step="0.01" value="0.55" oninput="layerSpread=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.62" oninput="smoothFactor=parseFloat(this.value)"></div>
-    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">6</span></div>
+    <div class="btn-row" style="margin-top:2px">
+      <button class="secondary-btn" style="flex:1" id="camera-switch-btn" onclick="switchCamera()">📷 Front Cam</button>
+    </div>
+    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="1" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">1px</span></div>
+    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="80" step="0.5" value="42" oninput="depthMultiplier=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.004" max="0.08" step="0.001" value="0.022" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
+    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="10" step="1" value="7" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">7</span></div>
+    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="1.2" step="0.01" value="0.62" oninput="layerSpread=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.58" oninput="smoothFactor=parseFloat(this.value)"></div>
+    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">7</span></div>
     <div class="btn-row">
       <button class="primary-btn" style="background:#059669;flex:1" onclick="exportRecordedJSON()">Export JSON</button>
       <button class="secondary-btn" style="flex:1" onclick="copyJSONToClipboard()">Copy JSON</button>
@@ -104,7 +107,7 @@ canvas{display:block;width:100%;height:100%}
         <option value="wireframe">Wireframe</option>
       </select>
     </div>
-    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
+    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="14" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.14</span></div>
     <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
     <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="4" max="30" step="1" value="16" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">16</span></div>
     <div class="btn-row">
@@ -166,26 +169,28 @@ let scene, camera, renderer, controls, gridHelper;
 let spatialLayers = [];
 let video, canvas2D, ctx2D;
 let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
-let stepSize = 2, depthMultiplier = 38, currentPointSize = 0.028;
-let layerCount = 6, layerSpread = 0.55, smoothFactor = 0.62;
-let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 16;
+let stepSize = 1, depthMultiplier = 42, currentPointSize = 0.022;
+let layerCount = 7, layerSpread = 0.62, smoothFactor = 0.58;
+let currentRenderMode = 'points', currentMetaValue = 0.14, currentFPS = 16;
 let isPlayMode = false, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
 let rawSourceFrames = [];
 let isMappingActive = false, mappedPins = [];
 let frameCount = 0, fpsTimer = 0;
 let autoOrbit = true, layerPulse = true;
 let layerVisibility = [];
-const VAULT_KEY = 'hyperstream_xd_vault_v4';
+const VAULT_KEY = 'hyperstream_xd_vault_v5';
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points = { threshold: 0.15 };
+raycaster.params.Points = { threshold: 0.12 };
 const mouse = new THREE.Vector2();
 let prevLayerPos = [];
 let timePhase = 0;
 let webcamReady = false;
+let currentFacingMode = 'user'; // 'user' = front, 'environment' = back
+let currentStream = null;
 
 window.addEventListener('DOMContentLoaded', () => {
   init3D();
-  initWebcam();
+  initWebcam('user');
   setupDragDrop();
   loadVaultList();
   rebuildLayerChips();
@@ -194,7 +199,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function init3D() {
   const c = document.getElementById('viewer-container');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.028);
+  scene.fog = new THREE.FogExp2(0x030712, 0.026);
   camera = new THREE.PerspectiveCamera(48, c.clientWidth / c.clientHeight, 0.02, 4000);
   camera.position.set(0, 0.25, 3.6);
 
@@ -237,7 +242,15 @@ function init3D() {
   animate();
 }
 
-function initWebcam() {
+function stopCurrentStream() {
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+  }
+  webcamReady = false;
+}
+
+function initWebcam(facing = 'user') {
   video = document.getElementById('webcam-video');
   canvas2D = document.createElement('canvas');
   ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
@@ -247,17 +260,45 @@ function initWebcam() {
     return;
   }
 
-  navigator.mediaDevices.getUserMedia({
-    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
-  }).then(stream => {
-    video.srcObject = stream;
-    video.play().then(() => {
-      webcamReady = true;
-      appendChat('Webcam linked · dimensional video ready.', 'system');
-    }).catch(e => appendChat('Video play failed: ' + e.message, 'error'));
-  }).catch(err => {
-    appendChat('Webcam error: ' + (err.message || err), 'error');
-  });
+  stopCurrentStream();
+
+  const constraints = {
+    video: {
+      facingMode: { ideal: facing },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: { ideal: 30 }
+    },
+    audio: false
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+      currentStream = stream;
+      currentFacingMode = facing;
+      video.srcObject = stream;
+      video.play().then(() => {
+        webcamReady = true;
+        const label = facing === 'environment' ? 'Back' : 'Front';
+        document.getElementById('camera-switch-btn').innerText = facing === 'environment' ? '📷 Back Cam' : '📷 Front Cam';
+        appendChat(`${label} camera linked · high-density dimensional video ready.`, 'system');
+      }).catch(e => appendChat('Video play failed: ' + e.message, 'error'));
+    })
+    .catch(err => {
+      // Fallback without facingMode if device doesn't support it
+      if (facing !== 'user') {
+        appendChat('Back camera not available, trying front…', 'error');
+        initWebcam('user');
+        return;
+      }
+      appendChat('Webcam error: ' + (err.message || err), 'error');
+    });
+}
+
+function switchCamera() {
+  const next = currentFacingMode === 'user' ? 'environment' : 'user';
+  appendChat('Switching camera…', 'system');
+  initWebcam(next);
 }
 
 function onWindowResize() {
@@ -315,37 +356,38 @@ function animate(now) {
       const basePos = [];
       const baseCol = [];
       const aspect = vw / Math.max(1, vh);
-      const scaleX = 1.28 * Math.min(aspect, 1.6);
-      const scaleY = 1.28;
+      const scaleX = 1.32 * Math.min(aspect, 1.7);
+      const scaleY = 1.32;
       const cx = vw * 0.5, cy = vh * 0.5;
       const maxR = Math.sqrt(cx * cx + cy * cy) || 1;
 
+      // Dense sampling – stepSize 1 = maximum nodes
       for (let y = 0; y < vh; y += stepSize) {
         for (let x = 0; x < vw; x += stepSize) {
           const idx = (y * vw + x) * 4;
           const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
           const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-          if (lum < 0.04) continue;
+          if (lum < 0.028) continue; // lower threshold = more points
 
           const nx = ((vw - x) / vw) * 2 - 1;
           const ny = -((y / vh) * 2 - 1);
-          const depthCurve = Math.pow(Math.max(0.001, lum), 0.46);
+          const depthCurve = Math.pow(Math.max(0.001, lum), 0.44);
           const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
           const rad2 = dx * dx + dy * dy;
 
-          let nz = (depthCurve - 0.28) * (depthMultiplier * 0.26);
-          nz -= rad2 * 0.58;
-          nz -= nx * nx * 0.18;
+          let nz = (depthCurve - 0.26) * (depthMultiplier * 0.27);
+          nz -= rad2 * 0.62;
+          nz -= nx * nx * 0.16;
 
-          const px = nx * scaleX * (1 - rad2 * 0.07);
-          const py = ny * scaleY * (1 - rad2 * 0.05);
+          const px = nx * scaleX * (1 - rad2 * 0.065);
+          const py = ny * scaleY * (1 - rad2 * 0.045);
           basePos.push(px, py, nz);
 
-          const sat = 1.15, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.35);
+          const sat = 1.18, avg = (r + g + b) / 3, rim = Math.min(1, rad2 * 1.4);
           baseCol.push(
-            Math.min(1, avg + (r - avg) * sat + rim * 0.03),
-            Math.min(1, avg + (g - avg) * sat + rim * 0.07),
-            Math.min(1, avg + (b - avg) * sat + rim * 0.16)
+            Math.min(1, avg + (r - avg) * sat + rim * 0.035),
+            Math.min(1, avg + (g - avg) * sat + rim * 0.075),
+            Math.min(1, avg + (b - avg) * sat + rim * 0.17)
           );
         }
       }
@@ -368,16 +410,16 @@ function animate(now) {
         recorded4DFrames.push({
           v: condensedV,
           c: baseCol.map(v => +v.toFixed(2)),
-          meta: 0.32 + Math.random() * 0.28,
+          meta: 0.30 + Math.random() * 0.30,
           layers: layerCount,
           spread: layerSpread
         });
         frameIndex++;
         document.getElementById('frame-counter').innerText = recorded4DFrames.length;
-        if (frameIndex % 6 === 0) updateJSONTextBox();
+        if (frameIndex % 5 === 0) updateJSONTextBox();
       }
     } catch (e) {
-      // silent frame skip on rare canvas errors
+      // silent frame skip
     }
   }
 
@@ -385,7 +427,7 @@ function animate(now) {
     for (let L = 0; L < spatialLayers.length; L++) {
       const obj = spatialLayers[L];
       if (!obj || !obj.visible) continue;
-      const breath = 1 + Math.sin(timePhase * 1.05 + L * 0.52) * 0.011;
+      const breath = 1 + Math.sin(timePhase * 1.05 + L * 0.52) * 0.010;
       obj.scale.set(breath, breath, breath);
     }
   }
@@ -428,29 +470,29 @@ function updateLiveMultiLayers(basePos, baseCol) {
   }
 
   const nodeCount = basePos.length / 3;
-  if (nodeCount < 6) return;
+  if (nodeCount < 8) return;
 
-  const metaOffset = currentMetaValue * 0.32;
+  const metaOffset = currentMetaValue * 0.34;
   const maxL = Math.max(1, layerCount - 1);
 
   for (let L = 0; L < layerCount; L++) {
     const t = L / maxL;
     const ease = t * t * (3 - 2 * t);
     const signed = ease - 0.5;
-    const depthOffset = signed * layerSpread * 3.7;
-    const yOffset = signed * layerSpread * 0.17;
-    const xParallax = signed * layerSpread * 0.11;
-    const scale = 1 + signed * 0.065;
+    const depthOffset = signed * layerSpread * 3.9;
+    const yOffset = signed * layerSpread * 0.19;
+    const xParallax = signed * layerSpread * 0.13;
+    const scale = 1 + signed * 0.07;
     const frontness = 1 - t;
-    const warm = 0.94 + frontness * 0.11;
-    const cool = 0.8 + (1 - frontness) * 0.42;
+    const warm = 0.93 + frontness * 0.12;
+    const cool = 0.78 + (1 - frontness) * 0.45;
 
     const pos = new Float32Array(nodeCount * 3);
     const col = new Float32Array(nodeCount * 3);
 
     for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
       let px = basePos[j] * scale + xParallax;
-      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.42 + L * 0.035);
+      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.44 + L * 0.038);
       let pz = basePos[j + 2] * scale + depthOffset;
 
       if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.01) {
@@ -463,13 +505,13 @@ function updateLiveMultiLayers(basePos, baseCol) {
 
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
       col[j] = Math.min(1, baseCol[j] * warm);
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.97 + L * 0.012));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.96 + L * 0.014));
       col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
     }
 
     prevLayerPos[L] = pos;
-    const sizeMul = 1.07 - L * 0.048;
-    const opac = Math.max(0.25, 0.92 - L * 0.085);
+    const sizeMul = 1.06 - L * 0.045;
+    const opac = Math.max(0.22, 0.93 - L * 0.08);
 
     let obj = spatialLayers[L];
     if (!obj) {
@@ -512,7 +554,7 @@ function updateLiveMultiLayers(basePos, baseCol) {
 function updatePointSizes() {
   spatialLayers.forEach((obj, L) => {
     if (obj && obj.material && obj.material.size !== undefined) {
-      obj.material.size = currentPointSize * (1.07 - L * 0.048);
+      obj.material.size = currentPointSize * (1.06 - L * 0.045);
     }
   });
 }
@@ -525,7 +567,7 @@ function toggleInfiniteScanning() {
     frameIndex = 0;
     btn.innerText = 'HALT DIMENSIONAL STREAM';
     btn.classList.add('scanning');
-    appendChat(`Dimensional stream started · ${layerCount} layers · depth ${layerSpread.toFixed(2)}`, 'system');
+    appendChat(`Dimensional stream started · ${layerCount} layers · high density`, 'system');
     document.getElementById('render-status').innerText = 'Recording';
   } else {
     btn.innerText = 'START DIMENSIONAL STREAM';
@@ -662,7 +704,7 @@ function applyFrameAndRender(frameIdx, metaBlend) {
   const basePos = [];
   const baseCol = [];
   for (let i = 0; i < src.length; i += tupleSize) {
-    const metaOffset = (target.meta || 0.5) * metaBlend * 0.36;
+    const metaOffset = (target.meta || 0.5) * metaBlend * 0.38;
     basePos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
     const ci = (i / tupleSize) * 3;
     if (cols.length >= ci + 3) baseCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
@@ -735,7 +777,7 @@ function processEnvironmentData(data) {
       document.getElementById('bbox-info').innerText = `${seq.length} frames · ${layerCount} layers`;
       appendChat(`✓ ${seq.length} frames · ${layerCount} dimensional layers.`, 'system');
 
-      if (seq.length < 120) {
+      if (seq.length < 100) {
         saveToVault(`CORE_DIM_${Date.now()}`, {
           HyperStream5D: seq,
           multiLayer: true,
@@ -1152,7 +1194,7 @@ function sendChatMessage() {
   appendChat(t);
   i.value = '';
   if (/help|status|info/i.test(t)) {
-    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Frames loaded: ${rawSourceFrames.length}`, 'system');
+    appendChat(`Status: ${document.getElementById('render-status').innerText} · Layers: ${layerCount} · Frames loaded: ${rawSourceFrames.length} · Camera: ${currentFacingMode}`, 'system');
   }
 }
 </script>
