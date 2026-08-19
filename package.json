@@ -1,0 +1,7 @@
+{
+  "name": "voxel-vault",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {"dev":"next dev","build":"next build","start":"next start"},
+  "dependencies": {"@supabase/supabase-js":"^2.54.0","next":"^15.4.0","react":"^19.1.0","react-dom":"^19.1.0","stripe":"^18.5.0"}
+}
