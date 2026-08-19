@@ -1,28 +1,65 @@
-# ToolMint 💸
+# DealRadar 🛰️
 
-A free, static, GitHub Pages-friendly utility site designed around **evergreen search traffic + multiple monetization channels**.
+DealRadar is a GitHub Pages-friendly deal-intelligence website designed to grow into an automated affiliate revenue asset.
+
+## MVP
+
+- Searchable deal catalog
+- Deal Score based on current vs typical price, discount depth and freshness
+- Category quick filters
+- Sort by deal score, discount or price
+- Price-watch interface using localStorage
+- Mobile-first responsive UI
+- SEO-friendly static foundation
+- Clearly labeled demo data so the site does not pretend to have live prices
+- Monetization placeholders for approved ads and affiliate links
 
 ## Revenue model
 
-1. **Display ads**: replace the ad placeholder with approved ad-network code.
-2. **Affiliate commissions**: replace the demo merchant URLs with your own approved affiliate URLs.
-3. **Digital products**: connect the Pro Pack button to a checkout for spreadsheets, templates, guides, prompt packs, etc.
-4. **SEO expansion**: turn every high-demand calculator/topic into its own indexable page.
+1. **Affiliate commissions:** connect legitimate merchant/product feeds and approved affiliate programs.
+2. **Display ads:** add approved ad-network code after the site has useful original content and meets the network's policies.
+3. **Price alerts:** later add an optional paid tier for server-backed alerts and saved tracking.
+4. **Sponsored deals:** allow clearly labeled sponsored placements once there is meaningful traffic.
 
-## Why this model
+## Architecture direction
 
-It does not require inventory, customer support for a physical product, a social-media personality, or a server that must stay running. The core experience is static JavaScript and can be hosted cheaply or free.
+The MVP intentionally runs as static HTML/CSS/JavaScript. The next phase should add a data-provider layer rather than hard-coding a retailer or relying on unauthorized scraping. A provider adapter can normalize product, price, availability, merchant and affiliate-link data into the format consumed by the front end.
 
-## Important setup
+Suggested future structure:
 
-- Apply to the affiliate programs you actually qualify for and replace the demo links.
-- Apply to an ad network when the site has useful original content and meets its policies.
-- Connect a real checkout before selling anything.
-- Add a privacy policy, terms, and any disclosures required for your jurisdiction and monetization partners.
-- Never present affiliate links as independent price guarantees. Prices and availability change.
+```text
+/data/providers/       approved product-feed adapters
+/data/normalize.js     normalized product schema
+/scoring/              deal-score calculations
+/alerts/               email/web-push alert service
+/pages/deals/          indexable category/product pages
+/admin/                feed health and revenue analytics
+```
 
-## Suggested growth loop
+## Important launch rules
 
-Add focused landing pages such as `/calculators/profit-margin/`, `/calculators/loan-payment/`, `/calculators/break-even/`, and `/guides/best-tools-for-creators/`. Each page should answer a real query, load quickly, and link naturally to related tools.
+- Do not publish a price as live unless a connected source confirms it.
+- Do not use retailer scraping that violates the retailer's terms.
+- Replace all demo merchant URLs/data with approved sources before monetization.
+- Clearly disclose affiliate relationships.
+- Verify prices and availability on the merchant site before purchase.
+- Add privacy, terms, affiliate disclosure and contact pages before scaling traffic.
 
-The goal is a **useful traffic asset**, not a promise of passive income. Revenue depends on traffic, conversion rates, partner approvals, ad rates, seasonality, and the quality of the content.
+## Deployment
+
+The site is designed for GitHub Pages. Enable Pages from the repository's `main` branch root after merging the MVP branch.
+
+## Roadmap
+
+- [x] DealRadar visual MVP
+- [x] Search and category filters
+- [x] Deal scoring
+- [x] Local price-watch prototype
+- [ ] Connect approved product/affiliate feed
+- [ ] Store historical price observations
+- [ ] Generate price-history charts
+- [ ] Build automated deal ingestion
+- [ ] Add email price alerts
+- [ ] Add indexable category/product pages
+- [ ] Add analytics and affiliate conversion tracking
+- [ ] Add premium alert tier
