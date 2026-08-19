@@ -11,6 +11,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     uint96 public constant MAX_FEE_BPS = 1000;
     uint96 public feeBps = 250;
     VoxelVaultNFT public immutable nft;
+    address payable public feeRecipient;
 
     struct Listing { address seller; uint256 price; }
     struct Offer { address buyer; uint256 amount; uint256 expiresAt; }
@@ -26,15 +27,19 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     event Sale(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price, uint256 royalty, uint256 fee);
     event OfferMade(uint256 indexed tokenId, address indexed buyer, uint256 amount, uint256 expiresAt);
     event OfferCancelled(uint256 indexed tokenId, address indexed buyer);
+    event OfferRefunded(uint256 indexed tokenId, address indexed buyer);
     event OfferAccepted(uint256 indexed tokenId, address indexed buyer, uint256 amount);
     event AuctionStarted(uint256 indexed tokenId, address indexed seller, uint256 reservePrice, uint256 endAt);
     event BidPlaced(uint256 indexed tokenId, address indexed bidder, uint256 amount);
     event AuctionSettled(uint256 indexed tokenId, address indexed winner, uint256 amount);
     event FeeUpdated(uint96 feeBps);
+    event FeeRecipientUpdated(address indexed recipient);
 
-    constructor(address initialOwner, address nftAddress) Ownable(initialOwner) {
+    constructor(address initialOwner, address nftAddress, address payable initialFeeRecipient) Ownable(initialOwner) {
         require(nftAddress != address(0), "NFT required");
+        require(initialFeeRecipient != address(0), "Fee recipient required");
         nft = VoxelVaultNFT(nftAddress);
+        feeRecipient = initialFeeRecipient;
     }
 
     function setFeeBps(uint96 newFeeBps) external onlyOwner {
@@ -43,7 +48,17 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         emit FeeUpdated(newFeeBps);
     }
 
-    function mintAndList(string calldata uri, uint96 royaltyBps, uint256 price) external nonReentrant returns (uint256 tokenId) {
+    function setFeeRecipient(address payable newRecipient) external onlyOwner {
+        require(newRecipient != address(0), "Invalid recipient");
+        feeRecipient = newRecipient;
+        emit FeeRecipientUpdated(newRecipient);
+    }
+
+    function mintAndList(string calldata uri, uint96 royaltyBps, uint256 price)
+        external
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         require(price > 0, "Price required");
         tokenId = nft.mintTo(address(this), msg.sender, uri, royaltyBps);
         listings[tokenId] = Listing(msg.sender, price);
@@ -77,6 +92,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     }
 
     function makeOffer(uint256 tokenId, uint256 expiresAt) external payable nonReentrant {
+        require(nft.ownerOf(tokenId) != address(0), "Token missing");
         require(msg.value > 0, "Offer required");
         require(expiresAt > block.timestamp, "Expiry required");
         Offer memory old = offers[tokenId];
@@ -91,6 +107,15 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         delete offers[tokenId];
         pendingWithdrawals[msg.sender] += offer.amount;
         emit OfferCancelled(tokenId, msg.sender);
+    }
+
+    function refundExpiredOffer(uint256 tokenId) external nonReentrant {
+        Offer memory offer = offers[tokenId];
+        require(offer.buyer != address(0), "No offer");
+        require(block.timestamp >= offer.expiresAt, "Offer active");
+        delete offers[tokenId];
+        pendingWithdrawals[offer.buyer] += offer.amount;
+        emit OfferRefunded(tokenId, offer.buyer);
     }
 
     function acceptOffer(uint256 tokenId) external nonReentrant {
@@ -133,6 +158,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         auctions[tokenId].settled = true;
         if (auction.highestBidder == address(0)) {
             nft.safeTransferFrom(address(this), auction.seller, tokenId);
+            delete auctions[tokenId];
             emit AuctionSettled(tokenId, address(0), 0);
             return;
         }
@@ -156,7 +182,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         royalty = royaltyAmount;
         if (royalty > salePrice - fee) royalty = salePrice - fee;
         if (receiver != address(0) && royalty > 0) pendingWithdrawals[receiver] += royalty;
-        if (fee > 0) pendingWithdrawals[owner()] += fee;
+        if (fee > 0) pendingWithdrawals[feeRecipient] += fee;
         pendingWithdrawals[seller] += salePrice - royalty - fee;
     }
 
