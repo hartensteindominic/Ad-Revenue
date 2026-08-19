@@ -2,12 +2,13 @@
 pragma solidity ^0.8.24;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {VoxelVaultNFT} from "./VoxelVaultNFT.sol";
 
-contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
+contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, IERC721Receiver {
     uint96 public constant MAX_FEE_BPS = 1000;
     uint96 public feeBps = 250;
     VoxelVaultNFT public immutable nft;
@@ -42,6 +43,10 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         feeRecipient = initialFeeRecipient;
     }
 
+    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
     function setFeeBps(uint96 newFeeBps) external onlyOwner {
         require(newFeeBps <= MAX_FEE_BPS, "Fee too high");
         feeBps = newFeeBps;
@@ -68,6 +73,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     function list(uint256 tokenId, uint256 price) external nonReentrant {
         require(price > 0, "Price required");
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         nft.transferFrom(msg.sender, address(this), tokenId);
         listings[tokenId] = Listing(msg.sender, price);
         emit Listed(tokenId, msg.sender, price);
@@ -92,7 +98,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     }
 
     function makeOffer(uint256 tokenId, uint256 expiresAt) external payable nonReentrant {
-        require(nft.ownerOf(tokenId) != address(0), "Token missing");
+        require(_exists(tokenId), "Token missing");
         require(msg.value > 0, "Offer required");
         require(expiresAt > block.timestamp, "Expiry required");
         Offer memory old = offers[tokenId];
@@ -123,6 +129,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         require(offer.buyer != address(0), "No offer");
         require(offer.expiresAt >= block.timestamp, "Offer expired");
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         delete offers[tokenId];
         nft.transferFrom(msg.sender, address(this), tokenId);
         (uint256 royalty, uint256 fee) = _distribute(tokenId, offer.amount, msg.sender);
@@ -134,6 +141,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
     function startAuction(uint256 tokenId, uint256 reservePrice, uint256 durationSeconds) external nonReentrant {
         require(reservePrice > 0 && durationSeconds >= 5 minutes, "Invalid auction");
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         require(auctions[tokenId].seller == address(0), "Auction exists");
         nft.transferFrom(msg.sender, address(this), tokenId);
         auctions[tokenId] = Auction(msg.sender, reservePrice, block.timestamp + durationSeconds, address(0), 0, false);
@@ -174,6 +182,11 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable {
         pendingWithdrawals[msg.sender] = 0;
         (bool ok,) = payable(msg.sender).call{value: amount}("");
         require(ok, "Withdraw failed");
+    }
+
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        try nft.ownerOf(tokenId) returns (address owner_) { return owner_ != address(0); }
+        catch { return false; }
     }
 
     function _distribute(uint256 tokenId, uint256 salePrice, address seller) internal returns (uint256 royalty, uint256 fee) {
