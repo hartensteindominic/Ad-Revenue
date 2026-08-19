@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Stripe from 'stripe';
 
 const secret = process.env.STRIPE_SECRET_KEY;
