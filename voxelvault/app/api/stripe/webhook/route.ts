@@ -1,6 +1,54 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe-server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+async function fulfillCheckout(session: Stripe.Checkout.Session) {
+  const assetId = session.metadata?.asset_id;
+  const buyerId = session.metadata?.buyer_id;
+  if (!assetId || !buyerId || session.payment_status !== 'paid') return;
+
+  const { data: asset, error: assetError } = await supabaseAdmin
+    .from('assets')
+    .select('id,seller_id,price_cents,currency')
+    .eq('id', assetId)
+    .eq('status', 'published')
+    .single();
+  if (assetError || !asset) throw assetError ?? new Error('Asset not found');
+
+  const amount = session.amount_total ?? asset.price_cents;
+  const fee = Math.floor(amount * 0.2);
+
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from('orders')
+    .upsert({
+      buyer_id: buyerId,
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+      currency: session.currency ?? asset.currency,
+      subtotal_cents: amount,
+      platform_fee_cents: fee,
+      status: 'paid',
+    }, { onConflict: 'stripe_checkout_session_id' })
+    .select('id')
+    .single();
+  if (orderError || !order) throw orderError ?? new Error('Order creation failed');
+
+  const { error: itemError } = await supabaseAdmin.from('order_items').upsert({
+    order_id: order.id,
+    asset_id: asset.id,
+    seller_id: asset.seller_id,
+    unit_amount_cents: amount,
+  }, { onConflict: 'order_id,asset_id' });
+  if (itemError) throw itemError;
+
+  const { error: entitlementError } = await supabaseAdmin.from('download_entitlements').upsert({
+    buyer_id: buyerId,
+    asset_id: asset.id,
+    order_id: order.id,
+  }, { onConflict: 'buyer_id,asset_id' });
+  if (entitlementError) throw entitlementError;
+}
 
 export async function POST(request: Request) {
   const signature = request.headers.get('stripe-signature');
@@ -15,26 +63,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      // Persist the paid order and entitlement with the server-side Supabase client.
-      // This handler intentionally does not trust the browser success URL.
-      console.info('VoxelVault checkout completed', session.id, session.metadata?.asset_id);
-      break;
+  try {
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
+      await fulfillCheckout(event.data.object as Stripe.Checkout.Session);
     }
-    case 'checkout.session.async_payment_succeeded': {
-      console.info('VoxelVault async payment succeeded');
-      break;
-    }
-    case 'charge.refunded': {
-      console.info('VoxelVault charge refunded');
-      break;
-    }
-    case 'account.updated': {
-      console.info('VoxelVault seller account updated');
-      break;
-    }
+  } catch (error) {
+    console.error('VoxelVault webhook fulfillment failed', error);
+    return NextResponse.json({ error: 'Fulfillment failed' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
