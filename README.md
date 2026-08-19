@@ -1,28 +1,54 @@
-# ToolMint 💸
+# Voxel Vault 🧊💜
 
-A free, static, GitHub Pages-friendly utility site designed around **evergreen search traffic + multiple monetization channels**.
+A 3D voxel NFT marketplace built around interactive models, creator publishing and real wallet ownership.
 
-## Revenue model
+## Marketplace stack
 
-1. **Display ads**: replace the ad placeholder with approved ad-network code.
-2. **Affiliate commissions**: replace the demo merchant URLs with your own approved affiliate URLs.
-3. **Digital products**: connect the Pro Pack button to a checkout for spreadsheets, templates, guides, prompt packs, etc.
-4. **SEO expansion**: turn every high-demand calculator/topic into its own indexable page.
+- Next.js + React + Three.js for the Voxel Vault experience
+- MetaMask / browser wallets through `ethers` v6
+- ERC-721 NFTs with per-token metadata
+- ERC-2981 royalty signaling through OpenZeppelin
+- Marketplace listings, fixed-price purchases, offers and timed auctions
+- Sepolia-first deployment workflow
+- GLB / GLTF assets referenced from IPFS or HTTPS metadata
+- Supabase + Stripe remain available for off-chain account and checkout features
 
-## Why this model
+OpenZeppelin's ERC-721 implementation supports the standard ownership and metadata interfaces, while `ERC721Royalty` exposes ERC-2981 royalty information. ERC-2981 signals royalty information but does not force every external marketplace to pay it, so Voxel Vault's own marketplace contract explicitly routes the royalty during its own sales. citehttps://docs.openzeppelin.com/contracts/5.x/api/token/erc721
 
-It does not require inventory, customer support for a physical product, a social-media personality, or a server that must stay running. The core experience is static JavaScript and can be hosted cheaply or free.
+## Smart contracts
 
-## Important setup
+- `contracts/VoxelVaultNFT.sol` — ERC-721 + URI storage + ERC-2981 royalties.
+- `contracts/VoxelVaultMarketplace.sol` — listings, purchases, offers, auctions, marketplace fee and withdrawal accounting.
+- `scripts/deploy-sepolia.js` — deploys both contracts and transfers NFT minting ownership to the marketplace.
 
-- Apply to the affiliate programs you actually qualify for and replace the demo links.
-- Apply to an ad network when the site has useful original content and meets its policies.
-- Connect a real checkout before selling anything.
-- Add a privacy policy, terms, and any disclosures required for your jurisdiction and monetization partners.
-- Never present affiliate links as independent price guarantees. Prices and availability change.
+## Deploy to Sepolia
 
-## Suggested growth loop
+Create a local `.env` file:
 
-Add focused landing pages such as `/calculators/profit-margin/`, `/calculators/loan-payment/`, `/calculators/break-even/`, and `/guides/best-tools-for-creators/`. Each page should answer a real query, load quickly, and link naturally to related tools.
+```text
+SEPOLIA_RPC_URL=your_sepolia_rpc_url
+DEPLOYER_PRIVATE_KEY=your_testnet_wallet_private_key
+```
 
-The goal is a **useful traffic asset**, not a promise of passive income. Revenue depends on traffic, conversion rates, partner approvals, ad rates, seasonality, and the quality of the content.
+Never commit this file or expose a private key in Vercel, GitHub, browser code or chat.
+
+Then run:
+
+```bash
+npm install
+npm run chain:compile
+npm run chain:deploy:sepolia
+```
+
+The deployment script prints two addresses:
+
+```text
+NEXT_PUBLIC_VOXEL_NFT_ADDRESS=...
+NEXT_PUBLIC_VOXEL_MARKET_ADDRESS=...
+```
+
+Add those two values to the Vercel project's environment variables, redeploy, and the marketplace UI will switch from **contract code ready** to **Sepolia contracts configured**.
+
+## Important production note
+
+The contracts are an initial marketplace implementation, not a substitute for an independent smart-contract security audit. Test on Sepolia first, verify every transaction and event, and do not fund a mainnet deployment until the contract behavior has been reviewed.
