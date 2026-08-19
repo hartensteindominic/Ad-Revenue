@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hartensteindominic.github.io/Ad-Revenue/sitemap.xml
