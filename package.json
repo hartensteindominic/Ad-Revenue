@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "chain:compile": "hardhat compile",
+    "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.54.0",
@@ -17,8 +19,11 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "typescript": "5.8.2",
     "@types/react": "19.1.10",
-    "@types/node": "20.17.6"
+    "@types/node": "20.17.6",
+    "hardhat": "^2.26.3"
   }
 }
