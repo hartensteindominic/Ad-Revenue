@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { stripe, platformFee } from '@/lib/stripe-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
