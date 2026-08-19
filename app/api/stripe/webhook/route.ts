@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { stripe } from '../../../../lib/stripe-server';
-import { supabaseAdmin } from '../../../../lib/supabase-admin';
+import { stripe } from '../../../lib/stripe-server';
+import { supabaseAdmin } from '../../../lib/supabase-admin';
 
 export async function POST(request: Request) {
   const signature = request.headers.get('stripe-signature');
