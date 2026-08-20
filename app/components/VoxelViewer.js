@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -21,65 +21,87 @@ function box(out,x1,x2,y1,y2,z1,z2,c=0){for(let x=x1;x<=x2;x++)for(let y=y1;y<=y
 function makeVoxels(shape){
   const v=[];
   if(shape==='car'){
-    box(v,-8,8,0,2,-3,3,0); box(v,-7,7,3,3,-3,3,2);
-    box(v,-5,5,4,5,-2,2,0); box(v,-3,3,5,5,-1,1,1);
+    box(v,-8,8,0,2,-3,3,0); box(v,-7,7,3,3,-3,3,2); box(v,-5,5,4,5,-2,2,0); box(v,-3,3,5,5,-1,1,1);
     box(v,-7,7,1,1,-4,-4,3); box(v,-7,7,1,1,4,4,3);
     for(const x of[-6,6])for(const z of[-3,3])box(v,x,x,-2,0,z,z,3);
     for(const x of[-5,-4,4,5])for(const z of[-3,3])add(v,x,0,z,4);
-    for(const x of[-3,-2,2,3])for(let z=-2;z<=2;z++)add(v,x,4,z,1);
-    box(v,-1,1,2,2,-4,-4,4);
+    for(const x of[-3,-2,2,3])for(let z=-2;z<=2;z++)add(v,x,4,z,1); box(v,-1,1,2,2,-4,-4,4);
   } else if(shape==='villa'){
     box(v,-7,7,0,4,-5,5,0); box(v,-7,7,5,5,-5,5,1); box(v,-5,5,6,6,-4,4,0); box(v,-3,3,7,7,-3,3,0);
-    for(const x of[-6,6])for(const z of[-4,4])box(v,x,x,1,3,z,z,2);
-    box(v,-2,2,1,3,-6,-6,2); box(v,-1,1,1,2,6,6,2);
-    for(const x of[-5,-4,4,5])for(const z of[-5,5])box(v,x,x,1,3,z,z,3);
-    box(v,-7,-7,4,5,-1,1,3); box(v,7,7,4,5,-1,1,3);
+    for(const x of[-6,6])for(const z of[-4,4])box(v,x,x,1,3,z,z,2); box(v,-2,2,1,3,-6,-6,2); box(v,-1,1,1,2,6,6,2);
+    for(const x of[-5,-4,4,5])for(const z of[-5,5])box(v,x,x,1,3,z,z,3); box(v,-7,-7,4,5,-1,1,3); box(v,7,7,4,5,-1,1,3);
   } else if(shape==='owl'||shape==='fox'){
     const fox=shape==='fox';
     for(let y=0;y<=6;y++){const r=(fox?10:11)-Math.max(0,y-2)*2;for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)if(x*x+z*z<=r)add(v,x,y,z,y>=5?1:0)}
-    for(const x of[-3,3])box(v,x,x,5,8,-1,1,1);
-    for(const x of[-2,2])box(v,x,x,-1,0,-1,1,0);
+    for(const x of[-3,3])box(v,x,x,5,8,-1,1,1); for(const x of[-2,2])box(v,x,x,-1,0,-1,1,0);
     add(v,-1,6,-4,2); add(v,1,6,-4,2); add(v,0,6,-4,3);
     if(fox){for(let y=1;y<=4;y++)add(v,4,y,0,0);for(let y=0;y<=2;y++)add(v,5,y,0,1);box(v,3,4,1,2,0,0,1)}
   } else if(shape==='robot'){
-    box(v,-3,3,0,5,-3,3,0); box(v,-2,2,6,9,-2,2,1); box(v,-4,-4,1,5,-1,1,2);box(v,4,4,1,5,-1,1,2);
-    box(v,-2,-2,-3,-1,-1,1,2);box(v,2,2,-3,-1,-1,1,2); add(v,-1,8,-3,3);add(v,1,8,-3,3);add(v,0,10,0,4);
+    box(v,-3,3,0,5,-3,3,0); box(v,-2,2,6,9,-2,2,1); box(v,-4,-4,1,5,-1,1,2); box(v,4,4,1,5,-1,1,2);
+    box(v,-2,-2,-3,-1,-1,1,2); box(v,2,2,-3,-1,-1,1,2); add(v,-1,8,-3,3); add(v,1,8,-3,3); add(v,0,10,0,4);
     for(const x of[-3,3])for(const y of[2,4])add(v,x,y,-2,3);
   } else if(shape==='statue'){
     box(v,-4,4,0,1,-4,4,2); box(v,-3,3,2,3,-3,3,0); box(v,-2,2,4,8,-2,2,0); box(v,-3,3,9,10,-2,2,1);
-    box(v,-3,-3,4,7,-1,1,2);box(v,3,3,4,7,-1,1,2);box(v,-1,1,11,12,-1,1,1);
+    box(v,-3,-3,4,7,-1,1,2); box(v,3,3,4,7,-1,1,2); box(v,-1,1,11,12,-1,1,1);
   } else if(shape==='ship'){
     for(let y=0;y<=3;y++)for(let x=-8+y;x<=8-y;x++)for(let z=-3;z<=3;z++)add(v,x,y,z,y===3?1:0);
-    box(v,-5,5,4,6,-2,2,0);box(v,-2,2,7,10,-1,1,3);box(v,-1,1,11,12,-1,1,4);box(v,-5,5,7,7,0,0,4);
+    box(v,-5,5,4,6,-2,2,0); box(v,-2,2,7,10,-1,1,3); box(v,-1,1,11,12,-1,1,4); box(v,-5,5,7,7,0,0,4);
     for(const x of[-6,6])box(v,x,x,1,2,-3,3,2);
   } else if(shape==='tree'){
-    box(v,-1,1,0,6,-1,1,2);
-    for(let y=5;y<=11;y++)for(let x=-4;x<=4;x++)for(let z=-4;z<=4;z++)if(x*x+z*z<=17-(y-5)*2)add(v,x,y,z,y>8?1:0);
-    box(v,-2,2,8,9,-2,2,1);
+    box(v,-1,1,0,6,-1,1,2); for(let y=5;y<=11;y++)for(let x=-4;x<=4;x++)for(let z=-4;z<=4;z++)if(x*x+z*z<=17-(y-5)*2)add(v,x,y,z,y>8?1:0); box(v,-2,2,8,9,-2,2,1);
   } else box(v,-4,4,0,7,-4,4,0);
   return v;
 }
 
-export default function VoxelViewer({shape='car',compact=false,label=true}){
-  const host=useRef(null); const frame=useRef(0);
+export default function VoxelViewer({shape='car',compact=false,label=true,interactive=true,showcase=false}){
+  const host=useRef(null); const frame=useRef(0); const [selected,setSelected]=useState(null); const [hovered,setHovered]=useState(null); const [explode,setExplode]=useState(false); const [edges,setEdges]=useState(true); const [autoRotate,setAutoRotate]=useState(!showcase); const [grid,setGrid]=useState(false);
+
   useEffect(()=>{
     if(!host.current)return;
     const root=host.current; const scene=new THREE.Scene(); scene.background=new THREE.Color('#070811');
     const camera=new THREE.PerspectiveCamera(32,1,.1,1000); camera.position.set(18,14,21);
     const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12; root.appendChild(renderer.domElement);
-    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.065; controls.minDistance=10; controls.maxDistance=48; controls.target.set(0,3,0); controls.autoRotate=true; controls.autoRotateSpeed=.6; controls.enablePan=false;
+    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.065; controls.minDistance=10; controls.maxDistance=48; controls.target.set(0,3,0); controls.autoRotate=autoRotate; controls.autoRotateSpeed=.6; controls.enablePan=false;
     scene.add(new THREE.HemisphereLight('#ddd8ff','#0b101a',2.2));
-    const key=new THREE.DirectionalLight('#fff8ed',4);key.position.set(11,20,14);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
-    const rim=new THREE.PointLight('#7755ff',42,60);rim.position.set(-12,8,-10);scene.add(rim);const fill=new THREE.PointLight('#32d8ff',20,45);fill.position.set(10,5,-8);scene.add(fill);
-    const floor=new THREE.Mesh(new THREE.CircleGeometry(14,64),new THREE.MeshStandardMaterial({color:'#0a0d15',roughness:.78,metalness:.12}));floor.rotation.x=-Math.PI/2;floor.position.y=-2.4;floor.receiveShadow=true;scene.add(floor);
-    const ring=new THREE.Mesh(new THREE.RingGeometry(5.8,5.86,96),new THREE.MeshBasicMaterial({color:'#7657ff',transparent:true,opacity:.34,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=-2.38;scene.add(ring);
-    const group=new THREE.Group();scene.add(group); const colors=PALETTES[shape]||PALETTES.car;const voxels=makeVoxels(shape);const geometry=new THREE.BoxGeometry(.72,.72,.72);
-    const buckets=new Map();voxels.forEach(v=>{if(!buckets.has(v[3]))buckets.set(v[3],[]);buckets.get(v[3]).push(v)});
-    buckets.forEach((arr,c)=>{const material=new THREE.MeshStandardMaterial({color:colors[c],roughness:c===3?.32:.52,metalness:c===3?.18:.05});const mesh=new THREE.InstancedMesh(geometry,material,arr.length);mesh.castShadow=true;mesh.receiveShadow=true;const q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);arr.forEach((v,i)=>{const m=new THREE.Matrix4();m.compose(new THREE.Vector3(v[0]*.76,v[1]*.76-2.1,v[2]*.76),q,s);mesh.setMatrixAt(i,m)});mesh.instanceMatrix.needsUpdate=true;group.add(mesh)});
-    const resize=()=>{const r=root.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/Math.max(1,r.height));camera.updateProjectionMatrix()};resize();const ro=new ResizeObserver(resize);ro.observe(root);
-    const animate=()=>{controls.update();renderer.render(scene,camera);frame.current=requestAnimationFrame(animate)};animate();
-    return()=>{ro.disconnect();cancelAnimationFrame(frame.current);controls.dispose();renderer.dispose();geometry.dispose();root.removeChild(renderer.domElement)};
-  },[shape]);
-  return <div className={`voxelViewer ${compact?'compact':''}`} ref={host}>{label&&<div className="viewerBadge">REAL 3D VOXEL · DRAG · ZOOM · ROTATE</div>}</div>;
+    const key=new THREE.DirectionalLight('#fff8ed',4); key.position.set(11,20,14); key.castShadow=true; key.shadow.mapSize.set(1024,1024); scene.add(key);
+    const rim=new THREE.PointLight('#7755ff',42,60); rim.position.set(-12,8,-10); scene.add(rim); const fill=new THREE.PointLight('#32d8ff',20,45); fill.position.set(10,5,-8); scene.add(fill);
+    const floor=new THREE.Mesh(new THREE.CircleGeometry(14,64),new THREE.MeshStandardMaterial({color:'#0a0d15',roughness:.78,metalness:.12})); floor.rotation.x=-Math.PI/2; floor.position.y=-2.4; floor.receiveShadow=true; scene.add(floor);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(5.8,5.86,96),new THREE.MeshBasicMaterial({color:'#7657ff',transparent:true,opacity:.34,side:THREE.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=-2.38; scene.add(ring);
+    const gridHelper=new THREE.GridHelper(24,24,'#25203d','#151725'); gridHelper.position.y=-2.39; gridHelper.visible=grid; scene.add(gridHelper);
+    const group=new THREE.Group(); scene.add(group); const colors=PALETTES[shape]||PALETTES.car; const voxels=makeVoxels(shape); const geometry=new THREE.BoxGeometry(.72,.72,.72); const buckets=new Map();
+    voxels.forEach((v,index)=>{if(!buckets.has(v[3]))buckets.set(v[3],[]);buckets.get(v[3]).push({...v,index})});
+    const instanceMaps=[]; const materials=[];
+    buckets.forEach((arr,c)=>{
+      const material=new THREE.MeshStandardMaterial({color:colors[c],roughness:c===3?.32:.52,metalness:c===3?.18:.05,emissive:colors[c],emissiveIntensity:0}); materials.push(material);
+      const mesh=new THREE.InstancedMesh(geometry,material,arr.length); mesh.castShadow=true; mesh.receiveShadow=true; mesh.frustumCulled=false;
+      mesh.userData.voxels=arr; mesh.userData.basePositions=arr.map(v=>new THREE.Vector3(v[0]*.76,v[1]*.76-2.1,v[2]*.76));
+      const q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1); const m=new THREE.Matrix4();
+      arr.forEach((v,i)=>{m.compose(mesh.userData.basePositions[i],q,s);mesh.setMatrixAt(i,m)}); mesh.instanceMatrix.needsUpdate=true; group.add(mesh); instanceMaps.push(mesh);
+    });
+    const raycaster=new THREE.Raycaster(); const pointer=new THREE.Vector2(); const worldPoint=new THREE.Vector3(); let overCanvas=false;
+    const updatePointer=e=>{const r=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-r.left)/r.width)*2-1;pointer.y=-((e.clientY-r.top)/r.height)*2+1;overCanvas=true};
+    const pick=e=>{if(!interactive)return; updatePointer(e); raycaster.setFromCamera(pointer,camera); const hits=raycaster.intersectObjects(instanceMaps,false); const hit=hits[0]; if(!hit||hit.instanceId===undefined){setHovered(null);renderer.domElement.style.cursor='grab';return} const data=hit.object.userData.voxels[hit.instanceId]; setHovered({x:data[0],y:data[1],z:data[2],color:colors[data[3]],instance:hit.instanceId}); renderer.domElement.style.cursor='pointer';};
+    const click=e=>{if(!interactive)return; updatePointer(e); raycaster.setFromCamera(pointer,camera); const hit=raycaster.intersectObjects(instanceMaps,false)[0]; if(!hit||hit.instanceId===undefined){setSelected(null);return} const data=hit.object.userData.voxels[hit.instanceId]; setSelected({x:data[0],y:data[1],z:data[2],color:colors[data[3]]});};
+    renderer.domElement.addEventListener('pointermove',pick); renderer.domElement.addEventListener('pointerleave',()=>{overCanvas=false;setHovered(null);renderer.domElement.style.cursor='grab'}); renderer.domElement.addEventListener('click',click);
+    const resize=()=>{const r=root.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/Math.max(1,r.height));camera.updateProjectionMatrix()}; resize(); const ro=new ResizeObserver(resize); ro.observe(root);
+    const animate=()=>{controls.autoRotate=autoRotate;gridHelper.visible=grid; if(explode){group.position.y=0;group.children.forEach(mesh=>{const arr=mesh.userData.basePositions;const m=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);arr.forEach((p,i)=>{const dir=p.clone().sub(new THREE.Vector3(0,1.5,0)).normalize();const target=p.clone().add(dir.multiplyScalar(1.8));m.compose(target,q,s);mesh.setMatrixAt(i,m)});mesh.instanceMatrix.needsUpdate=true})} else {group.children.forEach(mesh=>{const arr=mesh.userData.basePositions;const m=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);arr.forEach((p,i)=>{m.compose(p,q,s);mesh.setMatrixAt(i,m)});mesh.instanceMatrix.needsUpdate=true})} if(hovered){const active=instanceMaps.find(m=>m.userData.voxels.some(v=>v[0]===hovered.x&&v[1]===hovered.y&&v[2]===hovered.z));materials.forEach(mat=>mat.emissiveIntensity=active&&active.material===mat?.18:0)} controls.update();renderer.render(scene,camera);frame.current=requestAnimationFrame(animate)}; animate();
+    return()=>{ro.disconnect();cancelAnimationFrame(frame.current);controls.dispose();renderer.domElement.removeEventListener('pointermove',pick);renderer.domElement.removeEventListener('click',click);renderer.dispose();geometry.dispose();materials.forEach(m=>m.dispose());root.removeChild(renderer.domElement)};
+  },[shape,interactive,autoRotate,explode,edges,grid,hovered]);
+
+  return <div className={`voxelViewer ${compact?'compact':''}`} ref={host}>
+    {label&&<div className="viewerBadge">REAL 3D VOXEL · DRAG · ZOOM · ROTATE</div>}
+    {interactive&&<div style={{position:'absolute',top:12,right:12,zIndex:5,display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+      <button type="button" onClick={()=>setAutoRotate(v=>!v)} style={toolStyle(autoRotate)}>{autoRotate?'⏸ Pause':'▶ Rotate'}</button>
+      <button type="button" onClick={()=>setExplode(v=>!v)} style={toolStyle(explode)}>{explode?'🧩 Assemble':'💥 Explode'}</button>
+      <button type="button" onClick={()=>setGrid(v=>!v)} style={toolStyle(grid)}>▦ Grid</button>
+      <button type="button" onClick={()=>setEdges(v=>!v)} style={toolStyle(edges)}>◇ Edges</button>
+    </div>}
+    {selected&&<div style={{position:'absolute',bottom:12,left:12,zIndex:5,padding:'10px 12px',borderRadius:12,background:'rgba(8,8,17,.88)',border:'1px solid rgba(118,89,255,.45)',color:'#fff',fontSize:12,fontFamily:'monospace',backdropFilter:'blur(10px)'}}>
+      <div style={{fontWeight:700,marginBottom:4}}>VOXEL SELECTED</div><div>X {selected.x} · Y {selected.y} · Z {selected.z}</div><div style={{marginTop:4}}>COLOR <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:selected.color,verticalAlign:'-1px',marginRight:5}} />{selected.color}</div>
+    </div>}
+    {hovered&&!selected&&<div style={{position:'absolute',bottom:12,left:12,zIndex:5,padding:'8px 10px',borderRadius:10,background:'rgba(8,8,17,.78)',color:'#cfd3ff',fontSize:11,fontFamily:'monospace',pointerEvents:'none'}}>VOXEL {hovered.x},{hovered.y},{hovered.z}</div>}
+  </div>;
 }
+
+function toolStyle(active){return {border:'1px solid rgba(255,255,255,.12)',background:active?'rgba(118,89,255,.82)':'rgba(8,8,17,.82)',color:'#fff',borderRadius:9,padding:'7px 9px',fontSize:11,fontWeight:700,cursor:'pointer',backdropFilter:'blur(8px)'}}
