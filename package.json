@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "chain:compile": "hardhat compile",
+    "chain:deploy:mainnet": "hardhat run scripts/deploy-mainnet.js --network mainnet",
     "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia"
   },
   "dependencies": {
