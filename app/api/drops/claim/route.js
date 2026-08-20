@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
+import { randomBytes } from 'node:crypto';
 import { authorizeClaim, seedMemoryDrop } from '../../../../lib/claimAuthority';
 import { createDrop } from '../../../../lib/dropEngine';
 import { createUniversalCollectible } from '../../../../lib/universalCollectible';
+import { buildClaimMetadataUri } from '../../../../lib/claimMint';
+import { getClaimVoucherConfig, issueClaimVoucher } from '../../../../lib/claimVoucher';
 
 const MAX_BODY_BYTES = 8 * 1024;
 const MAX_DROP_ID_LENGTH = 128;
 
-/** Demo drops are intentionally development-only. Production claims must be durable. */
 function ensureDemoDrop(dropId) {
   if (process.env.NODE_ENV === 'production') return;
 
@@ -25,7 +27,7 @@ function ensureDemoDrop(dropId) {
 export async function POST(request) {
   try {
     if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'Claim persistence is not configured. Production claims are fail-closed until Supabase service-role storage is available.', ownershipGranted: false }, { status: 503 });
+      return NextResponse.json({ error: 'Claim persistence is not configured. Production claims are fail-closed until durable storage is available.', ownershipGranted: false }, { status: 503 });
     }
 
     const contentLength = Number(request.headers.get('content-length') || 0);
@@ -50,14 +52,53 @@ export async function POST(request) {
     });
 
     if (!result.authorized) {
-      return NextResponse.json({ ...result, error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied' }, { status: result.reason === 'already_claimed' ? 409 : 403 });
+      return NextResponse.json(
+        { ...result, error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied' },
+        { status: result.reason === 'already_claimed' ? 409 : 403 }
+      );
     }
 
-    return NextResponse.json({
-      ...result,
-      ownershipGranted: false,
-      message: 'Server authorized a claim ticket. Sign a wallet transaction next. Ownership is only real after chain confirmation.',
-    }, { headers: { 'Cache-Control': 'no-store' } });
+    const voucherConfig = getClaimVoucherConfig();
+    const claimTicket = result.claimTicket;
+    const deadline = result.expiresAt
+      ? Math.floor(new Date(result.expiresAt).getTime() / 1000)
+      : Math.floor(Date.now() / 1000) + 10 * 60;
+    const uri = buildClaimMetadataUri({ collectible: result.collectible, claimTicket, dropId });
+
+    let voucher = null;
+    let signature = null;
+    let claimMode = 'ticket-only';
+
+    if (voucherConfig.privateKey && voucherConfig.contract && voucherConfig.royaltyReceiver) {
+      const issued = await issueClaimVoucher({
+        recipient: walletAddress,
+        dropId,
+        claimTicket,
+        uri,
+        royaltyBps: 500,
+        deadline,
+        nonce: BigInt(`0x${randomBytes(16).toString('hex')}`),
+      });
+      voucher = issued.voucher;
+      signature = issued.signature;
+      claimMode = 'signed-voucher';
+    }
+
+    return NextResponse.json(
+      {
+        ...result,
+        claimMode,
+        claimVoucher: voucher,
+        claimSignature: signature,
+        metadataUri: uri,
+        ownershipGranted: false,
+        message:
+          claimMode === 'signed-voucher'
+            ? 'Claim reserved and cryptographically authorized. Redeem the signed voucher on-chain; ownership is granted only after the transaction confirms.'
+            : 'Claim reserved. Configure the claim signer and NFT contract to enable cryptographically bound on-chain redemption.',
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
   } catch (error) {
     const message = error?.message || 'Claim failed';
     const status = message.includes('not found') ? 404
