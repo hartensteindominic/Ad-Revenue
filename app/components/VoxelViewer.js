@@ -14,6 +14,32 @@ const DEFAULT_RARITY = {
   fortress: 'Legendary', mushroom: 'Rare', satellite: 'Rare', totem: 'Epic',
 };
 
+// Different primitive geometry per material family → real visual style change, not recolor
+const MATERIAL_PRIMITIVE = {
+  chrome: 'box', metallic: 'box', gold: 'box', weathered: 'box',
+  glass: 'sphere', crystal: 'octa', ice: 'octa', holographic: 'octa',
+  organic: 'sphere', wood: 'box', stone: 'box', ceramic: 'sphere',
+  neon: 'box', lava: 'sphere', default: 'box',
+};
+
+const MATERIAL_SURFACE = {
+  chrome: { roughness: 0.12, metalness: 0.92 },
+  metallic: { roughness: 0.22, metalness: 0.85 },
+  gold: { roughness: 0.18, metalness: 0.95 },
+  glass: { roughness: 0.05, metalness: 0.05, transparent: true, opacity: 0.72 },
+  crystal: { roughness: 0.08, metalness: 0.35, transparent: true, opacity: 0.85 },
+  ice: { roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.8 },
+  holographic: { roughness: 0.15, metalness: 0.7, emissiveIntensity: 0.35 },
+  neon: { roughness: 0.2, metalness: 0.4, emissiveIntensity: 0.55 },
+  organic: { roughness: 0.75, metalness: 0.05 },
+  wood: { roughness: 0.85, metalness: 0.02 },
+  stone: { roughness: 0.9, metalness: 0.05 },
+  ceramic: { roughness: 0.35, metalness: 0.1 },
+  weathered: { roughness: 0.88, metalness: 0.25 },
+  lava: { roughness: 0.4, metalness: 0.15, emissiveIntensity: 0.45 },
+  default: { roughness: 0.4, metalness: 0.15 },
+};
+
 function hashSeed(value) {
   let hash = 2166136261;
   const text = String(value || 'showcase');
@@ -36,6 +62,12 @@ function assetSignature(seed) {
   return hashSeed(seed).toString(16).padStart(8, '0').toUpperCase();
 }
 
+function makePrimitive(kind, size) {
+  if (kind === 'sphere') return new THREE.SphereGeometry(size * 0.55, 10, 8);
+  if (kind === 'octa') return new THREE.OctahedronGeometry(size * 0.58, 0);
+  return new THREE.BoxGeometry(size, size, size);
+}
+
 export default function VoxelViewer({
   shape = 'car',
   compact = false,
@@ -54,8 +86,6 @@ export default function VoxelViewer({
   const explodeRef = useRef(false);
   const edgesRef = useRef(true);
   const controlsRef = useRef(null);
-  const selectedRef = useRef(null);
-  const hoveredRef = useRef(null);
 
   const [selected, setSelected] = useState(null);
   const [hovered, setHovered] = useState(null);
@@ -73,121 +103,93 @@ export default function VoxelViewer({
     const root = host.current;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#05060c');
-    scene.fog = new THREE.FogExp2('#05060c', compact ? 0.028 : 0.017);
+    scene.fog = new THREE.FogExp2('#05060c', compact ? 0.03 : 0.016);
 
-    // Wider FOV + closer camera for cards so models fill the frame
-    const fov = compact ? 42 : 34;
+    const fov = compact ? 44 : 32;
     const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.5 : 1.75));
     renderer.shadowMap.enabled = !compact;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    renderer.domElement.setAttribute('aria-label', 'Interactive Voxel Vault 3D asset viewer');
+    renderer.toneMappingExposure = 1.22;
     root.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.055;
-    controls.minDistance = compact ? 4 : 5;
-    controls.maxDistance = compact ? 28 : 48;
+    controls.minDistance = compact ? 3.5 : 4.5;
+    controls.maxDistance = compact ? 24 : 42;
     controls.enablePan = false;
     controls.autoRotate = autoRotateRef.current;
-    controls.autoRotateSpeed = 0.58;
+    controls.autoRotateSpeed = 0.55;
     controlsRef.current = controls;
 
-    scene.add(new THREE.HemisphereLight('#e8e4ff', '#070a14', compact ? 1.9 : 2.5));
-    const key = new THREE.DirectionalLight('#fff7ea', compact ? 3.2 : 4.5);
+    scene.add(new THREE.HemisphereLight('#e8e4ff', '#070a14', compact ? 2.0 : 2.6));
+    const key = new THREE.DirectionalLight('#fff7ea', compact ? 3.4 : 4.6);
     key.position.set(12, 20, 15);
     key.castShadow = !compact;
-    if (!compact) key.shadow.mapSize.set(1024, 1024);
     scene.add(key);
-
-    const violet = new THREE.PointLight('#7657ff', compact ? 32 : 55, 65, 2);
+    const violet = new THREE.PointLight('#7657ff', compact ? 34 : 58, 65, 2);
     violet.position.set(-13, 9, -12);
     scene.add(violet);
-    const cyan = new THREE.PointLight('#29d9ff', compact ? 16 : 28, 48, 2);
+    const cyan = new THREE.PointLight('#29d9ff', compact ? 16 : 30, 48, 2);
     cyan.position.set(12, 6, -8);
     scene.add(cyan);
-    const warm = new THREE.PointLight('#ff7bcb', compact ? 11 : 18, 42, 2);
-    warm.position.set(0, 4, 15);
-    scene.add(warm);
 
-    // Smaller platform so the model dominates the frame
-    const floorRadius = compact ? 10 : 14;
     const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(floorRadius, compact ? 40 : 64),
+      new THREE.CircleGeometry(compact ? 9 : 13, 48),
       new THREE.MeshStandardMaterial({ color: '#080b14', roughness: 0.7, metalness: 0.18 })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = -2.4;
-    floor.receiveShadow = !compact;
     scene.add(floor);
 
     const platform = new THREE.Mesh(
-      new THREE.CylinderGeometry(compact ? 4.2 : 5.8, compact ? 4.6 : 6.4, 0.24, compact ? 40 : 64),
+      new THREE.CylinderGeometry(compact ? 3.8 : 5.4, compact ? 4.2 : 5.9, 0.22, 48),
       new THREE.MeshStandardMaterial({ color: '#111329', roughness: 0.38, metalness: 0.5, emissive: '#17113a', emissiveIntensity: 0.28 })
     );
     platform.position.y = -2.27;
-    platform.receiveShadow = !compact;
     scene.add(platform);
 
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(compact ? 3.6 : 5.1, compact ? 3.75 : 5.25, compact ? 48 : 80),
-      new THREE.MeshBasicMaterial({ color: '#8667ff', transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+      new THREE.RingGeometry(compact ? 3.3 : 4.8, compact ? 3.45 : 4.95, 64),
+      new THREE.MeshBasicMaterial({ color: '#8667ff', transparent: true, opacity: 0.48, side: THREE.DoubleSide })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = -2.08;
     scene.add(ring);
 
-    const innerRing = new THREE.Mesh(
-      new THREE.RingGeometry(compact ? 2.7 : 3.9, compact ? 2.74 : 3.94, compact ? 48 : 80),
-      new THREE.MeshBasicMaterial({ color: '#28d9ff', transparent: true, opacity: 0.16, side: THREE.DoubleSide })
-    );
-    innerRing.rotation.x = -Math.PI / 2;
-    innerRing.position.y = -2.07;
-    scene.add(innerRing);
-
-    const gridHelper = new THREE.GridHelper(compact ? 18 : 24, 24, '#30285a', '#15192a');
-    gridHelper.position.y = -2.04;
-    gridHelper.material.transparent = true;
-    gridHelper.material.opacity = 0.32;
-    scene.add(gridHelper);
-
     const random = seededRandom(`${seed}:${shape}`);
-    const starCount = compact ? 100 : 300;
+    const starCount = compact ? 80 : 260;
     const stars = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i += 1) {
-      const radius = 14 + random() * 28;
+      const radius = 14 + random() * 26;
       const theta = random() * Math.PI * 2;
       starPositions[i * 3] = Math.cos(theta) * radius;
-      starPositions[i * 3 + 1] = -1 + random() * 22;
+      starPositions[i * 3 + 1] = -1 + random() * 20;
       starPositions[i * 3 + 2] = Math.sin(theta) * radius;
     }
     stars.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starField = new THREE.Points(stars, new THREE.PointsMaterial({ color: '#bcb1ff', size: compact ? 0.04 : 0.05, transparent: true, opacity: 0.45 }));
+    const starField = new THREE.Points(stars, new THREE.PointsMaterial({ color: '#bcb1ff', size: 0.045, transparent: true, opacity: 0.42 }));
     scene.add(starField);
 
     const group = new THREE.Group();
     scene.add(group);
-    const highlight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.82, 0.82, 0.82),
-      new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.78, wireframe: true })
-    );
-    highlight.visible = false;
-    scene.add(highlight);
 
-    // Slightly larger voxels so models read better in cards
-    const voxelSize = compact ? 0.82 : 0.76;
-    const geometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
-    const wireGeometry = geometry.clone();
-    const buckets = new Map();
     const asset = generateVoxelAsset({ shape, seed, rarity: effectiveRarity, material });
+    const matKey = asset.material || material || 'default';
     const colors = asset.palette;
     const voxels = asset.voxels;
+    const primitive = MATERIAL_PRIMITIVE[matKey] || 'box';
+    const surface = MATERIAL_SURFACE[matKey] || MATERIAL_SURFACE.default;
+    const voxelSize = compact ? 0.88 : 0.8;
+
+    const geometry = makePrimitive(primitive, voxelSize);
+    const wireGeometry = geometry.clone();
+    const buckets = new Map();
     voxels.forEach((voxel) => {
       if (!buckets.has(voxel[3])) buckets.set(voxel[3], []);
       buckets.get(voxel[3]).push(voxel);
@@ -199,18 +201,27 @@ export default function VoxelViewer({
     const box = new THREE.Box3();
 
     buckets.forEach((arr, colorIndex) => {
-      const mat = new THREE.MeshStandardMaterial({
+      const matOpts = {
         color: colors[colorIndex],
-        roughness: colorIndex === 3 ? 0.22 : 0.4,
-        metalness: colorIndex === 3 ? 0.35 : 0.1,
-      });
+        roughness: surface.roughness,
+        metalness: surface.metalness,
+      };
+      if (surface.transparent) {
+        matOpts.transparent = true;
+        matOpts.opacity = surface.opacity;
+      }
+      if (surface.emissiveIntensity) {
+        matOpts.emissive = colors[colorIndex];
+        matOpts.emissiveIntensity = surface.emissiveIntensity * (colorIndex === 4 ? 1 : 0.4);
+      }
+      const mat = new THREE.MeshStandardMaterial(matOpts);
       const mesh = new THREE.InstancedMesh(geometry, mat, arr.length);
       mesh.castShadow = !compact;
       mesh.receiveShadow = !compact;
       mesh.frustumCulled = false;
       mesh.userData.voxels = arr;
       mesh.userData.basePositions = arr.map((v) => {
-        const position = new THREE.Vector3(v[0] * voxelSize, v[1] * voxelSize - 2.05, v[2] * voxelSize);
+        const position = new THREE.Vector3(v[0] * voxelSize, v[1] * voxelSize - 2.0, v[2] * voxelSize);
         box.expandByPoint(position);
         return position;
       });
@@ -231,31 +242,33 @@ export default function VoxelViewer({
       meshes.push(mesh);
       resources.push(mat);
 
-      const wireMaterial = new THREE.MeshBasicMaterial({ color: '#c9bdff', transparent: true, opacity: 0.16, wireframe: true });
-      const wire = new THREE.InstancedMesh(wireGeometry, wireMaterial, arr.length);
-      wire.frustumCulled = false;
-      wire.userData.basePositions = mesh.userData.basePositions;
-      wire.userData.directions = mesh.userData.directions;
-      arr.forEach((_, index) => {
-        matrix.compose(mesh.userData.basePositions[index], quaternion, scale);
-        wire.setMatrixAt(index, matrix);
-      });
-      wire.instanceMatrix.needsUpdate = true;
-      group.add(wire);
-      wireMeshes.push(wire);
-      resources.push(wireMaterial);
+      if (primitive === 'box') {
+        const wireMaterial = new THREE.MeshBasicMaterial({ color: '#c9bdff', transparent: true, opacity: 0.14, wireframe: true });
+        const wire = new THREE.InstancedMesh(wireGeometry, wireMaterial, arr.length);
+        wire.frustumCulled = false;
+        wire.userData.basePositions = mesh.userData.basePositions;
+        wire.userData.directions = mesh.userData.directions;
+        arr.forEach((_, index) => {
+          matrix.compose(mesh.userData.basePositions[index], quaternion, scale);
+          wire.setMatrixAt(index, matrix);
+        });
+        wire.instanceMatrix.needsUpdate = true;
+        group.add(wire);
+        wireMeshes.push(wire);
+        resources.push(wireMaterial);
+      }
     });
 
-    // Tighter framing so the model fills the card / modal
+    // Intelligent framing from bounding box — model owns the frame
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 3.2);
-    const distanceFactor = compact ? 1.15 : 1.35;
+    const maxDim = Math.max(size.x, size.y, size.z, 2.8);
+    const distanceFactor = compact ? 1.05 : 1.22;
     controls.target.copy(center);
     camera.position.copy(center).add(new THREE.Vector3(
-      maxDim * distanceFactor * 0.95,
-      maxDim * distanceFactor * 0.72,
-      maxDim * distanceFactor * 1.05
+      maxDim * distanceFactor * 0.9,
+      maxDim * distanceFactor * 0.65,
+      maxDim * distanceFactor * 1.0
     ));
     controls.update();
 
@@ -265,7 +278,6 @@ export default function VoxelViewer({
     let selectedHit = null;
     let explosionAmount = 0;
     let lastExplosion = -1;
-    let lastHighlightKey = '';
     let pulse = 0;
     let gltfScene = null;
     let gltfMixer = null;
@@ -276,9 +288,9 @@ export default function VoxelViewer({
       const objectSize = bounds.getSize(new THREE.Vector3());
       const objectCenter = bounds.getCenter(new THREE.Vector3());
       const dimension = Math.max(objectSize.x, objectSize.y, objectSize.z, 2);
-      const factor = compact ? 1.2 : 1.4;
+      const factor = compact ? 1.1 : 1.28;
       controls.target.copy(objectCenter);
-      camera.position.copy(objectCenter).add(new THREE.Vector3(dimension * factor * 0.95, dimension * factor * 0.7, dimension * factor * 1.05));
+      camera.position.copy(objectCenter).add(new THREE.Vector3(dimension * factor * 0.9, dimension * factor * 0.65, dimension * factor * 1.0));
       controls.update();
     };
 
@@ -317,30 +329,15 @@ export default function VoxelViewer({
       return hit && hit.instanceId !== undefined ? hit : null;
     };
 
-    const updateHighlight = () => {
-      const hit = selectedHit || hoveredHit;
-      if (!hit) {
-        highlight.visible = false;
-        return;
-      }
-      const base = hit.mesh.userData.basePositions[hit.instanceId];
-      const direction = hit.mesh.userData.directions[hit.instanceId];
-      highlight.position.copy(base).addScaledVector(direction, explosionAmount * 1.9);
-      highlight.position.y += selectedHit === hit ? 0.18 : 0.1;
-      highlight.scale.setScalar(selectedHit === hit ? 1.12 + Math.sin(pulse * 2.5) * 0.03 : 1.02);
-      highlight.visible = true;
-    };
-
     const hover = (event) => {
       const hit = hitVoxel(event);
       hoveredHit = hit ? { mesh: hit.object, instanceId: hit.instanceId } : null;
-      hoveredRef.current = hoveredHit;
       if (!hit) {
         setHovered(null);
         renderer.domElement.style.cursor = 'grab';
       } else {
         const data = hit.object.userData.voxels[hit.instanceId];
-        setHovered({ x: data[0], y: data[1], z: data[2], color: colors[data[3]], instance: hit.instanceId });
+        setHovered({ x: data[0], y: data[1], z: data[2], color: colors[data[3]] });
         renderer.domElement.style.cursor = 'pointer';
       }
     };
@@ -349,19 +346,16 @@ export default function VoxelViewer({
       const hit = hitVoxel(event);
       if (!hit) {
         selectedHit = null;
-        selectedRef.current = null;
         setSelected(null);
         return;
       }
       const data = hit.object.userData.voxels[hit.instanceId];
       selectedHit = { mesh: hit.object, instanceId: hit.instanceId };
-      selectedRef.current = selectedHit;
-      setSelected({ x: data[0], y: data[1], z: data[2], color: colors[data[3]], instance: hit.instanceId });
+      setSelected({ x: data[0], y: data[1], z: data[2], color: colors[data[3]] });
     };
 
     const leave = () => {
       hoveredHit = null;
-      hoveredRef.current = null;
       setHovered(null);
       renderer.domElement.style.cursor = 'grab';
     };
@@ -390,46 +384,36 @@ export default function VoxelViewer({
       explosionAmount = THREE.MathUtils.lerp(explosionAmount, targetExplosion, 0.075);
       pulse += delta * 2.4;
       controls.autoRotate = autoRotateRef.current;
-      gridHelper.visible = gridRef.current && !assetUrl;
       wireMeshes.forEach((wire) => { wire.visible = edgesRef.current && group.visible; });
-      ring.material.opacity = 0.42 + Math.sin(pulse) * 0.08;
-      innerRing.material.opacity = 0.14 + Math.sin(pulse * 1.7) * 0.05;
+      ring.material.opacity = 0.4 + Math.sin(pulse) * 0.08;
       starField.rotation.y += delta * 0.008;
       platform.rotation.y += delta * 0.012;
       if (gltfMixer) gltfMixer.update(delta);
 
-      const animationChanged = Math.abs(explosionAmount - lastExplosion) > 0.0005;
-      const highlightKey = `${hoveredHit?.mesh?.id || 0}:${hoveredHit?.instanceId ?? -1}:${selectedHit?.mesh?.id || 0}:${selectedHit?.instanceId ?? -1}`;
-      if (animationChanged || highlightKey !== lastHighlightKey) {
+      if (Math.abs(explosionAmount - lastExplosion) > 0.0005 && group.visible) {
         const matrix = new THREE.Matrix4();
         const quaternion = new THREE.Quaternion();
         const scale = new THREE.Vector3(1, 1, 1);
-        if (group.visible) {
-          meshes.forEach((mesh) => {
-            mesh.userData.basePositions.forEach((base, index) => {
-              const direction = mesh.userData.directions[index];
-              const position = base.clone().addScaledVector(direction, explosionAmount * 1.9);
-              if (hoveredHit?.mesh === mesh && hoveredHit.instanceId === index) position.y += 0.1 + Math.sin(pulse * 3) * 0.025;
-              if (selectedHit?.mesh === mesh && selectedHit.instanceId === index) position.y += 0.18 + Math.sin(pulse * 2.5) * 0.04;
-              matrix.compose(position, quaternion, scale);
-              mesh.setMatrixAt(index, matrix);
-            });
-            mesh.instanceMatrix.needsUpdate = true;
+        meshes.forEach((mesh) => {
+          mesh.userData.basePositions.forEach((base, index) => {
+            const direction = mesh.userData.directions[index];
+            const position = base.clone().addScaledVector(direction, explosionAmount * 1.9);
+            if (hoveredHit?.mesh === mesh && hoveredHit.instanceId === index) position.y += 0.1;
+            if (selectedHit?.mesh === mesh && selectedHit.instanceId === index) position.y += 0.18;
+            matrix.compose(position, quaternion, scale);
+            mesh.setMatrixAt(index, matrix);
           });
-          wireMeshes.forEach((wire) => {
-            wire.userData.basePositions.forEach((base, index) => {
-              const position = base.clone().addScaledVector(wire.userData.directions[index], explosionAmount * 1.9);
-              if (hoveredHit?.mesh === wire && hoveredHit.instanceId === index) position.y += 0.1;
-              if (selectedHit?.mesh === wire && selectedHit.instanceId === index) position.y += 0.18;
-              matrix.compose(position, quaternion, scale);
-              wire.setMatrixAt(index, matrix);
-            });
-            wire.instanceMatrix.needsUpdate = true;
+          mesh.instanceMatrix.needsUpdate = true;
+        });
+        wireMeshes.forEach((wire) => {
+          wire.userData.basePositions.forEach((base, index) => {
+            const position = base.clone().addScaledVector(wire.userData.directions[index], explosionAmount * 1.9);
+            matrix.compose(position, quaternion, scale);
+            wire.setMatrixAt(index, matrix);
           });
-        }
-        updateHighlight();
+          wire.instanceMatrix.needsUpdate = true;
+        });
         lastExplosion = explosionAmount;
-        lastHighlightKey = highlightKey;
       }
 
       controls.update();
@@ -453,16 +437,13 @@ export default function VoxelViewer({
       renderer.dispose();
       geometry.dispose();
       wireGeometry.dispose();
-      resources.forEach((resource) => resource.dispose());
+      resources.forEach((r) => r.dispose());
       floor.geometry.dispose(); floor.material.dispose();
       platform.geometry.dispose(); platform.material.dispose();
       ring.geometry.dispose(); ring.material.dispose();
-      innerRing.geometry.dispose(); innerRing.material.dispose();
-      gridHelper.geometry.dispose(); gridHelper.material.dispose();
       stars.dispose(); starField.material.dispose();
-      highlight.geometry.dispose(); highlight.material.dispose();
       if (gltfScene) scene.remove(gltfScene);
-      root.removeChild(renderer.domElement);
+      if (root.contains(renderer.domElement)) root.removeChild(renderer.domElement);
       controlsRef.current = null;
     };
   }, [shape, compact, interactive, effectiveRarity, seed, assetUrl, material]);
@@ -471,25 +452,10 @@ export default function VoxelViewer({
     const next = !autoRotate;
     autoRotateRef.current = next;
     setAutoRotate(next);
-    if (showcaseMode && !next) setShowcaseMode(false);
   };
-  const setGridMode = () => { const next = !grid; gridRef.current = next; setGrid(next); };
   const setExploded = () => { const next = !explode; explodeRef.current = next; setExplode(next); };
   const setEdgesMode = () => { const next = !edges; edgesRef.current = next; setEdges(next); };
   const resetView = () => { explodeRef.current = false; setExplode(false); controlsRef.current?.reset(); };
-  const toggleShowcase = () => {
-    const next = !showcaseMode;
-    setShowcaseMode(next);
-    autoRotateRef.current = next;
-    setAutoRotate(next);
-    gridRef.current = false;
-    setGrid(false);
-    edgesRef.current = true;
-    setEdges(true);
-    explodeRef.current = false;
-    setExplode(false);
-    controlsRef.current?.reset();
-  };
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) await host.current?.requestFullscreen();
@@ -501,25 +467,23 @@ export default function VoxelViewer({
     <div className={`voxelViewer ${compact ? 'compact' : ''} ${showcaseMode ? 'showcaseMode' : ''}`} ref={host}>
       {label && (
         <>
-          <div className="viewerBadge">REAL 3D VOXEL · {effectiveRarity.toUpperCase()} · {seed.toUpperCase()}</div>
-          <div className="dnaBadge">DNA · DETERMINISTIC · {assetSignature(seed)}</div>
+          <div className="viewerBadge">3D ASSET · {effectiveRarity.toUpperCase()}</div>
+          <div className="dnaBadge">DNA · {assetSignature(seed)}</div>
         </>
       )}
       {interactive && (
         <div className="viewerTools">
           <button type="button" onClick={setRotation}>{autoRotate ? '⏸ Pause' : '▶ Rotate'}</button>
           <button type="button" onClick={setExploded}>{explode ? '🧩 Assemble' : '💥 Explode'}</button>
-          {!assetUrl && <button type="button" onClick={setGridMode}>▦ Grid</button>}
           <button type="button" onClick={setEdgesMode}>{edges ? '◇ Edges' : '◇ Clean'}</button>
           <button type="button" onClick={resetView}>⌂ Reset</button>
-          <button type="button" onClick={toggleShowcase}>{showcaseMode ? '✦ Exit Showcase' : '✦ Showcase'}</button>
-          <button type="button" onClick={toggleFullscreen}>{isFullscreen ? '⤢ Exit' : '⛶ Fullscreen'}</button>
+          <button type="button" onClick={toggleFullscreen}>{isFullscreen ? '⤢ Exit' : '⛶ Full'}</button>
         </div>
       )}
-      {showcaseMode && <div className="showcaseBadge">✦ SHOWCASE MODE · LIVING 3D ASSET · DRAG TO INSPECT</div>}
-      {selected && <div className="voxelInfo"><b>VOXEL SELECTED</b><span>X {selected.x} · Y {selected.y} · Z {selected.z}</span><span><i style={{ background: selected.color }} /> {selected.color}</span></div>}
-      {hovered && !selected && <div className="voxelHover">VOXEL {hovered.x},{hovered.y},{hovered.z}</div>}
-      <style jsx>{` .viewerTools{position:absolute;top:12px;right:12px;z-index:5;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:390px}.viewerTools button{border:1px solid rgba(255,255,255,.12);background:rgba(6,7,14,.78);color:#fff;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:750;cursor:pointer;backdrop-filter:blur(12px);transition:transform .16s ease,border-color .16s ease,background .16s ease}.viewerTools button:hover{border-color:#8a6cff;background:rgba(104,75,235,.52);transform:translateY(-1px)}.voxelInfo,.voxelHover,.dnaBadge,.showcaseBadge{position:absolute;z-index:5;padding:9px 11px;border-radius:11px;background:rgba(6,7,14,.84);border:1px solid rgba(118,89,255,.4);color:#dfe2ff;font-size:11px;font-family:monospace;backdrop-filter:blur(12px);display:flex;gap:8px;flex-wrap:wrap}.voxelInfo{bottom:12px;left:12px}.voxelInfo b{width:100%;color:#fff}.voxelInfo i{display:inline-block;width:9px;height:9px;border-radius:3px;vertical-align:-1px}.voxelHover{bottom:12px;left:12px;pointer-events:none}.dnaBadge{right:12px;bottom:12px;font-size:8px;letter-spacing:1px;color:#b5a8ff}.showcaseBadge{left:50%;top:12px;transform:translateX(-50%);font-size:8px;letter-spacing:1.4px;color:#e1dcff;border-color:rgba(154,124,255,.55);white-space:nowrap}.showcaseMode canvas{filter:saturate(1.12) contrast(1.05)}.compact .viewerTools{transform:scale(.86);transform-origin:top right}.compact .voxelInfo,.compact .voxelHover{font-size:9px;padding:6px 8px}@media(max-width:600px){.viewerTools{max-width:220px}.viewerTools button{font-size:10px;padding:7px 8px}.showcaseBadge{max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}.voxelInfo{max-width:calc(100% - 24px)}} `}</style>
+      {showcaseMode && <div className="showcaseBadge">✦ SHOWCASE · DRAG TO INSPECT</div>}
+      {selected && <div className="voxelInfo"><b>SELECTED</b><span>X {selected.x} · Y {selected.y} · Z {selected.z}</span></div>}
+      {hovered && !selected && <div className="voxelHover">{hovered.x},{hovered.y},{hovered.z}</div>}
+      <style jsx>{` .viewerTools{position:absolute;top:12px;right:12px;z-index:5;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:360px}.viewerTools button{border:1px solid rgba(255,255,255,.12);background:rgba(6,7,14,.78);color:#fff;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:750;cursor:pointer;backdrop-filter:blur(12px)}.viewerTools button:hover{border-color:#8a6cff;background:rgba(104,75,235,.52)}.voxelInfo,.voxelHover,.dnaBadge,.showcaseBadge{position:absolute;z-index:5;padding:9px 11px;border-radius:11px;background:rgba(6,7,14,.84);border:1px solid rgba(118,89,255,.4);color:#dfe2ff;font-size:11px;font-family:monospace;backdrop-filter:blur(12px)}.voxelInfo{bottom:12px;left:12px}.voxelHover{bottom:12px;left:12px}.dnaBadge{right:12px;bottom:12px;font-size:8px;letter-spacing:1px;color:#b5a8ff}.showcaseBadge{left:50%;top:12px;transform:translateX(-50%);font-size:8px;letter-spacing:1.4px;color:#e1dcff;white-space:nowrap}.showcaseMode canvas{filter:saturate(1.1) contrast(1.04)}.compact .viewerTools{transform:scale(.85);transform-origin:top right} `}</style>
     </div>
   );
 }
