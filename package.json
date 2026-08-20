@@ -1,7 +1,7 @@
 {
   "name": "voxel-vault",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.54.0",
     "ethers": "^6.15.0",
     "next": "^15.5.23",
+    "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "stripe": "^18.5.0",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/contracts": "^5.4.0",
     "dotenv": "^16.6.1",
     "typescript": "5.8.2",
