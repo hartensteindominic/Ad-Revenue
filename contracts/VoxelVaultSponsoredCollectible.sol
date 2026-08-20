@@ -89,7 +89,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         reserveWallet = reserveWallet_;
     }
 
-    /// @notice Sponsor deposits the entire campaign budget. The sponsor is always msg.sender.
     function createCampaign(
         address creator,
         uint256 editions,
@@ -117,7 +116,7 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
             sponsor: msg.sender,
             creator: creator,
             fundedWei: msg.value,
-            remainingWei: perEdition * editions,
+            remainingWei: msg.value,
             perEditionWei: perEdition,
             editionsTotal: editions,
             editionsMinted: 0,
@@ -136,7 +135,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         emit CampaignCreated(campaignId, msg.sender, editions, msg.value);
     }
 
-    /// @notice Owner activation is the moderation gate. Routine claiming is permissionless after activation.
     function activateCampaign(uint256 campaignId) external onlyOwner campaignExists(campaignId) {
         Campaign storage c = campaigns[campaignId];
         require(!c.active, "Already active");
@@ -158,17 +156,17 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         Campaign storage c = campaigns[campaignId];
         require(c.active, "Campaign inactive");
         require(block.timestamp >= c.startTime && block.timestamp <= c.endTime, "Campaign not live");
-        require(quantity > 0 && quantity <= MAX_RESERVATIONS_PER_WALLET, "Invalid quantity");
-        require(c.editionsMinted + c.editionsReserved + quantity <= c.editionsTotal, "Sold out");
+        require(quantity == 1, "One collectible per reservation");
+        require(c.editionsMinted + c.editionsReserved < c.editionsTotal, "Sold out");
         require(reservations[campaignId][nonce].wallet == address(0), "Nonce already used");
-        require(walletReservationCount[campaignId][msg.sender] + quantity <= MAX_RESERVATIONS_PER_WALLET, "Wallet reservation limit");
+        require(walletReservationCount[campaignId][msg.sender] < MAX_RESERVATIONS_PER_WALLET, "Wallet reservation limit");
 
         uint256 expiry = block.timestamp + RESERVATION_DURATION;
-        reservations[campaignId][nonce] = Reservation(msg.sender, quantity, expiry);
-        walletReservationCount[campaignId][msg.sender] += quantity;
-        c.editionsReserved += quantity;
+        reservations[campaignId][nonce] = Reservation(msg.sender, 1, expiry);
+        walletReservationCount[campaignId][msg.sender] += 1;
+        c.editionsReserved += 1;
 
-        emit ReservationMade(campaignId, nonce, msg.sender, quantity, expiry);
+        emit ReservationMade(campaignId, nonce, msg.sender, 1, expiry);
     }
 
     function expireReservation(uint256 campaignId, bytes32 nonce) external campaignExists(campaignId) {
@@ -179,7 +177,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         emit ReservationExpired(campaignId, nonce);
     }
 
-    /// @notice Mints the sponsor-funded ad collectible. The collector pays no mint price.
     function mintSponsored(
         uint256 campaignId,
         bytes32 reservationNonce,
@@ -193,7 +190,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         Reservation memory r = reservations[campaignId][reservationNonce];
         require(r.wallet == msg.sender, "Reservation not owned");
         require(block.timestamp <= r.expiry, "Reservation expired");
-        require(r.quantity == 1, "Mint one collectible per reservation");
 
         _removeReservation(campaignId, reservationNonce);
         require(c.remainingWei >= c.perEditionWei, "Campaign budget exhausted");
@@ -227,7 +223,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         }
     }
 
-    /// @notice Returns unallocated sponsor budget after the campaign is complete or expired.
     function withdrawCampaignSurplus(uint256 campaignId)
         external
         nonReentrant
@@ -261,9 +256,7 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         require(ok, "Payment failed");
     }
 
-    function setBaseURI(string calldata newBaseURI) external onlyOwner {
-        baseTokenURI = newBaseURI;
-    }
+    function setBaseURI(string calldata newBaseURI) external onlyOwner { baseTokenURI = newBaseURI; }
 
     function setPlatformWallet(address payable wallet) external onlyOwner {
         require(wallet != address(0), "Invalid platform wallet");
