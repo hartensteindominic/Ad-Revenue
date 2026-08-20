@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createUniversalCollectible, validateUniversalCollectible, collectibleFingerprint } from '../../lib/universalCollectible';
-import { createDrop, isDropDiscoverable, isWithinDropZone, prepareClaim } from '../../lib/dropEngine';
+import { createDrop, isDropDiscoverable, isWithinDropZone } from '../../lib/dropEngine';
 
 const SAMPLE_DROPS = [
   {
@@ -18,11 +18,7 @@ const SAMPLE_DROPS = [
     startAt: new Date(Date.now() - 86400000).toISOString(),
     endAt: new Date(Date.now() + 7 * 86400000).toISOString(),
     collectibleInput: {
-      name: 'Field Camera',
-      family: 'technology',
-      subtype: 'camera',
-      rarity: 'rare',
-      seed: 'camera-001',
+      name: 'Field Camera', family: 'technology', subtype: 'camera', rarity: 'rare', seed: 'camera-001',
       realityBasis: { inspiredBy: 'vintage field camera', plausibility: 'realistic' },
     },
   },
@@ -38,11 +34,7 @@ const SAMPLE_DROPS = [
     startAt: new Date(Date.now() - 3600000).toISOString(),
     endAt: new Date(Date.now() + 3 * 86400000).toISOString(),
     collectibleInput: {
-      name: 'Survey Robot',
-      family: 'technology',
-      subtype: 'robot',
-      rarity: 'epic',
-      seed: 'robot-001',
+      name: 'Survey Robot', family: 'technology', subtype: 'robot', rarity: 'epic', seed: 'robot-001',
       realityBasis: { inspiredBy: 'industrial inspection robot', plausibility: 'realistic' },
     },
   },
@@ -53,16 +45,12 @@ const SAMPLE_DROPS = [
     quantity: 40,
     publicZoneId: 'venice-boardwalk',
     radiusMeters: 150,
-    lat: 33.9850,
+    lat: 33.985,
     lng: -118.4695,
     startAt: new Date(Date.now() - 7200000).toISOString(),
     endAt: new Date(Date.now() + 5 * 86400000).toISOString(),
     collectibleInput: {
-      name: 'Street Deck',
-      family: 'sports',
-      subtype: 'skateboard',
-      rarity: 'uncommon',
-      seed: 'board-001',
+      name: 'Street Deck', family: 'sports', subtype: 'skateboard', rarity: 'uncommon', seed: 'board-001',
       realityBasis: { inspiredBy: 'modern skateboard', plausibility: 'realistic' },
     },
   },
@@ -73,31 +61,20 @@ function haversineMeters(lat1, lng1, lat2, lng2) {
   const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
 function loadPlacedDrops() {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem('voxel-vault-placed-drops');
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(window.localStorage.getItem('voxel-vault-placed-drops') || '[]');
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 function savePlacedDrops(list) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem('voxel-vault-placed-drops', JSON.stringify(list.slice(-20)));
-  } catch {
-    // ignore quota / private mode
-  }
+  try { window.localStorage.setItem('voxel-vault-placed-drops', JSON.stringify(list.slice(-20))); } catch { /* ignore */ }
 }
 
 export default function DiscoveryExperience() {
@@ -107,53 +84,28 @@ export default function DiscoveryExperience() {
   const [selectedDropId, setSelectedDropId] = useState(null);
   const [wallet, setWallet] = useState('');
   const [claiming, setClaiming] = useState(false);
+  const [lastTicket, setLastTicket] = useState('');
   const [placedDrops, setPlacedDrops] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [showPlaceForm, setShowPlaceForm] = useState(false);
-  const [placeForm, setPlaceForm] = useState({
-    name: '',
-    radiusMeters: 80,
-    quantity: 10,
-    family: 'technology',
-    subtype: 'object',
-  });
+  const [placeForm, setPlaceForm] = useState({ name: '', radiusMeters: 80, quantity: 10, family: 'technology', subtype: 'object' });
 
-  useEffect(() => {
-    setPlacedDrops(loadPlacedDrops());
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (hydrated) savePlacedDrops(placedDrops);
-  }, [placedDrops, hydrated]);
+  useEffect(() => { setPlacedDrops(loadPlacedDrops()); setHydrated(true); }, []);
+  useEffect(() => { if (hydrated) savePlacedDrops(placedDrops); }, [placedDrops, hydrated]);
 
   const drops = useMemo(() => {
     const built = SAMPLE_DROPS.map((raw) => {
       const drop = createDrop({
-        id: raw.id,
-        name: raw.name,
-        status: raw.status,
-        quantity: raw.quantity,
-        publicZoneId: raw.publicZoneId,
-        radiusMeters: raw.radiusMeters,
-        startAt: raw.startAt,
-        endAt: raw.endAt,
+        id: raw.id, name: raw.name, status: raw.status, quantity: raw.quantity,
+        publicZoneId: raw.publicZoneId, radiusMeters: raw.radiusMeters, startAt: raw.startAt, endAt: raw.endAt,
       });
       const collectible = createUniversalCollectible(raw.collectibleInput);
-      return {
-        ...drop,
-        lat: raw.lat,
-        lng: raw.lng,
-        collectible,
-        fingerprint: collectibleFingerprint(collectible),
-        validation: validateUniversalCollectible(collectible),
-      };
+      return { ...drop, lat: raw.lat, lng: raw.lng, collectible, fingerprint: collectibleFingerprint(collectible), validation: validateUniversalCollectible(collectible) };
     });
     return [...built, ...placedDrops];
   }, [placedDrops]);
 
   const selected = drops.find((d) => d.id === selectedDropId) || null;
-
   const distanceToSelected = useMemo(() => {
     if (!position || !selected) return null;
     return haversineMeters(position.lat, position.lng, selected.lat, selected.lng);
@@ -162,10 +114,7 @@ export default function DiscoveryExperience() {
   const nearby = useMemo(() => {
     if (!position) return [];
     return drops
-      .map((d) => ({
-        ...d,
-        distance: haversineMeters(position.lat, position.lng, d.lat, d.lng),
-      }))
+      .map((d) => ({ ...d, distance: haversineMeters(position.lat, position.lng, d.lat, d.lng) }))
       .filter((d) => d.distance <= (d.discovery?.radiusMeters || 100) * 4)
       .sort((a, b) => a.distance - b.distance);
   }, [position, drops]);
@@ -182,11 +131,7 @@ export default function DiscoveryExperience() {
         setStatus('Location unlocked. Public drops near you will light up.');
       },
       (err) => {
-        const msg =
-          err?.code === 1
-            ? 'Location permission denied. You can still browse sample drops.'
-            : err?.message || 'Could not read location.';
-        setGeoError(msg);
+        setGeoError(err?.code === 1 ? 'Location permission denied. You can still browse sample drops.' : (err?.message || 'Could not read location.'));
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
     );
@@ -199,9 +144,7 @@ export default function DiscoveryExperience() {
 
   async function connectWallet() {
     try {
-      if (typeof window === 'undefined' || !window.ethereum) {
-        throw new Error('Wallet not detected. Use MetaMask or a compatible wallet.');
-      }
+      if (typeof window === 'undefined' || !window.ethereum) throw new Error('Wallet not detected. Use MetaMask or a compatible wallet.');
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       setWallet(accounts?.[0] || '');
       setStatus(accounts?.[0] ? `Wallet connected ${accounts[0].slice(0, 6)}…${accounts[0].slice(-4)}` : 'Connection cancelled');
@@ -211,36 +154,34 @@ export default function DiscoveryExperience() {
   }
 
   async function handleClaim() {
-    if (!selected) {
-      setStatus('Select a drop first.');
-      return;
-    }
-    if (!wallet) {
-      setStatus('Connect a wallet before claiming.');
-      return;
-    }
+    if (!selected) { setStatus('Select a drop first.'); return; }
+    if (!wallet) { setStatus('Connect a wallet before claiming.'); return; }
     setClaiming(true);
+    setLastTicket('');
     try {
-      const distance = distanceToSelected ?? 999999;
-      const intent = prepareClaim({
-        drop: selected,
-        collectible: selected.collectible,
-        walletAddress: wallet,
-        distanceMeters: distance,
+      const distance = distanceToSelected ?? null;
+      const response = await fetch('/api/drops/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dropId: selected.id,
+          walletAddress: wallet,
+          distanceMeters: distance,
+          requireInZone: false, // UX distance is not proof; server still authorizes ticket + replay rules
+        }),
       });
-      // Persist local claim intents for demo continuity (not ownership).
-      try {
-        const key = 'voxel-vault-claim-intents';
-        const existing = JSON.parse(window.localStorage.getItem(key) || '[]');
-        existing.push({ ...intent, localOnly: true });
-        window.localStorage.setItem(key, JSON.stringify(existing.slice(-30)));
-      } catch {
-        // ignore
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `Claim denied (${response.status})`);
       }
+      setLastTicket(data.claimTicket || '');
       setStatus(
-        `Claim intent created for ${selected.collectible.name}. ` +
-          `Server validation + signed wallet transaction are still required before ownership is real. ` +
-          `(Client distance: ${Math.round(distance)} m — UX only)`
+        data.ownershipGranted
+          ? 'Unexpected: server reported ownership — verify on-chain before trusting this.'
+          : `Server authorized claim ticket for ${selected.collectible?.name || selected.name}. ` +
+            `Ticket ${String(data.claimTicket || '').slice(0, 18)}… ` +
+            `Ownership is NOT granted until a wallet transaction confirms on-chain. ` +
+            `(storage: ${data.storage || 'server'})`
       );
     } catch (e) {
       setStatus(e?.message || 'Claim failed');
@@ -249,49 +190,57 @@ export default function DiscoveryExperience() {
     }
   }
 
-  function placeDrop(e) {
+  async function placeDrop(e) {
     e.preventDefault();
     if (!position) {
       setStatus('Enable location so the drop can be anchored to a public zone near you.');
       return;
     }
     try {
-      const id = `drop-local-${Date.now()}`;
-      const drop = createDrop({
-        id,
+      const payload = {
         name: placeForm.name || 'Local Voxel Drop',
         status: 'active',
         quantity: Number(placeForm.quantity) || 10,
         publicZoneId: 'user-public-zone',
         radiusMeters: Number(placeForm.radiusMeters) || 80,
-        startAt: new Date().toISOString(),
-        endAt: new Date(Date.now() + 2 * 86400000).toISOString(),
-      });
-      const collectible = createUniversalCollectible({
-        name: placeForm.name || 'Local Collectible',
-        family: placeForm.family,
-        subtype: placeForm.subtype || 'object',
-        rarity: 'common',
-        seed: id,
-        realityBasis: { inspiredBy: 'user-placed object', plausibility: 'realistic' },
-      });
-      const validation = validateUniversalCollectible(collectible);
-      if (!validation.valid) {
-        setStatus(`Collectible invalid: ${validation.errors.join(', ')}`);
-        return;
-      }
-      const entry = {
-        ...drop,
         lat: position.lat + (Math.random() - 0.5) * 0.004,
         lng: position.lng + (Math.random() - 0.5) * 0.004,
+        family: placeForm.family,
+        subtype: placeForm.subtype || 'object',
+      };
+      const response = await fetch('/api/drops', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Could not place drop');
+
+      const drop = data.drop;
+      const collectible = drop.collectible || createUniversalCollectible({
+        name: payload.name, family: payload.family, subtype: payload.subtype, rarity: 'common', seed: drop.id,
+      });
+      const entry = {
+        ...createDrop({
+          id: drop.id,
+          name: drop.name,
+          status: drop.status || 'active',
+          quantity: drop.quantity,
+          publicZoneId: drop.discovery?.publicZoneId,
+          radiusMeters: drop.discovery?.radiusMeters,
+          startAt: drop.schedule?.startAt,
+          endAt: drop.schedule?.endAt,
+        }),
+        lat: drop.lat,
+        lng: drop.lng,
         collectible,
         fingerprint: collectibleFingerprint(collectible),
-        validation,
+        validation: validateUniversalCollectible(collectible),
       };
       setPlacedDrops((prev) => [...prev, entry]);
-      setSelectedDropId(id);
+      setSelectedDropId(drop.id);
       setShowPlaceForm(false);
-      setStatus(`Drop “${drop.name}” placed in a public zone near you. Others on this device can discover it.`);
+      setStatus(`Drop “${drop.name}” registered with server. Others can discover it when storage is shared (Supabase).`);
     } catch (err) {
       setStatus(err?.message || 'Could not place drop');
     }
@@ -322,12 +271,11 @@ export default function DiscoveryExperience() {
 
       <header className="discHero">
         <div>
-          <div className="eyebrow"><i /> REAL-WORLD DROPS · POKÉMON GO FOR 3D OBJECTS</div>
+          <div className="eyebrow"><i /> REAL-WORLD DROPS · SERVER-AUTHORIZED CLAIMS</div>
           <h1>Find them <em>out there.</em></h1>
           <p>
-            Public Voxel Drops appear in real places. Walk into the zone, inspect the 3D object,
-            claim it with your wallet, then trade or keep it in your Vault.
-            Location is used only for discovery UX — ownership always requires server + chain confirmation.
+            Public Voxel Drops appear in real places. Claim hits the server for authorization and replay protection.
+            Location is UX only. Ownership requires a later wallet transaction and chain confirmation.
           </p>
           <div className="heroActions">
             <button type="button" className="primary" onClick={requestLocation}>Enable location</button>
@@ -342,16 +290,8 @@ export default function DiscoveryExperience() {
               const { x, y } = project(d.lat, d.lng);
               const active = selectedDropId === d.id;
               return (
-                <button
-                  key={d.id}
-                  type="button"
-                  className={`pin ${active ? 'active' : ''} ${isDropDiscoverable(d) ? 'live' : ''}`}
-                  style={{ left: `${x}%`, top: `${y}%` }}
-                  onClick={() => setSelectedDropId(d.id)}
-                  title={d.name}
-                >
-                  <span className="pinDot" />
-                  <span className="pinLabel">{d.collectible?.name || d.name}</span>
+                <button key={d.id} type="button" className={`pin ${active ? 'active' : ''} ${isDropDiscoverable(d) ? 'live' : ''}`} style={{ left: `${x}%`, top: `${y}%` }} onClick={() => setSelectedDropId(d.id)} title={d.name}>
+                  <span className="pinDot" /><span className="pinLabel">{d.collectible?.name || d.name}</span>
                 </button>
               );
             })}
@@ -362,9 +302,7 @@ export default function DiscoveryExperience() {
             <div className="mapGrid" />
           </div>
           <div className="mapMeta">
-            {position
-              ? `Your position · ${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}`
-              : 'Location off — enable to see nearby drops'}
+            {position ? `Your position · ${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}` : 'Location off — enable to see nearby drops'}
             {geoError && <span className="err"> · {geoError}</span>}
           </div>
         </div>
@@ -373,7 +311,7 @@ export default function DiscoveryExperience() {
       {showPlaceForm && (
         <form className="placeForm" onSubmit={placeDrop}>
           <h3>Place a public drop</h3>
-          <p>Anchors a temporary public zone near your current location. Others can discover and claim.</p>
+          <p>Registers the drop with the server API (Supabase when configured, otherwise ephemeral memory).</p>
           <div className="fields">
             <label>Name<input value={placeForm.name} onChange={(e) => setPlaceForm({ ...placeForm, name: e.target.value })} placeholder="Neon Compass" required /></label>
             <label>Family
@@ -394,10 +332,7 @@ export default function DiscoveryExperience() {
 
       <section className="nearbySection">
         <div className="sectionHead">
-          <div>
-            <div className="eyebrow">NEAR YOU</div>
-            <h2>Drops in range</h2>
-          </div>
+          <div><div className="eyebrow">NEAR YOU</div><h2>Drops in range</h2></div>
           <p>{nearby.length ? `${nearby.length} public zone(s) within extended range` : 'Walk closer or enable location — sample drops still listed below'}</p>
         </div>
         <div className="dropList">
@@ -405,14 +340,7 @@ export default function DiscoveryExperience() {
             const dist = d.distance ?? (position ? haversineMeters(position.lat, position.lng, d.lat, d.lng) : null);
             const inZone = dist != null && isWithinDropZone(d, dist);
             return (
-              <article
-                key={d.id}
-                className={`dropCard ${selectedDropId === d.id ? 'selected' : ''} ${inZone ? 'inZone' : ''}`}
-                onClick={() => setSelectedDropId(d.id)}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedDropId(d.id)}
-                role="button"
-                tabIndex={0}
-              >
+              <article key={d.id} className={`dropCard ${selectedDropId === d.id ? 'selected' : ''} ${inZone ? 'inZone' : ''}`} onClick={() => setSelectedDropId(d.id)} onKeyDown={(e) => e.key === 'Enter' && setSelectedDropId(d.id)} role="button" tabIndex={0}>
                 <div className="dropTop">
                   <span className="liveDot">{isDropDiscoverable(d) ? '● LIVE' : '○ OFF'}</span>
                   <strong>{d.collectible?.name || d.name}</strong>
@@ -437,10 +365,7 @@ export default function DiscoveryExperience() {
             <div>
               <div className="eyebrow">VOXEL DROP · {(selected.collectible?.rarity || 'common').toUpperCase()}</div>
               <h2>{selected.collectible?.name}</h2>
-              <p>
-                {selected.collectible?.realityBasis?.inspiredBy || selected.name}.
-                Family: {selected.collectible?.family} · Fingerprint: <code>{selected.fingerprint?.slice(0, 12)}…</code>
-              </p>
+              <p>{selected.collectible?.realityBasis?.inspiredBy || selected.name}. Family: {selected.collectible?.family}</p>
               <div className="stats">
                 <span>Zone radius <b>{selected.discovery?.radiusMeters} m</b></span>
                 <span>Your distance <b>{distanceToSelected != null ? `${Math.round(distanceToSelected)} m` : 'unknown'}</b></span>
@@ -449,15 +374,13 @@ export default function DiscoveryExperience() {
               </div>
               <div className="actions">
                 <button type="button" className="primary" onClick={handleClaim} disabled={claiming || !wallet}>
-                  {claiming ? 'Creating claim…' : wallet ? 'Claim this object' : 'Connect wallet to claim'}
+                  {claiming ? 'Authorizing…' : wallet ? 'Request claim ticket' : 'Connect wallet to claim'}
                 </button>
-                <Link className="secondary" href={`/trade?mode=create&object=${encodeURIComponent(selected.collectible?.name || '')}`}>
-                  Offer to trade →
-                </Link>
+                <Link className="secondary" href={`/trade?mode=create&object=${encodeURIComponent(selected.collectible?.name || '')}`}>Offer to trade →</Link>
               </div>
               <p className="securityNote">
-                Claim creates a <strong>claim intent</strong> only. Server validation, replay protection,
-                and a signed wallet transaction are still required before ownership is real.
+                This calls <strong>/api/drops/claim</strong>. A successful response is a <strong>claim ticket</strong>, not ownership.
+                {lastTicket ? ` Last ticket: ${lastTicket.slice(0, 22)}…` : ''}
               </p>
             </div>
           </div>
@@ -465,10 +388,7 @@ export default function DiscoveryExperience() {
       )}
 
       {status && (
-        <div className="statusBar">
-          <span>●</span>{status}
-          <button type="button" onClick={() => setStatus('')}>×</button>
-        </div>
+        <div className="statusBar"><span>●</span>{status}<button type="button" onClick={() => setStatus('')}>×</button></div>
       )}
 
       <style jsx>{`
@@ -490,8 +410,7 @@ export default function DiscoveryExperience() {
         .mapGrid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
         .pin{position:absolute;transform:translate(-50%,-50%);background:transparent;border:0;cursor:pointer;z-index:2}
         .pinDot{display:block;width:14px;height:14px;border-radius:50%;background:#9b7cff;box-shadow:0 0 18px #9b7cff;border:2px solid #fff}
-        .pin.live .pinDot{background:#55e6ff;box-shadow:0 0 18px #55e6ff}
-        .pin.active .pinDot{transform:scale(1.35);background:#fff}
+        .pin.live .pinDot{background:#55e6ff;box-shadow:0 0 18px #55e6ff}.pin.active .pinDot{transform:scale(1.35);background:#fff}
         .pinLabel{position:absolute;left:50%;top:18px;transform:translateX(-50%);white-space:nowrap;font-size:9px;font-weight:800;letter-spacing:.06em;color:#d9dceb;background:rgba(5,6,11,.8);padding:3px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.1)}
         .you{position:absolute;transform:translate(-50%,-50%);z-index:3}.you span{display:block;width:16px;height:16px;border-radius:50%;background:#55e6ff;border:3px solid #fff;box-shadow:0 0 22px #55e6ff}
         .mapMeta{padding:10px 14px;font-size:11px;color:#7f879b;border-top:1px solid rgba(255,255,255,.07)}.mapMeta .err{color:#ff8f8f}
