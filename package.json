@@ -1,7 +1,7 @@
 {
   "name": "voxel-vault",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.54.0",
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "ethers": "^6.15.0",
     "next": "^15.5.23",
     "react": "^19.1.0",
