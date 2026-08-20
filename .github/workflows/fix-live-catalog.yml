@@ -1,4 +1,4 @@
-name: Remove demo NFT catalog
+name: Fix Voxel Vault live catalog
 
 on:
   push:
@@ -14,7 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Remove hard-coded demo NFTs
+        with:
+          ref: feature/100k-nft-engine
+          fetch-depth: 0
+
+      - name: Patch catalog to use published assets only
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -23,42 +27,59 @@ jobs:
           p = Path('app/page.js')
           s = p.read_text()
 
-          s = re.sub(r"const collections = \[.*?\];\n\n", "", s, count=1, flags=re.S)
+          # Remove every hard-coded collection definition, regardless of its exact contents.
+          s, count = re.subn(r"const collections = \[.*?\];\s*\n\s*", "", s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Hard-coded collections block not found')
 
-          old = "  useEffect(()=>{supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener.subscription.unsubscribe()},[]);"
-          new = "  useEffect(()=>{ if(!supabaseBrowser){return} supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency,metadata').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener?.subscription?.unsubscribe()},[]);"
-          if old not in s: raise SystemExit('expected Supabase effect not found')
-          s = s.replace(old, new)
+          # Supabase is optional at build time. Only query it when configured.
+          s = s.replace(
+              "useEffect(()=>{supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener.subscription.unsubscribe()},[]);",
+              "useEffect(()=>{if(!supabaseBrowser)return; supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency,metadata').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener?.subscription?.unsubscribe()},[]);"
+          )
 
-          old = "  async function signIn(){setLoading(true);setMessage('');const {error}=await supabaseBrowser.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});setLoading(false);setMessage(error?error.message:'Check your email for the VoxelVault sign-in link.')}"
-          new = "  async function signIn(){if(!supabaseBrowser){setMessage('Sign-in is temporarily unavailable. Configure Supabase in Vercel first.');return}setLoading(true);setMessage('');const {error}=await supabaseBrowser.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});setLoading(false);setMessage(error?error.message:'Check your email for the VoxelVault sign-in link.')}"
-          if old not in s: raise SystemExit('expected signIn not found')
-          s = s.replace(old, new)
+          # Never fabricate rarity/type/shape from array position. Prefer published metadata.
+          s = re.sub(
+              r"const live=useMemo\(\(\)=>assets\.map\(.*?\),\[assets\]\);\s*\n\s*const listings=\[\.\.\.live,\.\.\.collections\]\.filter\(.*?\);",
+              "const live=useMemo(()=>assets.map(a=>{const m=a.metadata||{};return {...a,creator:m.creator||'VoxelVault Creator',price:(a.price_cents||0)/100,rarity:m.rarity||'Unranked',type:m.type||'3D Asset',shape:m.shape||'cube',note:m.note||m.description||'Published 3D asset'};}),[assets]);\n  const listings=live.filter(n=>filter==='All'||n.type===filter||n.rarity===filter);\n  const featured=live[0]||null;",
+              s,
+              count=1,
+              flags=re.S
+          )
 
-          old = "  async function buy(assetId){if(String(assetId).startsWith('demo-')){setMessage('This is a showcase listing. Published assets use the live checkout flow.');return}if(!user){setMessage('Sign in first, then collect this asset.');return}setLoading(true);const {data:{session}}=await supabaseBrowser.auth.getSession();"
-          new = "  async function buy(assetId){if(!supabaseBrowser){setMessage('Marketplace checkout is not configured yet.');return}if(!user){setMessage('Sign in first, then collect this asset.');return}setLoading(true);const {data:{session}}=await supabaseBrowser.auth.getSession();"
-          if old not in s: raise SystemExit('expected buy not found')
-          s = s.replace(old, new)
+          # Never reintroduce the old demo catalog in the lab.
+          s = s.replace('{collections.slice(0,6).map(n=>', '{live.slice(0,6).map(n=>')
 
-          old = "  const live=useMemo(()=>assets.map((a,i)=>({...a,creator:'VoxelVault Creator',price:(a.price_cents||0)/100,rarity:['Rare','Epic','Legendary'][i%3],type:['World','Character','Vehicle'][i%3],shape:['villa','robot','car'][i%3],note:'Published 3D asset'})),[assets]);\n  const listings=[...live,...collections].filter(n=>filter==='All'||n.type===filter||n.rarity===filter);"
-          new = "  const live=useMemo(()=>assets.map((a,i)=>{const m=a.metadata||{};return {...a,creator:m.creator||'VoxelVault Creator',price:(a.price_cents||0)/100,rarity:m.rarity||'Unranked',type:m.type||'3D Asset',shape:m.shape||['villa','robot','car'][i%3],note:m.note||'Published 3D asset'};}),[assets]);\n  const listings=live.filter(n=>filter==='All'||n.type===filter||n.rarity===filter);\n  const featured=live[0]||null;"
-          if old not in s: raise SystemExit('expected catalog mapping not found')
-          s = s.replace(old, new)
+          # Make the featured model dynamic instead of Marble Guardian.
+          s = s.replace('<VoxelViewer shape="statue"/><div className="modelCaption"><strong>Marble Guardian</strong><span>3,640 BLOCKS · LEGENDARY · 1/1</span></div>', '<VoxelViewer shape={featured?.shape||"cube"}/><div className="modelCaption"><strong>{featured?.title||"Your next voxel NFT"}</strong><span>{featured?`${featured.rarity} · ${featured.type} · LIVE ASSET`:"Publish a 3D asset to feature it here."}</span></div>')
 
-          s = s.replace("{collections.slice(0,6).map(n=>", "{live.slice(0,6).map(n=>")
-          s = s.replace("<strong>Marble Guardian</strong><span>3,640 BLOCKS · LEGENDARY · 1/1</span>", "<strong>{featured?.title||'Your next voxel'}</strong><span>{featured?`${featured.rarity} · ${featured.type} · LIVE ASSET`:'Publish your first 3D asset to feature it here.'}</span>")
-          s = s.replace("<VoxelViewer shape=\"statue\"/><div className=\"modelCaption\">", "<VoxelViewer shape={featured?.shape||'statue'}/><div className=\"modelCaption\">")
+          # Remove demo-only purchase guard and make auth actions safe without Supabase.
+          s = s.replace("if(String(assetId).startsWith('demo-')){setMessage('This is a showcase listing. Published assets use the live checkout flow.');return}", "if(!supabaseBrowser){setMessage('Marketplace checkout is not configured yet.');return}")
+          s = s.replace("async function signIn(){setLoading(true);", "async function signIn(){if(!supabaseBrowser){setMessage('Sign-in is not configured yet.');return}setLoading(true);", 1)
+
+          if re.search(r'Midnight GT|Modern Villa|Forest Owl|Marble Guardian|Astra Robot 07|Deep Space Hauler|Red Fox Study|Crystal Tree', s):
+              raise SystemExit('A hard-coded demo NFT name remains in app/page.js')
+          if 'collections' in s:
+              raise SystemExit('A stale collections reference remains in app/page.js')
+          if 'const listings=[...live' in s:
+              raise SystemExit('Catalog is still merging demo listings')
 
           p.write_text(s)
           PY
 
-      - name: Commit and remove temporary workflow
+      - name: Verify the resulting page
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ! grep -E -q 'Midnight GT|Modern Villa|Forest Owl|Marble Guardian|Astra Robot 07|Deep Space Hauler|Red Fox Study|Crystal Tree|collections' app/page.js
+          grep -q 'const listings=live.filter' app/page.js
+          grep -q 'const featured=live\[0\]' app/page.js
+
+      - name: Commit the fix and remove this temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app/page.js
-          git commit -m "fix: remove hard-coded demo NFT catalog" || exit 0
-          git push origin HEAD
+          git commit -m 'fix: make NFT catalog fully data-driven'
+          git push origin HEAD:feature/100k-nft-engine
           git rm .github/workflows/fix-live-catalog.yml
-          git commit -m "chore: remove temporary catalog patch workflow"
-          git push origin HEAD
+          git commit -m 'chore: remove temporary catalog migration workflow'
+          git push origin HEAD:feature/100k-nft-engine
