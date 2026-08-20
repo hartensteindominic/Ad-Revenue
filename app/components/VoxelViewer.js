@@ -73,48 +73,52 @@ export default function VoxelViewer({
     const root = host.current;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#05060c');
-    scene.fog = new THREE.FogExp2('#05060c', 0.017);
+    scene.fog = new THREE.FogExp2('#05060c', compact ? 0.028 : 0.017);
 
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 1000);
+    // Wider FOV + closer camera for cards so models fill the frame
+    const fov = compact ? 42 : 34;
+    const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.shadowMap.enabled = !compact;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.16;
+    renderer.toneMappingExposure = 1.2;
     renderer.domElement.setAttribute('aria-label', 'Interactive Voxel Vault 3D asset viewer');
     root.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.055;
-    controls.minDistance = 6;
-    controls.maxDistance = 58;
+    controls.minDistance = compact ? 4 : 5;
+    controls.maxDistance = compact ? 28 : 48;
     controls.enablePan = false;
     controls.autoRotate = autoRotateRef.current;
     controls.autoRotateSpeed = 0.58;
     controlsRef.current = controls;
 
-    scene.add(new THREE.HemisphereLight('#e8e4ff', '#070a14', compact ? 1.7 : 2.5));
-    const key = new THREE.DirectionalLight('#fff7ea', compact ? 2.8 : 4.5);
+    scene.add(new THREE.HemisphereLight('#e8e4ff', '#070a14', compact ? 1.9 : 2.5));
+    const key = new THREE.DirectionalLight('#fff7ea', compact ? 3.2 : 4.5);
     key.position.set(12, 20, 15);
     key.castShadow = !compact;
     if (!compact) key.shadow.mapSize.set(1024, 1024);
     scene.add(key);
 
-    const violet = new THREE.PointLight('#7657ff', compact ? 28 : 55, 65, 2);
+    const violet = new THREE.PointLight('#7657ff', compact ? 32 : 55, 65, 2);
     violet.position.set(-13, 9, -12);
     scene.add(violet);
-    const cyan = new THREE.PointLight('#29d9ff', compact ? 14 : 28, 48, 2);
+    const cyan = new THREE.PointLight('#29d9ff', compact ? 16 : 28, 48, 2);
     cyan.position.set(12, 6, -8);
     scene.add(cyan);
-    const warm = new THREE.PointLight('#ff7bcb', compact ? 9 : 18, 42, 2);
+    const warm = new THREE.PointLight('#ff7bcb', compact ? 11 : 18, 42, 2);
     warm.position.set(0, 4, 15);
     scene.add(warm);
 
+    // Smaller platform so the model dominates the frame
+    const floorRadius = compact ? 10 : 14;
     const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(16, compact ? 48 : 72),
+      new THREE.CircleGeometry(floorRadius, compact ? 40 : 64),
       new THREE.MeshStandardMaterial({ color: '#080b14', roughness: 0.7, metalness: 0.18 })
     );
     floor.rotation.x = -Math.PI / 2;
@@ -123,7 +127,7 @@ export default function VoxelViewer({
     scene.add(floor);
 
     const platform = new THREE.Mesh(
-      new THREE.CylinderGeometry(6.6, 7.2, 0.28, compact ? 48 : 72),
+      new THREE.CylinderGeometry(compact ? 4.2 : 5.8, compact ? 4.6 : 6.4, 0.24, compact ? 40 : 64),
       new THREE.MeshStandardMaterial({ color: '#111329', roughness: 0.38, metalness: 0.5, emissive: '#17113a', emissiveIntensity: 0.28 })
     );
     platform.position.y = -2.27;
@@ -131,7 +135,7 @@ export default function VoxelViewer({
     scene.add(platform);
 
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(5.75, 5.9, compact ? 64 : 96),
+      new THREE.RingGeometry(compact ? 3.6 : 5.1, compact ? 3.75 : 5.25, compact ? 48 : 80),
       new THREE.MeshBasicMaterial({ color: '#8667ff', transparent: true, opacity: 0.5, side: THREE.DoubleSide })
     );
     ring.rotation.x = -Math.PI / 2;
@@ -139,32 +143,32 @@ export default function VoxelViewer({
     scene.add(ring);
 
     const innerRing = new THREE.Mesh(
-      new THREE.RingGeometry(4.3, 4.34, compact ? 64 : 96),
+      new THREE.RingGeometry(compact ? 2.7 : 3.9, compact ? 2.74 : 3.94, compact ? 48 : 80),
       new THREE.MeshBasicMaterial({ color: '#28d9ff', transparent: true, opacity: 0.16, side: THREE.DoubleSide })
     );
     innerRing.rotation.x = -Math.PI / 2;
     innerRing.position.y = -2.07;
     scene.add(innerRing);
 
-    const gridHelper = new THREE.GridHelper(28, 28, '#30285a', '#15192a');
+    const gridHelper = new THREE.GridHelper(compact ? 18 : 24, 24, '#30285a', '#15192a');
     gridHelper.position.y = -2.04;
     gridHelper.material.transparent = true;
-    gridHelper.material.opacity = 0.38;
+    gridHelper.material.opacity = 0.32;
     scene.add(gridHelper);
 
     const random = seededRandom(`${seed}:${shape}`);
-    const starCount = compact ? 150 : 360;
+    const starCount = compact ? 100 : 300;
     const stars = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i += 1) {
-      const radius = 18 + random() * 34;
+      const radius = 14 + random() * 28;
       const theta = random() * Math.PI * 2;
       starPositions[i * 3] = Math.cos(theta) * radius;
-      starPositions[i * 3 + 1] = -1 + random() * 28;
+      starPositions[i * 3 + 1] = -1 + random() * 22;
       starPositions[i * 3 + 2] = Math.sin(theta) * radius;
     }
     stars.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starField = new THREE.Points(stars, new THREE.PointsMaterial({ color: '#bcb1ff', size: compact ? 0.045 : 0.055, transparent: true, opacity: 0.5 }));
+    const starField = new THREE.Points(stars, new THREE.PointsMaterial({ color: '#bcb1ff', size: compact ? 0.04 : 0.05, transparent: true, opacity: 0.45 }));
     scene.add(starField);
 
     const group = new THREE.Group();
@@ -176,7 +180,9 @@ export default function VoxelViewer({
     highlight.visible = false;
     scene.add(highlight);
 
-    const geometry = new THREE.BoxGeometry(0.72, 0.72, 0.72);
+    // Slightly larger voxels so models read better in cards
+    const voxelSize = compact ? 0.82 : 0.76;
+    const geometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
     const wireGeometry = geometry.clone();
     const buckets = new Map();
     const asset = generateVoxelAsset({ shape, seed, rarity: effectiveRarity, material });
@@ -193,18 +199,18 @@ export default function VoxelViewer({
     const box = new THREE.Box3();
 
     buckets.forEach((arr, colorIndex) => {
-      const material = new THREE.MeshStandardMaterial({
+      const mat = new THREE.MeshStandardMaterial({
         color: colors[colorIndex],
-        roughness: colorIndex === 3 ? 0.26 : 0.43,
-        metalness: colorIndex === 3 ? 0.28 : 0.08,
+        roughness: colorIndex === 3 ? 0.22 : 0.4,
+        metalness: colorIndex === 3 ? 0.35 : 0.1,
       });
-      const mesh = new THREE.InstancedMesh(geometry, material, arr.length);
+      const mesh = new THREE.InstancedMesh(geometry, mat, arr.length);
       mesh.castShadow = !compact;
       mesh.receiveShadow = !compact;
       mesh.frustumCulled = false;
       mesh.userData.voxels = arr;
       mesh.userData.basePositions = arr.map((v) => {
-        const position = new THREE.Vector3(v[0] * 0.76, v[1] * 0.76 - 2.1, v[2] * 0.76);
+        const position = new THREE.Vector3(v[0] * voxelSize, v[1] * voxelSize - 2.05, v[2] * voxelSize);
         box.expandByPoint(position);
         return position;
       });
@@ -223,9 +229,9 @@ export default function VoxelViewer({
       mesh.instanceMatrix.needsUpdate = true;
       group.add(mesh);
       meshes.push(mesh);
-      resources.push(material);
+      resources.push(mat);
 
-      const wireMaterial = new THREE.MeshBasicMaterial({ color: '#c9bdff', transparent: true, opacity: 0.18, wireframe: true });
+      const wireMaterial = new THREE.MeshBasicMaterial({ color: '#c9bdff', transparent: true, opacity: 0.16, wireframe: true });
       const wire = new THREE.InstancedMesh(wireGeometry, wireMaterial, arr.length);
       wire.frustumCulled = false;
       wire.userData.basePositions = mesh.userData.basePositions;
@@ -240,11 +246,17 @@ export default function VoxelViewer({
       resources.push(wireMaterial);
     });
 
+    // Tighter framing so the model fills the card / modal
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 4);
+    const maxDim = Math.max(size.x, size.y, size.z, 3.2);
+    const distanceFactor = compact ? 1.15 : 1.35;
     controls.target.copy(center);
-    camera.position.copy(center).add(new THREE.Vector3(maxDim * 1.55, maxDim * 1.05, maxDim * 1.75));
+    camera.position.copy(center).add(new THREE.Vector3(
+      maxDim * distanceFactor * 0.95,
+      maxDim * distanceFactor * 0.72,
+      maxDim * distanceFactor * 1.05
+    ));
     controls.update();
 
     const raycaster = new THREE.Raycaster();
@@ -264,8 +276,9 @@ export default function VoxelViewer({
       const objectSize = bounds.getSize(new THREE.Vector3());
       const objectCenter = bounds.getCenter(new THREE.Vector3());
       const dimension = Math.max(objectSize.x, objectSize.y, objectSize.z, 2);
+      const factor = compact ? 1.2 : 1.4;
       controls.target.copy(objectCenter);
-      camera.position.copy(objectCenter).add(new THREE.Vector3(dimension * 1.55, dimension * 1.05, dimension * 1.75));
+      camera.position.copy(objectCenter).add(new THREE.Vector3(dimension * factor * 0.95, dimension * factor * 0.7, dimension * factor * 1.05));
       controls.update();
     };
 
