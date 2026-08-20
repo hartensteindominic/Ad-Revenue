@@ -8,7 +8,6 @@ async function main() {
   console.log('Network:', hre.network.name, 'chainId', network.chainId.toString());
   console.log('Deploying from:', deployer.address);
 
-  // For mainnet: pass MULTISIG_OWNER and FEE_RECIPIENT env vars instead of deployer.
   const owner = process.env.MULTISIG_OWNER || deployer.address;
   const feeRecipient = process.env.FEE_RECIPIENT || deployer.address;
 
@@ -22,17 +21,16 @@ async function main() {
   await market.waitForDeployment();
   const marketAddress = await market.getAddress();
 
-  // If owner is deployer, enable market as minter. If owner is multisig, multisig must setMinter.
   if (owner.toLowerCase() === deployer.address.toLowerCase()) {
     const minterTx = await nft.setMinter(marketAddress, true);
     await minterTx.wait();
     console.log('Marketplace set as minter');
 
-    // Optional: disable public mint on production-like deploys
-    if (process.env.DISABLE_PUBLIC_MINT === 'true') {
-      const tx = await nft.setPublicMintEnabled(false);
+    // Public mint is opt-in, even on testnet. Keep it off for production-like deployments.
+    if (process.env.ENABLE_PUBLIC_MINT === 'true') {
+      const tx = await nft.setPublicMintEnabled(true);
       await tx.wait();
-      console.log('Public mint disabled');
+      console.log('Public mint explicitly enabled');
     }
   } else {
     console.log('Owner is not deployer — call setMinter(market, true) from the owner multisig');
