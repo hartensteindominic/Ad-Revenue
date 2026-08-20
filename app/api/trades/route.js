@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createTradeOffer, canAcceptTrade, transitionTrade, isTradeExpired } from '../../../lib/tradingEngine';
 import { saveTradeOffer, getTradeOffer } from '../../../lib/claimAuthority';
 import { verifyMarketplaceSettlement } from '../../../lib/transactionVerification';
 
 const PLACEHOLDER_RECIPIENT = '0x000000000000000000000000000000000000dead';
+const MAX_ITEMS = 32;
+const MAX_JSON_ITEM_BYTES = 4096;
 let supabase = null;
 
 function configuredChainId() {
@@ -19,6 +22,17 @@ function configuredSettlementContract() {
 
 function looksLikeWallet(value) {
   return /^0x[a-fA-F0-9]{40}$/.test(String(value || '').trim());
+}
+
+function boundedItems(value) {
+  if (!Array.isArray(value) || value.length > MAX_ITEMS) return null;
+  const serialized = JSON.stringify(value);
+  if (serialized.length > MAX_JSON_ITEM_BYTES) return null;
+  return value;
+}
+
+function newTradeId() {
+  return `trade-${randomUUID()}`;
 }
 
 function getSupabase() {
@@ -66,19 +80,24 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const action = body.action || 'create';
+    const action = typeof body.action === 'string' ? body.action : 'create';
 
     if (action === 'create') {
       if (!looksLikeWallet(body.offerer)) return NextResponse.json({ error: 'A valid offerer wallet address is required' }, { status: 400 });
       if (body.recipient && !looksLikeWallet(body.recipient)) return NextResponse.json({ error: 'Invalid recipient wallet address' }, { status: 400 });
+      const offered = boundedItems(body.offered || []);
+      const requested = boundedItems(body.requested || []);
+      if (!offered || !requested) return NextResponse.json({ error: 'Trade payload is too large or malformed' }, { status: 413 });
+
       const offer = createTradeOffer({
         offerer: body.offerer,
         recipient: body.recipient || PLACEHOLDER_RECIPIENT,
-        offered: body.offered || [],
-        requested: body.requested || [],
+        offered,
+        requested,
         expiresAt: body.expiresAt || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       });
-      offer.id = body.id || `trade-${Date.now().toString(36)}`;
+      // IDs are server-issued. Never allow a client to overwrite an existing trade row.
+      offer.id = newTradeId();
       const saved = await saveTradeOffer(offer);
       return NextResponse.json({ offer: saved, ownershipChanged: false });
     }
