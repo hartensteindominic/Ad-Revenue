@@ -75,18 +75,18 @@ The skateboard is not the product. It is only one test category.
 
 ## Build sequence
 
-1. Universal collectible schema
-2. Category-aware realistic generation
-3. 3D asset pipeline
-4. Creator Studio
-5. Wallet ownership verification
-6. My Vault
-7. Transfer protocol
-8. Trading engine
-9. Marketplace lifecycle
+1. Universal collectible schema ✅
+2. Category-aware realistic generation ✅
+3. 3D asset pipeline (partial)
+4. Creator Studio (partial)
+5. Wallet ownership verification (existing foundation)
+6. My Vault (partial)
+7. Transfer protocol (QR / deep-link handoff UI ✅)
+8. Trading engine ✅
+9. Marketplace lifecycle (existing foundation)
 10. Random collection generation
-11. Drop Engine
-12. Discovery map
+11. Drop Engine ✅
+12. Discovery map ✅ (UI + geolocation + placement)
 13. Game mechanics
 14. AI Curator
 15. AI Creator
@@ -102,8 +102,24 @@ Every major milestone is reviewed through 100 lenses covering visual design, res
 
 A review is only useful when it attempts to break the implementation. Repeating a checklist without changing the test lens does not count as another review.
 
-## Current implementation status
+## Current implementation status (2026-08-20)
 
-The repository already has a premium 3D-first showcase and mobile GPU-safety work. The current feature branch adds the foundational universal collectible schema, category-aware generation grammars, drop/discovery primitives, and a trade state machine without replacing the existing homepage.
+**On `feature/universal-collectible-engine` (PR #12, still draft):**
 
-Next implementation work should wire these primitives into the actual UI and existing contract/wallet layer, then validate the three-object vertical slice before expanding the catalog.
+- Universal collectible schema, validation, fingerprints
+- Category-aware generation grammars
+- Drop engine with security boundaries (client location = UX only)
+- Trade state machine with dual authorization
+- **Discovery Experience** (`/discover`): map, geolocation, sample drops for Field Camera / Survey Robot / Street Deck, place-a-drop form, claim-intent flow
+- **Tap-to-Trade** (`/trade`): object selection, QR + deep-link handoff, accept/submit/confirm path
+- Homepage nav wired to Discover + Trade
+
+**Still required before calling it production-ready:**
+
+- Server-side claim validation + anti-replay
+- Real on-chain settlement for claims and trades
+- Persistent drop storage (Supabase or equivalent)
+- Full 3D asset generation pipeline for the three test objects
+- End-to-end vertical slice proof (Generate → Mint → Vault → Drop → Claim → Trade)
+
+Do not merge to main until the vertical slice is proven and Vercel builds are clean.
