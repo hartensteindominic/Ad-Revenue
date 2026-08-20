@@ -51,7 +51,8 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         feeRecipient = initialFeeRecipient;
     }
 
-    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes calldata) external view override returns (bytes4) {
+        require(msg.sender == address(nft), "Unsupported NFT collection");
         return IERC721Receiver.onERC721Received.selector;
     }
 
@@ -121,6 +122,8 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
 
     function makeOffer(uint256 tokenId, uint256 expiresAt) external payable nonReentrant whenNotPaused {
         require(_exists(tokenId), "Token missing");
+        require(listings[tokenId].seller == address(0), "Token listed; delist first");
+        require(!_activeAuction(tokenId), "Token in auction");
         require(msg.value > 0, "Offer required");
         require(expiresAt > block.timestamp, "Expiry required");
         Offer memory old = offers[tokenId];
@@ -179,7 +182,6 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
             nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
             "Marketplace not approved"
         );
-        // Clear any settled leftover slot (defensive; settle should delete)
         delete auctions[tokenId];
         nft.transferFrom(msg.sender, address(this), tokenId);
         auctions[tokenId] = Auction(
@@ -211,7 +213,6 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         require(auction.seller != address(0) && !auction.settled, "No auction");
         require(block.timestamp >= auction.endAt, "Auction active");
 
-        // Clear auction storage first (CEI) so token can be auctioned again later.
         delete auctions[tokenId];
 
         if (auction.highestBidder == address(0)) {
