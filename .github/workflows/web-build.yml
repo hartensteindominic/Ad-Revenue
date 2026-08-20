@@ -1,22 +1,48 @@
-name: Voxel Vault web build
+name: Voxel Vault quality gate
 
 on:
   push:
     branches: ['**']
   pull_request:
 
+concurrency:
+  group: voxel-vault-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      # Repository does not currently commit a package-lock.json.
-      # Use npm install so CI can still validate a production build.
-      - run: npm install
-      - run: npm run build
+
+      # package-lock.json is intentionally not committed yet.
+      - run: npm install --no-audit --no-fund
+
+      - name: Universal smoke test
+        run: npm run test:universal
+
+      - name: Proximity tests
+        run: npm run test:proximity
+
+      - name: Adversarial proximity tests
+        run: npm run test:proximity:adversarial
+
+      - name: Sponsored collectible tests
+        run: npm run test:sponsored
+
+      - name: Funding pool tests
+        run: npm run test:funding
+
+      - name: Solidity compile
+        run: npm run chain:compile
+
+      - name: Production build
+        run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://voxel-vault.vercel.app
