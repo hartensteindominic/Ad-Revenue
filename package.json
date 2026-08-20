@@ -1,14 +1,15 @@
 {
   "name": "voxel-vault",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "test:universal": "node scripts/smoke-test-universal.mjs",
     "chain:compile": "hardhat compile",
-    "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia"
+    "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
+    "chain:deploy:mainnet": "hardhat run scripts/deploy-mainnet.js --network mainnet"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.54.0",
