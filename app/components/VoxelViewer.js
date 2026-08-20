@@ -54,51 +54,192 @@ function makeVoxels(shape){
 }
 
 export default function VoxelViewer({shape='car',compact=false,label=true,interactive=true,showcase=false}){
-  const host=useRef(null); const frame=useRef(0); const [selected,setSelected]=useState(null); const [hovered,setHovered]=useState(null); const [explode,setExplode]=useState(false); const [edges,setEdges]=useState(true); const [autoRotate,setAutoRotate]=useState(!showcase); const [grid,setGrid]=useState(false);
+  const host=useRef(null);
+  const frame=useRef(0);
+  const autoRotateRef=useRef(!showcase);
+  const gridRef=useRef(false);
+  const explodeTargetRef=useRef(false);
+  const hoveredRef=useRef(null);
+  const selectedRef=useRef(null);
+  const [selected,setSelected]=useState(null);
+  const [hovered,setHovered]=useState(null);
+  const [explode,setExplode]=useState(false);
+  const [edges,setEdges]=useState(true);
+  const [autoRotate,setAutoRotate]=useState(!showcase);
+  const [grid,setGrid]=useState(false);
 
   useEffect(()=>{
     if(!host.current)return;
-    const root=host.current; const scene=new THREE.Scene(); scene.background=new THREE.Color('#070811');
-    const camera=new THREE.PerspectiveCamera(32,1,.1,1000); camera.position.set(18,14,21);
+    const root=host.current;
+    const scene=new THREE.Scene();
+    scene.background=new THREE.Color('#070811');
+    const camera=new THREE.PerspectiveCamera(32,1,.1,1000);
+    camera.position.set(18,14,21);
     const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12; root.appendChild(renderer.domElement);
-    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.065; controls.minDistance=10; controls.maxDistance=48; controls.target.set(0,3,0); controls.autoRotate=autoRotate; controls.autoRotateSpeed=.6; controls.enablePan=false;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    renderer.shadowMap.enabled=true;
+    renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure=1.12;
+    root.appendChild(renderer.domElement);
+
+    const controls=new OrbitControls(camera,renderer.domElement);
+    controls.enableDamping=true;
+    controls.dampingFactor=.065;
+    controls.minDistance=10;
+    controls.maxDistance=48;
+    controls.target.set(0,3,0);
+    controls.autoRotate=autoRotateRef.current;
+    controls.autoRotateSpeed=.6;
+    controls.enablePan=false;
+
     scene.add(new THREE.HemisphereLight('#ddd8ff','#0b101a',2.2));
-    const key=new THREE.DirectionalLight('#fff8ed',4); key.position.set(11,20,14); key.castShadow=true; key.shadow.mapSize.set(1024,1024); scene.add(key);
-    const rim=new THREE.PointLight('#7755ff',42,60); rim.position.set(-12,8,-10); scene.add(rim); const fill=new THREE.PointLight('#32d8ff',20,45); fill.position.set(10,5,-8); scene.add(fill);
-    const floor=new THREE.Mesh(new THREE.CircleGeometry(14,64),new THREE.MeshStandardMaterial({color:'#0a0d15',roughness:.78,metalness:.12})); floor.rotation.x=-Math.PI/2; floor.position.y=-2.4; floor.receiveShadow=true; scene.add(floor);
-    const ring=new THREE.Mesh(new THREE.RingGeometry(5.8,5.86,96),new THREE.MeshBasicMaterial({color:'#7657ff',transparent:true,opacity:.34,side:THREE.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=-2.38; scene.add(ring);
-    const gridHelper=new THREE.GridHelper(24,24,'#25203d','#151725'); gridHelper.position.y=-2.39; gridHelper.visible=grid; scene.add(gridHelper);
-    const group=new THREE.Group(); scene.add(group); const colors=PALETTES[shape]||PALETTES.car; const voxels=makeVoxels(shape); const geometry=new THREE.BoxGeometry(.72,.72,.72); const buckets=new Map();
+    const key=new THREE.DirectionalLight('#fff8ed',4);
+    key.position.set(11,20,14);
+    key.castShadow=true;
+    key.shadow.mapSize.set(1024,1024);
+    scene.add(key);
+    const rim=new THREE.PointLight('#7755ff',42,60);
+    rim.position.set(-12,8,-10);
+    scene.add(rim);
+    const fill=new THREE.PointLight('#32d8ff',20,45);
+    fill.position.set(10,5,-8);
+    scene.add(fill);
+
+    const floor=new THREE.Mesh(new THREE.CircleGeometry(14,64),new THREE.MeshStandardMaterial({color:'#0a0d15',roughness:.78,metalness:.12}));
+    floor.rotation.x=-Math.PI/2;
+    floor.position.y=-2.4;
+    floor.receiveShadow=true;
+    scene.add(floor);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(5.8,5.86,96),new THREE.MeshBasicMaterial({color:'#7657ff',transparent:true,opacity:.34,side:THREE.DoubleSide}));
+    ring.rotation.x=-Math.PI/2;
+    ring.position.y=-2.38;
+    scene.add(ring);
+    const gridHelper=new THREE.GridHelper(24,24,'#25203d','#151725');
+    gridHelper.position.y=-2.39;
+    scene.add(gridHelper);
+
+    const group=new THREE.Group();
+    scene.add(group);
+    const colors=PALETTES[shape]||PALETTES.car;
+    const voxels=makeVoxels(shape);
+    const geometry=new THREE.BoxGeometry(.72,.72,.72);
+    const buckets=new Map();
     voxels.forEach((v,index)=>{if(!buckets.has(v[3]))buckets.set(v[3],[]);buckets.get(v[3]).push({...v,index})});
-    const instanceMaps=[]; const materials=[];
+    const instanceMaps=[];
+    const materials=[];
+
     buckets.forEach((arr,c)=>{
-      const material=new THREE.MeshStandardMaterial({color:colors[c],roughness:c===3?.32:.52,metalness:c===3?.18:.05,emissive:colors[c],emissiveIntensity:0}); materials.push(material);
-      const mesh=new THREE.InstancedMesh(geometry,material,arr.length); mesh.castShadow=true; mesh.receiveShadow=true; mesh.frustumCulled=false;
-      mesh.userData.voxels=arr; mesh.userData.basePositions=arr.map(v=>new THREE.Vector3(v[0]*.76,v[1]*.76-2.1,v[2]*.76));
-      const q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1); const m=new THREE.Matrix4();
-      arr.forEach((v,i)=>{m.compose(mesh.userData.basePositions[i],q,s);mesh.setMatrixAt(i,m)}); mesh.instanceMatrix.needsUpdate=true; group.add(mesh); instanceMaps.push(mesh);
+      const material=new THREE.MeshStandardMaterial({color:colors[c],roughness:c===3?.32:.52,metalness:c===3?.18:.05,emissive:colors[c],emissiveIntensity:0});
+      materials.push(material);
+      const mesh=new THREE.InstancedMesh(geometry,material,arr.length);
+      mesh.castShadow=true;
+      mesh.receiveShadow=true;
+      mesh.frustumCulled=false;
+      mesh.userData.voxels=arr;
+      mesh.userData.basePositions=arr.map(v=>new THREE.Vector3(v[0]*.76,v[1]*.76-2.1,v[2]*.76));
+      mesh.userData.originalMatrices=[];
+      const q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1),m=new THREE.Matrix4();
+      arr.forEach((v,i)=>{m.compose(mesh.userData.basePositions[i],q,s);mesh.setMatrixAt(i,m);mesh.userData.originalMatrices.push(m.clone())});
+      mesh.instanceMatrix.needsUpdate=true;
+      group.add(mesh);
+      instanceMaps.push(mesh);
     });
-    const raycaster=new THREE.Raycaster(); const pointer=new THREE.Vector2(); const worldPoint=new THREE.Vector3(); let overCanvas=false;
-    const updatePointer=e=>{const r=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-r.left)/r.width)*2-1;pointer.y=-((e.clientY-r.top)/r.height)*2+1;overCanvas=true};
-    const pick=e=>{if(!interactive)return; updatePointer(e); raycaster.setFromCamera(pointer,camera); const hits=raycaster.intersectObjects(instanceMaps,false); const hit=hits[0]; if(!hit||hit.instanceId===undefined){setHovered(null);renderer.domElement.style.cursor='grab';return} const data=hit.object.userData.voxels[hit.instanceId]; setHovered({x:data[0],y:data[1],z:data[2],color:colors[data[3]],instance:hit.instanceId}); renderer.domElement.style.cursor='pointer';};
-    const click=e=>{if(!interactive)return; updatePointer(e); raycaster.setFromCamera(pointer,camera); const hit=raycaster.intersectObjects(instanceMaps,false)[0]; if(!hit||hit.instanceId===undefined){setSelected(null);return} const data=hit.object.userData.voxels[hit.instanceId]; setSelected({x:data[0],y:data[1],z:data[2],color:colors[data[3]]});};
-    renderer.domElement.addEventListener('pointermove',pick); renderer.domElement.addEventListener('pointerleave',()=>{overCanvas=false;setHovered(null);renderer.domElement.style.cursor='grab'}); renderer.domElement.addEventListener('click',click);
-    const resize=()=>{const r=root.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/Math.max(1,r.height));camera.updateProjectionMatrix()}; resize(); const ro=new ResizeObserver(resize); ro.observe(root);
-    const animate=()=>{controls.autoRotate=autoRotate;gridHelper.visible=grid; if(explode){group.position.y=0;group.children.forEach(mesh=>{const arr=mesh.userData.basePositions;const m=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);arr.forEach((p,i)=>{const dir=p.clone().sub(new THREE.Vector3(0,1.5,0)).normalize();const target=p.clone().add(dir.multiplyScalar(1.8));m.compose(target,q,s);mesh.setMatrixAt(i,m)});mesh.instanceMatrix.needsUpdate=true})} else {group.children.forEach(mesh=>{const arr=mesh.userData.basePositions;const m=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);arr.forEach((p,i)=>{m.compose(p,q,s);mesh.setMatrixAt(i,m)});mesh.instanceMatrix.needsUpdate=true})} if(hovered){const active=instanceMaps.find(m=>m.userData.voxels.some(v=>v[0]===hovered.x&&v[1]===hovered.y&&v[2]===hovered.z));materials.forEach(mat=>mat.emissiveIntensity=active&&active.material===mat?.18:0)} controls.update();renderer.render(scene,camera);frame.current=requestAnimationFrame(animate)}; animate();
-    return()=>{ro.disconnect();cancelAnimationFrame(frame.current);controls.dispose();renderer.domElement.removeEventListener('pointermove',pick);renderer.domElement.removeEventListener('click',click);renderer.dispose();geometry.dispose();materials.forEach(m=>m.dispose());root.removeChild(renderer.domElement)};
-  },[shape,interactive,autoRotate,explode,edges,grid,hovered]);
+
+    const raycaster=new THREE.Raycaster();
+    const pointer=new THREE.Vector2();
+    const updatePointer=e=>{const r=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-r.left)/r.width)*2-1;pointer.y=-((e.clientY-r.top)/r.height)*2+1};
+    const clearHighlight=()=>{materials.forEach(m=>{m.emissiveIntensity=0})};
+    const pick=e=>{
+      if(!interactive)return;
+      updatePointer(e);
+      raycaster.setFromCamera(pointer,camera);
+      const hit=raycaster.intersectObjects(instanceMaps,false)[0];
+      clearHighlight();
+      if(!hit||hit.instanceId===undefined){hoveredRef.current=null;setHovered(null);renderer.domElement.style.cursor='grab';return}
+      const data=hit.object.userData.voxels[hit.instanceId];
+      hoveredRef.current={x:data[0],y:data[1],z:data[2],color:colors[data[3]],instance:hit.instanceId,mesh:hit.object};
+      setHovered(hoveredRef.current);
+      hit.object.material.emissiveIntensity=.32;
+      renderer.domElement.style.cursor='pointer';
+    };
+    const click=e=>{
+      if(!interactive)return;
+      updatePointer(e);
+      raycaster.setFromCamera(pointer,camera);
+      const hit=raycaster.intersectObjects(instanceMaps,false)[0];
+      if(!hit||hit.instanceId===undefined){selectedRef.current=null;setSelected(null);return}
+      const data=hit.object.userData.voxels[hit.instanceId];
+      selectedRef.current={x:data[0],y:data[1],z:data[2],color:colors[data[3]],instance:hit.instanceId};
+      setSelected(selectedRef.current);
+    };
+    renderer.domElement.addEventListener('pointermove',pick);
+    renderer.domElement.addEventListener('pointerleave',()=>{clearHighlight();hoveredRef.current=null;setHovered(null);renderer.domElement.style.cursor='grab'});
+    renderer.domElement.addEventListener('click',click);
+
+    const resize=()=>{const r=root.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/Math.max(1,r.height));camera.updateProjectionMatrix()};
+    resize();
+    const ro=new ResizeObserver(resize);
+    ro.observe(root);
+    let explosionAmount=0;
+    const center=new THREE.Vector3(0,1.5,0);
+    const animate=()=>{
+      controls.autoRotate=autoRotateRef.current;
+      gridHelper.visible=gridRef.current;
+      const target=explodeTargetRef.current?1:0;
+      explosionAmount=THREE.MathUtils.lerp(explosionAmount,target,.075);
+      group.children.forEach(mesh=>{
+        const arr=mesh.userData.basePositions;
+        const m=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(1,1,1);
+        arr.forEach((p,i)=>{
+          const dir=p.clone().sub(center);
+          if(dir.lengthSq()<.001)dir.set(0,1,0);
+          dir.normalize();
+          const targetPos=p.clone().addScaledVector(dir,1.8*explosionAmount);
+          m.compose(targetPos,q,s);
+          mesh.setMatrixAt(i,m);
+        });
+        mesh.instanceMatrix.needsUpdate=true;
+      });
+      controls.update();
+      renderer.render(scene,camera);
+      frame.current=requestAnimationFrame(animate);
+    };
+    animate();
+
+    return()=>{
+      ro.disconnect();
+      cancelAnimationFrame(frame.current);
+      controls.dispose();
+      renderer.domElement.removeEventListener('pointermove',pick);
+      renderer.domElement.removeEventListener('click',click);
+      renderer.dispose();
+      geometry.dispose();
+      materials.forEach(m=>m.dispose());
+      floor.geometry.dispose();floor.material.dispose();
+      ring.geometry.dispose();ring.material.dispose();
+      gridHelper.geometry.dispose();gridHelper.material.dispose();
+      root.removeChild(renderer.domElement);
+    };
+  },[shape,interactive]);
+
+  const setRotation=()=>{const next=!autoRotate;autoRotateRef.current=next;setAutoRotate(next)};
+  const setGridMode=()=>{const next=!grid;gridRef.current=next;setGrid(next)};
+  const setExploded=()=>{const next=!explode;explodeTargetRef.current=next;setExplode(next)};
 
   return <div className={`voxelViewer ${compact?'compact':''}`} ref={host}>
     {label&&<div className="viewerBadge">REAL 3D VOXEL · DRAG · ZOOM · ROTATE</div>}
     {interactive&&<div style={{position:'absolute',top:12,right:12,zIndex:5,display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-      <button type="button" onClick={()=>setAutoRotate(v=>!v)} style={toolStyle(autoRotate)}>{autoRotate?'⏸ Pause':'▶ Rotate'}</button>
-      <button type="button" onClick={()=>setExplode(v=>!v)} style={toolStyle(explode)}>{explode?'🧩 Assemble':'💥 Explode'}</button>
-      <button type="button" onClick={()=>setGrid(v=>!v)} style={toolStyle(grid)}>▦ Grid</button>
-      <button type="button" onClick={()=>setEdges(v=>!v)} style={toolStyle(edges)}>◇ Edges</button>
+      <button type="button" aria-label="Toggle automatic rotation" onClick={setRotation} style={toolStyle(autoRotate)}>{autoRotate?'⏸ Pause':'▶ Rotate'}</button>
+      <button type="button" aria-label="Explode or assemble voxel model" onClick={setExploded} style={toolStyle(explode)}>{explode?'🧩 Assemble':'💥 Explode'}</button>
+      <button type="button" aria-label="Toggle voxel floor grid" onClick={setGridMode} style={toolStyle(grid)}>▦ Grid</button>
+      <button type="button" aria-label="Toggle voxel edge rendering" onClick={()=>setEdges(v=>!v)} style={toolStyle(edges)}>◇ Edges</button>
     </div>}
     {selected&&<div style={{position:'absolute',bottom:12,left:12,zIndex:5,padding:'10px 12px',borderRadius:12,background:'rgba(8,8,17,.88)',border:'1px solid rgba(118,89,255,.45)',color:'#fff',fontSize:12,fontFamily:'monospace',backdropFilter:'blur(10px)'}}>
-      <div style={{fontWeight:700,marginBottom:4}}>VOXEL SELECTED</div><div>X {selected.x} · Y {selected.y} · Z {selected.z}</div><div style={{marginTop:4}}>COLOR <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:selected.color,verticalAlign:'-1px',marginRight:5}} />{selected.color}</div>
+      <div style={{fontWeight:700,marginBottom:4}}>VOXEL SELECTED</div>
+      <div>X {selected.x} · Y {selected.y} · Z {selected.z}</div>
+      <div style={{marginTop:4}}>COLOR <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:selected.color,verticalAlign:'-1px',marginRight:5}} />{selected.color}</div>
     </div>}
     {hovered&&!selected&&<div style={{position:'absolute',bottom:12,left:12,zIndex:5,padding:'8px 10px',borderRadius:10,background:'rgba(8,8,17,.78)',color:'#cfd3ff',fontSize:11,fontFamily:'monospace',pointerEvents:'none'}}>VOXEL {hovered.x},{hovered.y},{hovered.z}</div>}
   </div>;
