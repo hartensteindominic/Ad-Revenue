@@ -31,12 +31,7 @@ function randomFrom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function generateObject() {
-  const family = randomFrom(OBJECT_FAMILIES);
-  const prefix = randomFrom(FAMILY_NAMES[family]);
-  const noun = randomFrom(OBJECT_WORDS);
-  const rarity = randomFrom(RARITIES);
-  const seed = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function buildObject({ family, prefix, noun, rarity, seed }) {
   const collectible = createUniversalCollectible({
     name: `${prefix} ${noun}`,
     family,
@@ -58,10 +53,21 @@ function generateObject() {
   return { ...collectible, fingerprint: collectibleFingerprint(collectible) };
 }
 
+function generateObject() {
+  const family = randomFrom(OBJECT_FAMILIES);
+  return buildObject({
+    family,
+    prefix: randomFrom(FAMILY_NAMES[family]),
+    noun: randomFrom(OBJECT_WORDS),
+    rarity: randomFrom(RARITIES),
+    seed: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  });
+}
+
 const INITIAL = [
-  generateObject(),
-  generateObject(),
-  generateObject(),
+  buildObject({ family: 'technology', prefix: 'Quantum', noun: 'Device', rarity: 'rare', seed: 'vault-engine-001' }),
+  buildObject({ family: 'creatures', prefix: 'Solar', noun: 'Specimen', rarity: 'epic', seed: 'vault-engine-002' }),
+  buildObject({ family: 'artifacts', prefix: 'Ancient', noun: 'Relic', rarity: 'legendary', seed: 'vault-engine-003' }),
 ];
 
 export default function UniversalEnginePanel() {
