@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { createUniversalCollectible, collectibleFingerprint } from '../../lib/universalCollectible';
 import { ethOfferOnToken, transferCollectible, hasContracts, hasNftContract, EVM_CHAIN_NAME } from '../../lib/blockchain';
 
@@ -10,26 +11,6 @@ const DEMO_OBJECTS = [
   createUniversalCollectible({ name: 'Survey Robot', family: 'technology', subtype: 'robot', rarity: 'epic', seed: 'robot-001' }),
   createUniversalCollectible({ name: 'Street Deck', family: 'sports', subtype: 'skateboard', rarity: 'uncommon', seed: 'board-001' }),
 ];
-
-function makeQrDataUrl(text) {
-  const size = 140;
-  const cells = 21;
-  const cell = size / cells;
-  let hash = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="100%" height="100%" fill="#0b0d15"/>`;
-  for (let y = 0; y < cells; y++) {
-    for (let x = 0; x < cells; x++) {
-      const bit = ((hash ^ (x * 17 + y * 31)) + x * y) & 1;
-      const finder = (x < 7 && y < 7) || (x > cells - 8 && y < 7) || (x < 7 && y > cells - 8);
-      if (bit || finder) svg += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}" fill="${finder ? '#55e6ff' : '#e7e2ff'}"/>`;
-    }
-  }
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg + '</svg>')}`;
-}
 
 export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
   const [wallet, setWallet] = useState('');
@@ -42,14 +23,33 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
   );
   const [offer, setOffer] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
 
   const deepLink = useMemo(() => {
-    if (!offer) return '';
+    if (!offer && !initialOfferId) return '';
     const base = typeof window !== 'undefined' ? window.location.origin : 'https://voxel-vault.vercel.app';
-    return `${base}/trade?mode=accept&offer=${encodeURIComponent(offer.id || 'local')}`;
-  }, [offer]);
+    const id = offer?.id || initialOfferId || 'local';
+    return `${base}/trade?mode=accept&offer=${encodeURIComponent(id)}`;
+  }, [offer, initialOfferId]);
 
-  const qrUrl = useMemo(() => (deepLink ? makeQrDataUrl(deepLink) : ''), [deepLink]);
+  useEffect(() => {
+    let cancelled = false;
+    if (!deepLink) {
+      setQrUrl('');
+      return undefined;
+    }
+    QRCode.toDataURL(deepLink, {
+      width: 240,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#0b0d15', light: '#ffffff' },
+    }).then((url) => {
+      if (!cancelled) setQrUrl(url);
+    }).catch(() => {
+      if (!cancelled) setQrUrl('');
+    });
+    return () => { cancelled = true; };
+  }, [deepLink]);
 
   async function connectWallet() {
     try {
@@ -146,6 +146,30 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
     }
   }
 
+  async function copyDeepLink() {
+    if (!deepLink) return;
+    try {
+      await navigator.clipboard.writeText(deepLink);
+      setStatus('Trade link copied. Send it to the other phone.');
+    } catch {
+      setStatus('Copy is unavailable. Use the QR code or share button.');
+    }
+  }
+
+  async function shareTrade() {
+    if (!deepLink) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Voxel Vault trade', text: 'Open this Voxel Vault handoff.', url: deepLink });
+        setStatus('Trade handoff shared.');
+      } else {
+        await copyDeepLink();
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') setStatus('Share cancelled or unavailable.');
+    }
+  }
+
   return (
     <main className="tradeRoot">
       <nav className="tradeNav">
@@ -202,23 +226,25 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
 
         <div className="panel handoff">
           <h3>2. Phone handoff</h3>
-          {offer ? (
+          {deepLink ? (
             <>
               <div className="qrWrap">
-                {qrUrl && <img src={qrUrl} alt="Trade handoff code" width={160} height={160} />}
-                <div className="offerState">State: <b>{offer.state}</b></div>
+                {qrUrl ? <img src={qrUrl} alt="Scannable Voxel Vault trade QR code" width={240} height={240} /> : <div className="qrLoading">Generating secure handoff QR…</div>}
+                <div className="offerState">State: <b>{offer?.state || 'ready'}</b></div>
               </div>
-              <p className="linkLabel">Deep link</p>
+              <p className="linkLabel">Real scannable handoff</p>
               <code className="deeplink">{deepLink}</code>
-              <div className="actions">
+              <div className="actions handoffActions">
                 <button type="button" className="secondary" onClick={acceptOffer} disabled={busy || !wallet}>
                   {busy ? 'Working…' : 'Accept as recipient'}
                 </button>
+                <button type="button" className="secondary" onClick={shareTrade} disabled={busy}>Share</button>
+                <button type="button" className="secondary" onClick={copyDeepLink} disabled={busy}>Copy link</button>
               </div>
-              <p className="hint">Accept updates app state. Use Transfer NFT or Offer ETH to move value on-chain.</p>
+              <p className="hint">Scan from the other phone, open the handoff, connect the recipient wallet, then settle the actual NFT transfer or ETH transaction on-chain.</p>
             </>
           ) : (
-            <div className="emptyHandoff"><p>Create an offer to generate QR / deep link.</p></div>
+            <div className="emptyHandoff"><p>Create an offer to generate a real QR / deep link.</p></div>
           )}
         </div>
       </section>
@@ -251,11 +277,14 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
         .primary{background:#fff;color:#07080c;border-color:#fff;width:100%}.secondary{background:#0b0d15;color:#e7e2ff;border-color:rgba(155,124,255,.35)}
         .handoff{display:flex;flex-direction:column;align-items:center;text-align:center}
         .qrWrap{padding:16px;border-radius:18px;background:#090b12;border:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+        .qrWrap img{display:block;width:min(240px,68vw);height:auto;border-radius:8px;background:#fff;padding:4px}
+        .qrLoading{width:240px;height:240px;display:grid;place-items:center;color:#8f97ad;font-size:12px}
         .offerState{margin-top:8px;font-size:12px;color:#9da3b5}.offerState b{color:#55e6ff;text-transform:uppercase}
         .linkLabel{font-size:10px;letter-spacing:.14em;color:#7f879b;margin:8px 0 4px}
         .deeplink{display:block;font-size:10px;word-break:break-all;color:#a183ff;padding:8px;background:rgba(0,0,0,.3);border-radius:8px}
         .hint{font-size:12px;color:#8a91a5;line-height:1.5;margin:12px 0}
         .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;justify-content:center}.actions button{flex:1;min-width:120px}
+        .handoffActions{margin-top:8px}
         .emptyHandoff{padding:40px 20px;color:#7f879b}
         .statusBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:80;background:#11141e;border:1px solid rgba(255,255,255,.14);padding:11px 14px;border-radius:999px;display:flex;align-items:center;gap:9px;font-size:12px;max-width:min(920px,94vw)}.statusBar span{color:#9b7cff}.statusBar button{border:0;background:transparent;color:#8e94a7;cursor:pointer}
         @media(max-width:800px){.tradeGrid{grid-template-columns:1fr}.navLinks{display:none}}
