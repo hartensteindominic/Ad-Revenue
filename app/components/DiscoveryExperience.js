@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { createUniversalCollectible, validateUniversalCollectible, collectibleFingerprint } from '../../lib/universalCollectible';
 import { createDrop, isDropDiscoverable, isWithinDropZone, prepareClaim } from '../../lib/dropEngine';
 
-// Sample public drops using the three vertical-slice objects.
-// Coordinates are illustrative public zones (city parks / plazas).
 const SAMPLE_DROPS = [
   {
     id: 'drop-field-camera-001',
@@ -81,6 +79,27 @@ function haversineMeters(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+function loadPlacedDrops() {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem('voxel-vault-placed-drops');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePlacedDrops(list) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('voxel-vault-placed-drops', JSON.stringify(list.slice(-20)));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export default function DiscoveryExperience() {
   const [position, setPosition] = useState(null);
   const [geoError, setGeoError] = useState('');
@@ -89,6 +108,7 @@ export default function DiscoveryExperience() {
   const [wallet, setWallet] = useState('');
   const [claiming, setClaiming] = useState(false);
   const [placedDrops, setPlacedDrops] = useState([]);
+  const [hydrated, setHydrated] = useState(false);
   const [showPlaceForm, setShowPlaceForm] = useState(false);
   const [placeForm, setPlaceForm] = useState({
     name: '',
@@ -97,6 +117,15 @@ export default function DiscoveryExperience() {
     family: 'technology',
     subtype: 'object',
   });
+
+  useEffect(() => {
+    setPlacedDrops(loadPlacedDrops());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) savePlacedDrops(placedDrops);
+  }, [placedDrops, hydrated]);
 
   const drops = useMemo(() => {
     const built = SAMPLE_DROPS.map((raw) => {
@@ -137,13 +166,13 @@ export default function DiscoveryExperience() {
         ...d,
         distance: haversineMeters(position.lat, position.lng, d.lat, d.lng),
       }))
-      .filter((d) => d.distance <= (d.discovery?.radiusMeters || 100) * 3)
+      .filter((d) => d.distance <= (d.discovery?.radiusMeters || 100) * 4)
       .sort((a, b) => a.distance - b.distance);
   }, [position, drops]);
 
   const requestLocation = useCallback(() => {
     setGeoError('');
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setGeoError('Geolocation is not available in this browser.');
       return;
     }
@@ -153,21 +182,26 @@ export default function DiscoveryExperience() {
         setStatus('Location unlocked. Public drops near you will light up.');
       },
       (err) => {
-        setGeoError(err.message || 'Could not read location.');
+        const msg =
+          err?.code === 1
+            ? 'Location permission denied. You can still browse sample drops.'
+            : err?.message || 'Could not read location.';
+        setGeoError(msg);
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
     );
   }, []);
 
   useEffect(() => {
-    // Soft prompt once on mount for the discovery feel.
-    const t = setTimeout(requestLocation, 600);
+    const t = setTimeout(requestLocation, 800);
     return () => clearTimeout(t);
   }, [requestLocation]);
 
   async function connectWallet() {
     try {
-      if (!window.ethereum) throw new Error('Wallet not detected. Use MetaMask or a compatible wallet.');
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new Error('Wallet not detected. Use MetaMask or a compatible wallet.');
+      }
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       setWallet(accounts?.[0] || '');
       setStatus(accounts?.[0] ? `Wallet connected ${accounts[0].slice(0, 6)}…${accounts[0].slice(-4)}` : 'Connection cancelled');
@@ -177,8 +211,12 @@ export default function DiscoveryExperience() {
   }
 
   async function handleClaim() {
-    if (!selected || !wallet) {
-      setStatus('Connect a wallet and select a drop first.');
+    if (!selected) {
+      setStatus('Select a drop first.');
+      return;
+    }
+    if (!wallet) {
+      setStatus('Connect a wallet before claiming.');
       return;
     }
     setClaiming(true);
@@ -190,11 +228,18 @@ export default function DiscoveryExperience() {
         walletAddress: wallet,
         distanceMeters: distance,
       });
-      // Client creates the claim intent. Real ownership still requires server + chain.
-      console.info('Claim intent ready for server validation', intent);
+      // Persist local claim intents for demo continuity (not ownership).
+      try {
+        const key = 'voxel-vault-claim-intents';
+        const existing = JSON.parse(window.localStorage.getItem(key) || '[]');
+        existing.push({ ...intent, localOnly: true });
+        window.localStorage.setItem(key, JSON.stringify(existing.slice(-30)));
+      } catch {
+        // ignore
+      }
       setStatus(
         `Claim intent created for ${selected.collectible.name}. ` +
-          `Server validation + wallet signature required before ownership is real. ` +
+          `Server validation + signed wallet transaction are still required before ownership is real. ` +
           `(Client distance: ${Math.round(distance)} m — UX only)`
       );
     } catch (e) {
@@ -210,41 +255,48 @@ export default function DiscoveryExperience() {
       setStatus('Enable location so the drop can be anchored to a public zone near you.');
       return;
     }
-    const id = `drop-local-${Date.now()}`;
-    const drop = createDrop({
-      id,
-      name: placeForm.name || 'Local Voxel Drop',
-      status: 'active',
-      quantity: Number(placeForm.quantity) || 10,
-      publicZoneId: 'user-public-zone',
-      radiusMeters: Number(placeForm.radiusMeters) || 80,
-      startAt: new Date().toISOString(),
-      endAt: new Date(Date.now() + 2 * 86400000).toISOString(),
-    });
-    const collectible = createUniversalCollectible({
-      name: placeForm.name || 'Local Collectible',
-      family: placeForm.family,
-      subtype: placeForm.subtype,
-      rarity: 'common',
-      seed: id,
-      realityBasis: { inspiredBy: 'user-placed object', plausibility: 'realistic' },
-    });
-    setPlacedDrops((prev) => [
-      ...prev,
-      {
+    try {
+      const id = `drop-local-${Date.now()}`;
+      const drop = createDrop({
+        id,
+        name: placeForm.name || 'Local Voxel Drop',
+        status: 'active',
+        quantity: Number(placeForm.quantity) || 10,
+        publicZoneId: 'user-public-zone',
+        radiusMeters: Number(placeForm.radiusMeters) || 80,
+        startAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+      });
+      const collectible = createUniversalCollectible({
+        name: placeForm.name || 'Local Collectible',
+        family: placeForm.family,
+        subtype: placeForm.subtype || 'object',
+        rarity: 'common',
+        seed: id,
+        realityBasis: { inspiredBy: 'user-placed object', plausibility: 'realistic' },
+      });
+      const validation = validateUniversalCollectible(collectible);
+      if (!validation.valid) {
+        setStatus(`Collectible invalid: ${validation.errors.join(', ')}`);
+        return;
+      }
+      const entry = {
         ...drop,
         lat: position.lat + (Math.random() - 0.5) * 0.004,
         lng: position.lng + (Math.random() - 0.5) * 0.004,
         collectible,
         fingerprint: collectibleFingerprint(collectible),
-        validation: validateUniversalCollectible(collectible),
-      },
-    ]);
-    setShowPlaceForm(false);
-    setStatus(`Drop “${drop.name}” placed in a public zone near you. Others can discover it.`);
+        validation,
+      };
+      setPlacedDrops((prev) => [...prev, entry]);
+      setSelectedDropId(id);
+      setShowPlaceForm(false);
+      setStatus(`Drop “${drop.name}” placed in a public zone near you. Others on this device can discover it.`);
+    } catch (err) {
+      setStatus(err?.message || 'Could not place drop');
+    }
   }
 
-  // Simple relative map projection around user or first drop
   const mapCenter = position || { lat: 40.75, lng: -73.98 };
   const project = (lat, lng) => {
     const scale = 18000;
@@ -263,7 +315,7 @@ export default function DiscoveryExperience() {
           <Link href="/trade">Trade</Link>
           <Link href="/marketplace">Marketplace</Link>
         </div>
-        <button className="walletBtn" onClick={connectWallet}>
+        <button type="button" className="walletBtn" onClick={connectWallet}>
           {wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : '◈ Connect Wallet'}
         </button>
       </nav>
@@ -278,8 +330,8 @@ export default function DiscoveryExperience() {
             Location is used only for discovery UX — ownership always requires server + chain confirmation.
           </p>
           <div className="heroActions">
-            <button className="primary" onClick={requestLocation}>Enable location</button>
-            <button className="secondary" onClick={() => setShowPlaceForm((v) => !v)}>
+            <button type="button" className="primary" onClick={requestLocation}>Enable location</button>
+            <button type="button" className="secondary" onClick={() => setShowPlaceForm((v) => !v)}>
               {showPlaceForm ? 'Cancel placement' : 'Place a drop near me'}
             </button>
           </div>
@@ -292,6 +344,7 @@ export default function DiscoveryExperience() {
               return (
                 <button
                   key={d.id}
+                  type="button"
                   className={`pin ${active ? 'active' : ''} ${isDropDiscoverable(d) ? 'live' : ''}`}
                   style={{ left: `${x}%`, top: `${y}%` }}
                   onClick={() => setSelectedDropId(d.id)}
@@ -345,7 +398,7 @@ export default function DiscoveryExperience() {
             <div className="eyebrow">NEAR YOU</div>
             <h2>Drops in range</h2>
           </div>
-          <p>{nearby.length ? `${nearby.length} public zone(s) within extended range` : 'Walk closer or enable location'}</p>
+          <p>{nearby.length ? `${nearby.length} public zone(s) within extended range` : 'Walk closer or enable location — sample drops still listed below'}</p>
         </div>
         <div className="dropList">
           {(nearby.length ? nearby : drops).map((d) => {
@@ -356,6 +409,9 @@ export default function DiscoveryExperience() {
                 key={d.id}
                 className={`dropCard ${selectedDropId === d.id ? 'selected' : ''} ${inZone ? 'inZone' : ''}`}
                 onClick={() => setSelectedDropId(d.id)}
+                onKeyDown={(e) => e.key === 'Enter' && setSelectedDropId(d.id)}
+                role="button"
+                tabIndex={0}
               >
                 <div className="dropTop">
                   <span className="liveDot">{isDropDiscoverable(d) ? '● LIVE' : '○ OFF'}</span>
@@ -379,7 +435,7 @@ export default function DiscoveryExperience() {
         <section className="inspectPanel">
           <div className="inspectInner">
             <div>
-              <div className="eyebrow">VOXEL DROP · {selected.collectible?.rarity?.toUpperCase()}</div>
+              <div className="eyebrow">VOXEL DROP · {(selected.collectible?.rarity || 'common').toUpperCase()}</div>
               <h2>{selected.collectible?.name}</h2>
               <p>
                 {selected.collectible?.realityBasis?.inspiredBy || selected.name}.
@@ -392,7 +448,7 @@ export default function DiscoveryExperience() {
                 <span>In zone <b>{distanceToSelected != null && isWithinDropZone(selected, distanceToSelected) ? 'yes' : 'no'}</b></span>
               </div>
               <div className="actions">
-                <button className="primary" onClick={handleClaim} disabled={claiming || !wallet}>
+                <button type="button" className="primary" onClick={handleClaim} disabled={claiming || !wallet}>
                   {claiming ? 'Creating claim…' : wallet ? 'Claim this object' : 'Connect wallet to claim'}
                 </button>
                 <Link className="secondary" href={`/trade?mode=create&object=${encodeURIComponent(selected.collectible?.name || '')}`}>
@@ -411,7 +467,7 @@ export default function DiscoveryExperience() {
       {status && (
         <div className="statusBar">
           <span>●</span>{status}
-          <button onClick={() => setStatus('')}>×</button>
+          <button type="button" onClick={() => setStatus('')}>×</button>
         </div>
       )}
 
