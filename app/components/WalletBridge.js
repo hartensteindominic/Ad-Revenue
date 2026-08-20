@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react';
 
+const SEPOLIA_CHAIN_ID = 11155111;
+let walletConnectProviderPromise = null;
+
 function dappUrl() {
   if (typeof window === 'undefined') return '';
   return encodeURIComponent(window.location.href);
@@ -23,23 +26,66 @@ function closeModal() {
   document.getElementById('vv-wallet-modal')?.remove();
 }
 
+function setConnectedButtons(name, address) {
+  localStorage.setItem('vv-wallet-address', address);
+  localStorage.setItem('vv-wallet-name', name);
+  document.querySelectorAll('button').forEach((b) => {
+    const text = (b.textContent || '').toLowerCase();
+    if (text.includes('metamask') || text.includes('connect wallet')) {
+      b.textContent = `${name} · ${address.slice(0, 6)}…${address.slice(-4)}`;
+    }
+  });
+}
+
 async function connectProvider(provider, name, button) {
   try {
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     const address = accounts?.[0];
     if (address) {
-      localStorage.setItem('vv-wallet-address', address);
-      localStorage.setItem('vv-wallet-name', name);
-      document.querySelectorAll('button').forEach((b) => {
-        const text = (b.textContent || '').toLowerCase();
-        if (text.includes('metamask') || text.includes('connect wallet')) {
-          b.textContent = `${name} · ${address.slice(0, 6)}…${address.slice(-4)}`;
-        }
-      });
+      setConnectedButtons(name, address);
       closeModal();
     }
   } catch (error) {
-    if (button) button.textContent = error?.message || 'Connection cancelled';
+    if (button) button.textContent = error?.code === 4001 ? 'Connection cancelled' : (error?.message || 'Connection failed');
+  }
+}
+
+async function getWalletConnectProvider() {
+  const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+  if (!projectId) throw new Error('WalletConnect is not configured yet. Add NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID in the Vercel environment variables.');
+
+  if (!walletConnectProviderPromise) {
+    walletConnectProviderPromise = import('@walletconnect/ethereum-provider').then(async ({ EthereumProvider }) => {
+      return EthereumProvider.init({
+        projectId,
+        optionalChains: [SEPOLIA_CHAIN_ID],
+        showQrModal: true,
+        rpcMap: { [SEPOLIA_CHAIN_ID]: 'https://rpc.sepolia.org' },
+        metadata: {
+          name: 'Voxel Vault',
+          description: '3D voxel NFT marketplace',
+          url: window.location.origin,
+          icons: [`${window.location.origin}/icon.png`],
+        },
+      });
+    });
+  }
+
+  return walletConnectProviderPromise;
+}
+
+async function connectWalletConnect(button) {
+  try {
+    if (button) button.textContent = 'Opening WalletConnect…';
+    const provider = await getWalletConnectProvider();
+    await provider.connect();
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const address = accounts?.[0];
+    if (!address) throw new Error('No wallet account was returned.');
+    setConnectedButtons('WalletConnect', address);
+    closeModal();
+  } catch (error) {
+    if (button) button.textContent = error?.message || 'WalletConnect connection failed';
   }
 }
 
@@ -54,9 +100,9 @@ function showWalletModal() {
         <button class="vv-wallet-close" aria-label="Close">×</button>
         <div class="vv-wallet-kicker">VOXEL VAULT</div>
         <h2>Connect your wallet</h2>
-        <p>MetaMask is only one option. Choose any supported wallet, or open Voxel Vault inside your wallet app.</p>
+        <p>Use MetaMask, Coinbase, Trust, Rainbow, Phantom, or any compatible WalletConnect wallet. Your private keys stay inside your wallet.</p>
         <div class="vv-wallet-list"></div>
-        <div class="vv-wallet-note">Your private keys never leave your wallet.</div>
+        <div class="vv-wallet-note">Sepolia test network · Voxel Vault never asks for your seed phrase.</div>
       </div>
     </div>`;
 
@@ -72,19 +118,28 @@ function showWalletModal() {
     .vv-wallet-list{display:grid;gap:9px}
     .vv-wallet-option{width:100%;padding:14px 15px;border:1px solid #282b3b;border-radius:12px;background:#0d0f17;color:#fff;text-align:left;font-weight:800;cursor:pointer}
     .vv-wallet-option:hover{border-color:#8063ff;background:#151129}
-    .vv-wallet-note{margin-top:16px;text-align:center;color:#666d80;font-size:9px;letter-spacing:.5px}
+    .vv-wallet-option.primary{border-color:#7658ff;background:linear-gradient(135deg,#24164f,#12101f)}
+    .vv-wallet-note{margin-top:16px;text-align:center;color:#666d80;font-size:9px;letter-spacing:.5px;line-height:1.5}
   `;
   document.head.appendChild(style);
   document.body.appendChild(modal);
 
   const list = modal.querySelector('.vv-wallet-list');
+
+  const wcButton = document.createElement('button');
+  wcButton.className = 'vv-wallet-option primary';
+  wcButton.textContent = '◎ Connect with WalletConnect';
+  wcButton.onclick = () => connectWalletConnect(wcButton);
+  list.appendChild(wcButton);
+
   const discovered = [];
   const providers = new Map();
   const announce = (event) => {
     const detail = event.detail;
-    if (!detail?.provider || providers.has(detail.info?.uuid)) return;
-    providers.set(detail.info?.uuid || discovered.length, detail.provider);
-    discovered.push([detail.info?.name || 'Wallet', detail.provider]);
+    const key = detail?.info?.uuid || detail?.info?.name;
+    if (!detail?.provider || (key && providers.has(key))) return;
+    if (key) providers.set(key, detail.provider);
+    discovered.push([detail.info?.name || 'Browser Wallet', detail.provider]);
   };
   window.addEventListener('eip6963:announceProvider', announce);
   window.dispatchEvent(new Event('eip6963:requestProvider'));
@@ -125,8 +180,9 @@ export default function WalletBridge() {
       event.stopPropagation();
       event.stopImmediatePropagation?.();
 
-      if (window.ethereum && !window.ethereum.providers) {
-        connectProvider(window.ethereum, window.ethereum.isMetaMask ? 'MetaMask' : 'Wallet', target);
+      const injected = window.ethereum;
+      if (injected && !injected.providers) {
+        connectProvider(injected, injected.isMetaMask ? 'MetaMask' : 'Browser Wallet', target);
         return;
       }
 
