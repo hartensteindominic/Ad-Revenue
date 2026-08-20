@@ -10,7 +10,7 @@ const NFT_ABI = [
   'function symbol() view returns (string)',
   'event VoxelMinted(uint256 indexed tokenId,address indexed creator,string tokenURI,uint96 royaltyBps)'
 ];
-const SEPOLIA_CHAIN_HEX='0xaa36a7';
+const MAINNET_CHAIN_HEX='0x1';
 
 function dataUri(json){ return `data:application/json;base64,${btoa(unescape(encodeURIComponent(JSON.stringify(json))))}`; }
 
@@ -21,13 +21,13 @@ async function getProvider(){
   return provider;
 }
 
-async function ensureSepolia(provider){
+async function ensureMainnet(provider){
   const chain=await provider.request({method:'eth_chainId'});
-  if(chain===SEPOLIA_CHAIN_HEX) return;
-  try { await provider.request({method:'wallet_switchEthereumChain',params:[{chainId:SEPOLIA_CHAIN_HEX}]}); }
+  if(chain===MAINNET_CHAIN_HEX) return;
+  try { await provider.request({method:'wallet_switchEthereumChain',params:[{chainId:MAINNET_CHAIN_HEX}]}); }
   catch(error){
     if(error?.code!==4902) throw error;
-    await provider.request({method:'wallet_addEthereumChain',params:[{chainId:SEPOLIA_CHAIN_HEX,chainName:'Sepolia',nativeCurrency:{name:'Sepolia ETH',symbol:'ETH',decimals:18},rpcUrls:['https://rpc.sepolia.org'],blockExplorerUrls:['https://sepolia.etherscan.io']} ]});
+    await provider.request({method:'wallet_addEthereumChain',params:[{chainId:MAINNET_CHAIN_HEX,chainName:'Ethereum Mainnet',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://cloudflare-eth.com'],blockExplorerUrls:['https://etherscan.io']} ]});
   }
 }
 
@@ -67,7 +67,7 @@ export default function CreatorStudio(){
     setMintStatus('');setMintedToken('');
     try{
       if(!contractAddress) throw new Error('NFT contract address is not configured yet. Add NEXT_PUBLIC_VOXEL_NFT_ADDRESS to the deployment environment.');
-      const provider=await getProvider(); await ensureSepolia(provider);
+      const provider=await getProvider(); await ensureMainnet(provider);
       const accounts=await provider.request({method:'eth_requestAccounts'});const account=accounts?.[0];if(!account)throw new Error('No wallet account is connected.');
       const ethers=await import('ethers');
       const browserProvider=new ethers.BrowserProvider(provider);const signer=await browserProvider.getSigner();
@@ -80,7 +80,7 @@ export default function CreatorStudio(){
       const receipt=await tx.wait();
       let tokenId='';
       for(const log of receipt.logs){try{const parsed=contract.interface.parseLog(log);if(parsed?.name==='VoxelMinted'){tokenId=parsed.args.tokenId.toString();break;}}catch{}}
-      setMintedToken(tokenId);setMintStatus(tokenId?`Minted successfully · Token #${tokenId}`:'Minted successfully on Sepolia.');
+      setMintedToken(tokenId);setMintStatus(tokenId?`Minted successfully · Token #${tokenId}`:'Minted successfully on Ethereum mainnet.');
       saveDraft();
     }catch(error){
       setMintStatus(error?.code===4001?'Transaction cancelled in wallet':error?.shortMessage||error?.message||'Mint failed.');
@@ -99,12 +99,12 @@ export default function CreatorStudio(){
       </aside>
       <section className="canvasPanel"><div className="canvasTop"><span>LIVE 3D PREVIEW</span><span>WEBGL · INTERACTIVE</span></div><div className="canvas"><VoxelViewer key={shape+autoRotate} shape={shape} showcase={!autoRotate}/></div><div className="canvasBottom"><div><strong>{selected}</strong><span>Interactive voxel geometry</span></div><div className="canvasHint">DRAG TO ORBIT · SCROLL TO ZOOM · CLICK BLOCKS</div></div></section>
       <aside className="panel right"><div className="kicker">02 · MINT</div><h2>Make it<br/><em>on-chain.</em></h2><div className={walletAddress?'status good':'status'}><span/> {walletAddress?`Wallet ${walletAddress.slice(0,6)}…${walletAddress.slice(-4)}`:'Connect a wallet to mint'}</div>
-        <div className="specs"><div><span>FORMAT</span><strong>3D VOXEL</strong></div><div><span>CHAIN</span><strong>SEPOLIA</strong></div><div><span>ROYALTY</span><strong>{(Math.min(1500,Math.max(0,Number(royalty)||0))/100).toFixed(2)}%</strong></div><div><span>CONTRACT</span><strong>{contractAddress?`${contractAddress.slice(0,6)}…${contractAddress.slice(-4)}`:'NOT CONFIGURED'}</strong></div></div>
-        <div className="pipeline"><div className="done"><i>✓</i><span><b>3D preview</b>Interactive object loaded</span></div><div className="done"><i>✓</i><span><b>Metadata</b>Generated locally for this mint</span></div><div className={contractAddress?'done':''}><i>{contractAddress?'✓':'03'}</i><span><b>NFT contract</b>{contractAddress?'Contract address configured':'Waiting for deployment configuration'}</span></div><div><i>04</i><span><b>Wallet mint</b>Approve the transaction in your wallet</span></div></div>
+        <div className="specs"><div><span>FORMAT</span><strong>3D VOXEL</strong></div><div><span>CHAIN</span><strong>ETHEREUM MAINNET</strong></div><div><span>ROYALTY</span><strong>{(Math.min(1500,Math.max(0,Number(royalty)||0))/100).toFixed(2)}%</strong></div><div><span>CONTRACT</span><strong>{contractAddress?`${contractAddress.slice(0,6)}…${contractAddress.slice(-4)}`:'NOT CONFIGURED'}</strong></div></div>
+        <div className="pipeline"><div className="done"><i>✓</i><span><b>3D preview</b>Interactive object loaded</span></div><div className="done"><i>✓</i><span><b>Metadata</b>Generated locally for this mint</span></div><div className={contractAddress?'done':''}><i>{contractAddress?'✓':'03'}</i><span><b>NFT contract</b>{contractAddress?'Contract address configured':'Waiting for mainnet deployment configuration'}</span></div><div><i>04</i><span><b>Wallet mint</b>Approve the real ETH transaction in your wallet</span></div></div>
         <button className="mint" disabled={minting} onClick={mint}>{minting?'Minting…':mintedToken?`Minted · Token #${mintedToken}`:'Mint 3D NFT'} <span>→</span></button>
         {mintStatus&&<div className={mintedToken?'mintSuccess':'mintStatus'}>{mintStatus}</div>}
-        {!contractAddress&&<div className="configWarning">The UI is ready, but a real contract address must be supplied before minting can occur.</div>}
-        <small>Metadata is generated in the browser for this first mint path. Never enter a recovery phrase here. Wallet transactions always require approval in your wallet.</small>
+        {!contractAddress&&<div className="configWarning">Mainnet minting is locked until the deployed Ethereum mainnet NFT contract address is supplied.</div>}
+        <small>Metadata is generated in the browser for this first mint path. Never enter a recovery phrase here. Mainnet transactions use real ETH and always require wallet approval.</small>
       </aside>
     </section>
   </main>;
