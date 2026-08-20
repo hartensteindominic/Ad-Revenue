@@ -1,5 +1,6 @@
 import CryptoAdSlot from './components/CryptoAdSlot';
 import WalletBridge from './components/WalletBridge';
+import './vault-fallback.css';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://voxel-vault.vercel.app').replace(/\/$/, '');
 
@@ -10,11 +11,7 @@ export const metadata = {
     template: '%s | Voxel Vault',
   },
   description: 'Discover, inspect, collect and create interactive 3D digital objects with real-world inspiration, distinctive materials and real ownership.',
-  keywords: [
-    '3D NFT marketplace', '3D digital art', 'voxel art', '3D collectibles',
-    'interactive NFTs', 'digital collectibles', '3D models', 'Web3 art',
-    'GLB NFT', 'GLTF NFT', '3D creators', 'digital artifacts',
-  ],
+  keywords: ['3D NFT marketplace','3D digital art','voxel art','3D collectibles','interactive NFTs','digital collectibles','3D models','Web3 art','GLB NFT','GLTF NFT','3D creators','digital artifacts'],
   alternates: { canonical: SITE_URL },
   robots: { index: true, follow: true },
   openGraph: {
