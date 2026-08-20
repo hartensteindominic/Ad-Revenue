@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import VoxelViewer from './VoxelViewer';
+import ArtPreview from './ArtPreview';
 import { getCatalogWindow, CATALOG_SIZE } from '../../lib/catalog';
 import { buyAsset, hasContracts } from '../../lib/blockchain';
 
@@ -72,7 +73,7 @@ export default function VaultUniverse() {
         item.type === mapped ||
         (category === 'Nature' && (item.type === 'World' || item.type === 'Nature')) ||
         (category === 'Sci-Fi' && (item.shape === 'ship' || item.shape === 'satellite' || item.shape === 'mech'));
-      const text = `${item.name} ${item.creator} ${item.type} ${item.rarity} ${item.material || ''} ${item.style || ''}`.toLowerCase();
+      const text = `${item.name} ${item.creator} ${item.type} ${item.rarity} ${item.material || ''} ${item.style || ''} ${item.family || ''}`.toLowerCase();
       return categoryMatch && (!q || text.includes(q));
     });
   }, [items, category, query]);
@@ -114,7 +115,6 @@ export default function VaultUniverse() {
     setBusy(true);
     setStatus(`Opening Stripe checkout for ${selected.name}…`);
     try {
-      // Uses existing /api/checkout which reads STRIPE_SECRET_KEY from Vercel env
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,13 +122,8 @@ export default function VaultUniverse() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        // Auth required by the existing Stripe route — surface clear next step
-        if (res.status === 401) {
-          throw new Error('Sign in is required for card checkout. Open Creator Studio / account, then try again.');
-        }
-        if (res.status === 404) {
-          throw new Error('This showcase piece is not yet listed in the Stripe catalog. Curated/published assets checkout with card.');
-        }
+        if (res.status === 401) throw new Error('Sign in is required for card checkout. Open Creator Studio / account, then try again.');
+        if (res.status === 404) throw new Error('This showcase piece is not yet listed in the Stripe catalog. Curated/published assets checkout with card.');
         throw new Error(data.error || `Checkout failed (${res.status})`);
       }
       if (data.url) {
@@ -142,6 +137,33 @@ export default function VaultUniverse() {
       setBusy(false);
     }
   }
+
+  const renderArtwork = (item, compact = true, interactive = false) => {
+    if (item.renderMode === 'voxel') {
+      return (
+        <VoxelViewer
+          shape={item.shape}
+          material={item.material}
+          seed={item.seed}
+          rarity={item.rarity}
+          compact={compact}
+          showcase={!interactive}
+          interactive={interactive}
+          label={false}
+        />
+      );
+    }
+    return (
+      <ArtPreview
+        family={item.family}
+        material={item.material}
+        seed={item.seed}
+        compact={compact}
+        interactive={interactive}
+        showcase={!interactive}
+      />
+    );
+  };
 
   return (
     <main className="vaultUniverse">
@@ -165,14 +187,14 @@ export default function VaultUniverse() {
         <div className="heroCopy">
           <div className="eyebrow"><i /> 3D DIGITAL OBJECTS · REAL OWNERSHIP</div>
           <h1>Objects worth <em>owning.</em></h1>
-          <p>Explore original 3D sculptures, environments, creatures and machines. Pay with crypto or card. Inspect every object in real 3D before you collect it.</p>
+          <p>Explore original voxel art, sculptural 3D pieces, creatures, machines, architecture and impossible forms. Inspect every object in real 3D before you collect it.</p>
           <div className="heroActions">
             <a href="#drops" className="primaryAction">Explore the Vault ↓</a>
             <a href="#creators" className="secondaryAction">Create a drop →</a>
           </div>
           <div className="heroStats">
             <span><b>{CATALOG_SIZE.toLocaleString()}</b> forms</span>
-            <span><b>22</b> shape families</span>
+            <span><b>8</b> art families</span>
             <span><b>14</b> materials</span>
             <span><b>3D</b> native</span>
           </div>
@@ -186,7 +208,7 @@ export default function VaultUniverse() {
       <section className="discover" id="drops">
         <div className="sectionHead">
           <div><div className="eyebrow">THE COLLECTION</div><h2>More than one kind of <em>beautiful.</em></h2></div>
-          <p>{CATALOG_SIZE.toLocaleString()} forms — live 3D previews stay limited so the page stays fast. Open any piece for full inspection.</p>
+          <p>{CATALOG_SIZE.toLocaleString()} forms — voxel and non-voxel 3D previews are staged in a small live window so the page stays fast. Open any piece for full inspection.</p>
         </div>
         <div className="toolbar">
           <div className="categoryBar">{CATEGORIES.map((item) => <button key={item} className={category === item ? 'selected' : ''} onClick={() => setCategory(item)}>{item}</button>)}</div>
@@ -198,20 +220,9 @@ export default function VaultUniverse() {
             return (
               <article className="artCard" key={`${item.id}-${item.seed}`}>
                 <button className="artVisual" onClick={() => setSelected(item)} aria-label={`Inspect ${item.name}`}>
-                  {live3d ? (
-                    <VoxelViewer
-                      shape={item.shape}
-                      material={item.material}
-                      seed={item.seed}
-                      rarity={item.rarity}
-                      compact
-                      showcase
-                      interactive={false}
-                      label={false}
-                    />
-                  ) : (
+                  {live3d ? renderArtwork(item, true, false) : (
                     <div className="cardPlaceholder">
-                      <span className="phShape">{item.shape}</span>
+                      <span className="phShape">{item.family || item.shape}</span>
                       <span className="phHint">Tap to open 3D</span>
                     </div>
                   )}
@@ -243,8 +254,8 @@ export default function VaultUniverse() {
         <div><div className="eyebrow">THE VAULT PHILOSOPHY</div><h2>Not a grid of pictures.<br /><em>A world of objects.</em></h2></div>
         <div className="manifestoGrid">
           <div><b>01</b><strong>Real 3D</strong><p>Interactive previews put geometry first. Open any piece for the full viewer.</p></div>
-          <div><b>02</b><strong>Original variety</strong><p>Vehicles, architecture, creatures, fantasy, sci-fi and abstract work in one vault.</p></div>
-          <div><b>03</b><strong>Pay your way</strong><p>Crypto via wallet contracts or card via Stripe — both wired to your existing keys.</p></div>
+          <div><b>02</b><strong>Original variety</strong><p>Voxel sculptures, realistic-style procedural forms, architecture, creatures, fantasy, sci-fi and abstract work in one vault.</p></div>
+          <div><b>03</b><strong>Pay your way</strong><p>Crypto via wallet contracts or card via Stripe when the real catalog and environment are configured.</p></div>
         </div>
       </section>
 
@@ -263,17 +274,7 @@ export default function VaultUniverse() {
         <div className="inspectBackdrop" role="dialog" aria-modal="true">
           <div className="inspectModal">
             <button className="close" onClick={() => setSelected(null)}>×</button>
-            <div className="inspectViewer">
-              <VoxelViewer
-                shape={selected.shape}
-                material={selected.material}
-                seed={selected.seed}
-                rarity={selected.rarity}
-                interactive
-                showcase={false}
-                label={false}
-              />
-            </div>
+            <div className="inspectViewer">{renderArtwork(selected, false, true)}</div>
             <div className="inspectDetails">
               <div className="eyebrow">3D INSPECTION · {selected.rarity}</div>
               <h2>{selected.name}</h2>
@@ -281,22 +282,15 @@ export default function VaultUniverse() {
               <div className="detailRows">
                 <span>Category <b>{selected.type}</b></span>
                 <span>Style <b>{selected.style || selected.material}</b></span>
+                <span>Art form <b>{selected.family || selected.shape}</b></span>
                 <span>Price <b>{selected.price} ETH · ~${selected.priceUsd || '—'}</b></span>
               </div>
               <div className="payRow">
-                <button className="collect" onClick={payCrypto} disabled={busy}>
-                  {busy ? 'Working…' : 'Pay with Crypto'}
-                </button>
-                <button className="cardPay" onClick={payCard} disabled={busy}>
-                  {busy ? 'Working…' : 'Pay with Card'}
-                </button>
+                <button className="collect" onClick={payCrypto} disabled={busy}>{busy ? 'Working…' : 'Pay with Crypto'}</button>
+                <button className="cardPay" onClick={payCard} disabled={busy}>{busy ? 'Working…' : 'Pay with Card'}</button>
               </div>
-              <button className="walletLink" onClick={connectWallet}>
-                {wallet ? `Wallet ${wallet.slice(0, 6)}…` : 'Connect wallet →'}
-              </button>
-              <p className="payHint">
-                Crypto uses your Vercel contract env. Card uses Stripe + Supabase auth on published assets.
-              </p>
+              <button className="walletLink" onClick={connectWallet}>{wallet ? `Wallet ${wallet.slice(0, 6)}…` : 'Connect wallet →'}</button>
+              <p className="payHint">Crypto uses your configured contract environment. Card uses the existing Stripe + Supabase path for published assets.</p>
             </div>
           </div>
         </div>
