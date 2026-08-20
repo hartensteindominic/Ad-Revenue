@@ -1,6 +1,7 @@
 import CryptoAdSlot from './components/CryptoAdSlot';
 import WalletBridge from './components/WalletBridge';
 import './vault-fallback.css';
+import './futuristic-vault.css';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://voxel-vault.vercel.app').replace(/\/$/, '');
 
