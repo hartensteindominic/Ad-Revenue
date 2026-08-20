@@ -16,7 +16,7 @@ The iPhone app should be a native-enhanced Voxel Vault companion, not a thin web
 
 ## Crypto and NFT boundary
 
-Apple's current App Review Guidelines allow apps to use In-App Purchase for NFT-related services such as minting, listing and transferring. They also allow users to view their own NFTs as long as NFT ownership does not unlock app functionality. Wallet functionality has additional restrictions, including an organization requirement for cryptocurrency wallet apps. cite-not-in-repo-source-placeholder
+Apple's current App Review Guidelines allow apps to use In-App Purchase for NFT-related services such as minting, listing and transferring. They also allow users to view their own NFTs as long as NFT ownership does not unlock app functionality. Wallet functionality has additional restrictions, including an organization requirement for cryptocurrency wallet apps.
 
 For the first submission, keep the native surface focused on discovery, 3D inspection, hunts, sharing and viewing owned collectibles. Keep the full web marketplace and experimental crypto flows behind the web product until the exact iOS payment/wallet design has been reviewed against the current Apple rules for each intended storefront.
 
@@ -41,7 +41,7 @@ Do not market the app as an investment product or promise casual income. The pro
 Do not spend all $300 on crypto or infrastructure.
 
 1. **$0 first:** use the current branch to finish code hardening and test gates.
-2. **Up to $99:** Apple Developer Program membership when the native build is ready to test and submit. Apple currently lists the membership at $99/year. cite-not-in-repo-source-placeholder
+2. **Up to $99:** Apple Developer Program membership when the native build is ready to test and submit. Apple currently lists the membership at $99/year.
 3. **Keep at least $100:** reserve for testnet gas, small service costs, or an unexpected release blocker.
 4. **Remainder:** only unlock after the iPhone build runs on a physical device and the web golden path is green.
 
