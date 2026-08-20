@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { createTradeOffer, canAcceptTrade, transitionTrade, isTradeExpired } from '../../../lib/tradingEngine';
 import { saveTradeOffer, getTradeOffer } from '../../../lib/claimAuthority';
 import { verifyMarketplaceSettlement } from '../../../lib/transactionVerification';
@@ -36,11 +37,7 @@ export async function GET(request) {
 
     const offer = await getTradeOffer(id);
     if (!offer) return noStore({ error: 'Offer not found' }, 404);
-    return noStore({
-      offer,
-      expired: isTradeExpired(offer),
-      note: 'Application state remains untrusted until server-verified semantic chain settlement is validated.',
-    });
+    return noStore({ offer, expired: isTradeExpired(offer), note: 'Application state remains untrusted until server-verified semantic chain settlement is validated.' });
   } catch (error) {
     console.error('[trades] GET failed', error);
     return noStore({ error: 'Unable to load offer' }, 500);
@@ -69,8 +66,7 @@ export async function POST(request) {
         requested: body.requested,
         expiresAt: body.expiresAt || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       });
-      // Never let the caller choose an existing offer ID and overwrite another offer.
-      offer.id = `trade-${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 12)}`;
+      offer.id = `trade-${Date.now().toString(36)}-${randomUUID().slice(0, 12)}`;
       const saved = await saveTradeOffer(offer);
       return noStore({ offer: saved, ownershipChanged: false });
     }
@@ -84,9 +80,7 @@ export async function POST(request) {
       const wallet = String(body.walletAddress || '').trim().toLowerCase();
       if (!looksLikeWallet(wallet)) return noStore({ error: 'A valid walletAddress is required' }, 400);
       const working = { ...existing, recipient: existing.recipient === DEAD_RECIPIENT.toLowerCase() ? wallet : existing.recipient };
-      if (!canAcceptTrade(working, wallet)) {
-        return noStore({ error: 'This wallet cannot accept this offer (wrong recipient or expired)', ownershipChanged: false }, 403);
-      }
+      if (!canAcceptTrade(working, wallet)) return noStore({ error: 'This wallet cannot accept this offer (wrong recipient or expired)', ownershipChanged: false }, 403);
 
       const accepted = transitionTrade(working, 'accepted');
       const submitted = transitionTrade(accepted, 'submitted');
@@ -135,15 +129,7 @@ export async function POST(request) {
       confirmed.tokenId = verification.tokenId;
       const saved = await saveTradeOffer(confirmed);
 
-      return noStore({
-        offer: saved,
-        ownershipChanged: true,
-        chainConfirmed: true,
-        semanticSettlementVerified: true,
-        txHash: verification.transactionHash,
-        verification,
-        message: 'Marketplace settlement was verified on-chain and matched the expected participants.',
-      });
+      return noStore({ offer: saved, ownershipChanged: true, chainConfirmed: true, semanticSettlementVerified: true, txHash: verification.transactionHash, verification, message: 'Marketplace settlement was verified on-chain and matched the expected participants.' });
     }
 
     return noStore({ error: 'Unknown action', ownershipChanged: false }, 400);
