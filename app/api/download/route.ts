@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '../../../lib/supabase-admin';
+import { getSupabaseAdmin } from '../../../lib/supabase-admin';
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const auth = request.headers.get('authorization');
     const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!token) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
