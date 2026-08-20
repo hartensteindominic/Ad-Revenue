@@ -1,9 +1,4 @@
-"""Pinata IPFS folder uploads for Voxel Vault.
-
-Uses Pinata's pinFileToIPFS endpoint because it returns a directory CID when
-multiple files are uploaded together. Batches keep requests below typical
-multipart/request limits.
-"""
+"""Batched Pinata IPFS folder uploads for Voxel Vault."""
 
 import json
 import os
@@ -37,20 +32,21 @@ class PinataUploader:
                 relative = f"{root_name.rstrip('/')}/{path.name}"
                 mime = "application/json" if path.suffix == ".json" else "image/png"
                 multipart.append(("file", (relative, handle, mime)))
-
-            payload = {"pinataOptions": json.dumps({"cidVersion": 1}), "pinataMetadata": json.dumps({"name": root_name})}
+            payload = {
+                "pinataOptions": json.dumps({"cidVersion": 1}),
+                "pinataMetadata": json.dumps({"name": root_name}),
+            }
             last_error = None
             for attempt in range(self.retries):
                 try:
                     response = requests.post(self.URL, files=multipart, data=payload, headers=headers, timeout=self.timeout)
                     if response.ok:
-                        data = response.json()
-                        return data["IpfsHash"]
+                        return response.json()["IpfsHash"]
                     last_error = RuntimeError(f"Pinata {response.status_code}: {response.text[:500]}")
                 except requests.RequestException as exc:
                     last_error = exc
                 time.sleep(min(2 ** attempt, 16))
-            raise RuntimeError(f"Pinata upload failed after {self.retries} attempts: {last_error}")
+            raise RuntimeError(f"Pinata upload failed: {last_error}")
         finally:
             for handle in opened:
                 handle.close()
@@ -60,10 +56,10 @@ class PinataUploader:
         mapping: Dict[int, str] = {}
         for offset in range(0, len(files), batch_size):
             batch = files[offset:offset + batch_size]
-            cid = self.upload_folder_batch(batch, f"batch-{offset // batch_size:04d}")
+            root_name = f"batch-{offset // batch_size:04d}"
+            cid = self.upload_folder_batch(batch, root_name)
             for path in batch:
-                token_id = int(path.stem)
-                mapping[token_id] = f"ipfs://{cid}/{path.name}"
+                mapping[int(path.stem)] = f"ipfs://{cid}/{root_name}/{path.name}"
             print(f"Uploaded {min(offset + batch_size, len(files)):,}/{len(files):,} -> {cid}")
         return mapping
 
