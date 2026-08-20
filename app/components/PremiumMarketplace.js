@@ -1,36 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import VoxelViewer from './VoxelViewer';
 import { buyAsset, makeOffer, bidOnAuction, mintAndList, hasContracts } from '../../lib/blockchain';
+import { getCatalogWindow, CATALOG_SIZE } from '../../lib/catalog';
 
-const ITEMS = [
-  { id: 1, name: 'Midnight GT', creator: 'BlockGarage', shape: 'car', material: 'metallic', type: 'Vehicle', rarity: 'Epic', price: '0.110', blocks: '2,480', color: 'violet', seed: 'midnight-gt-01', description: 'A low-slung hypercar study with chrome bodywork and neon underglow accents.' },
-  { id: 2, name: 'Modern Villa', creator: 'SpatialMint', shape: 'villa', material: 'stone', type: 'Architecture', rarity: 'Legendary', price: '0.190', blocks: '4,920', color: 'blue', seed: 'modern-villa-02', description: 'Brutalist villa form with stacked terraces and deep stone massing.' },
-  { id: 3, name: 'Forest Owl', creator: 'PixelWild', shape: 'owl', material: 'organic', type: 'Creature', rarity: 'Rare', price: '0.065', blocks: '1,180', color: 'green', seed: 'forest-owl-03', description: 'Watchful owl with layered organic plumage and amber eye highlights.' },
-  { id: 4, name: 'Marble Guardian', creator: 'WorldBlocks', shape: 'statue', material: 'stone', type: 'Artifact', rarity: 'Legendary', price: '0.220', blocks: '3,640', color: 'gold', seed: 'marble-guardian-04', description: 'Monumental statue carved from pale stone with gold inlay details.' },
-  { id: 5, name: 'Astra Robot 07', creator: 'FutureFoundry', shape: 'robot', material: 'chrome', type: 'Character', rarity: 'Rare', price: '0.090', blocks: '2,060', color: 'cyan', seed: 'astra-robot-05', description: 'Humanoid chassis with polished chrome plating and cyan sensor clusters.' },
-  { id: 6, name: 'Deep Space Hauler', creator: 'OrbitWorks', shape: 'ship', material: 'metallic', type: 'Vehicle', rarity: 'Epic', price: '0.160', blocks: '3,180', color: 'pink', seed: 'space-hauler-06', description: 'Heavy cargo vessel with layered hull plates and engine array.' },
-  { id: 7, name: 'Red Fox Study', creator: 'VoxelWilds', shape: 'fox', material: 'organic', type: 'Creature', rarity: 'Rare', price: '0.075', blocks: '1,420', color: 'orange', seed: 'red-fox-07', description: 'Alert fox form with warm organic tones and sharp silhouette.' },
-  { id: 8, name: 'Crystal Tree', creator: 'VoxelGarden', shape: 'tree', material: 'crystal', type: 'World', rarity: 'Rare', price: '0.055', blocks: '1,760', color: 'mint', seed: 'crystal-tree-08', description: 'Translucent crystalline canopy rising from a mineral trunk.' },
-  { id: 9, name: 'Obsidian Dragon', creator: 'MythForge', shape: 'dragon', material: 'crystal', type: 'Creature', rarity: 'Mythic', price: '0.340', blocks: '5,120', color: 'violet', seed: 'obsidian-dragon-09', description: 'Winged dragon with crystalline scales and luminous core.' },
-  { id: 10, name: 'Aegis Mech', creator: 'IronCircuit', shape: 'mech', material: 'chrome', type: 'Character', rarity: 'Legendary', price: '0.280', blocks: '4,680', color: 'cyan', seed: 'aegis-mech-10', description: 'Heavy combat frame with reinforced limbs and sensor mast.' },
-  { id: 11, name: 'Prism Spire', creator: 'LightLab', shape: 'crystal', material: 'glass', type: 'Artifact', rarity: 'Epic', price: '0.145', blocks: '2,910', color: 'blue', seed: 'prism-spire-11', description: 'Faceted glass crystal rising in stacked geometric tiers.' },
-  { id: 12, name: 'Void Gate', creator: 'HorizonStudio', shape: 'portal', material: 'holographic', type: 'World', rarity: 'Legendary', price: '0.255', blocks: '3,840', color: 'pink', seed: 'void-gate-12', description: 'Circular portal ring with holographic energy field.' },
-  { id: 13, name: 'Sun Temple', creator: 'StonePath', shape: 'temple', material: 'stone', type: 'Architecture', rarity: 'Epic', price: '0.175', blocks: '4,210', color: 'gold', seed: 'sun-temple-13', description: 'Stepped temple with corner pillars and elevated sanctuary.' },
-  { id: 14, name: 'Neon Rider', creator: 'StreetVoltage', shape: 'motorcycle', material: 'neon', type: 'Vehicle', rarity: 'Rare', price: '0.095', blocks: '1,640', color: 'cyan', seed: 'neon-rider-14', description: 'Sleek motorcycle with emissive neon accents and disc wheels.' },
-  { id: 15, name: 'Xenon Visitor', creator: 'DeepSignal', shape: 'alien', material: 'organic', type: 'Character', rarity: 'Epic', price: '0.130', blocks: '2,280', color: 'green', seed: 'xenon-visitor-15', description: 'Bipedal visitor with elongated head and organic plating.' },
-  { id: 16, name: 'Crown Relic', creator: 'AtelierVault', shape: 'jewelry', material: 'gold', type: 'Artifact', rarity: 'Legendary', price: '0.310', blocks: '1,980', color: 'gold', seed: 'crown-relic-16', description: 'Ornate gold circlet with elevated central gem.' },
-  { id: 17, name: 'Helix Drift', creator: 'FormAtelier', shape: 'abstract', material: 'holographic', type: 'World', rarity: 'Mythic', price: '0.420', blocks: '3,560', color: 'violet', seed: 'helix-drift-17', description: 'Twisting abstract helix of interwoven geometric streams.' },
-  { id: 18, name: 'Eclipse Blade', creator: 'EdgeWorks', shape: 'sword', material: 'metallic', type: 'Artifact', rarity: 'Epic', price: '0.120', blocks: '1,320', color: 'blue', seed: 'eclipse-blade-18', description: 'Long blade with crossguard and luminous tip.' },
-  { id: 19, name: 'Bastion Keep', creator: 'Wallwright', shape: 'fortress', material: 'weathered', type: 'Architecture', rarity: 'Legendary', price: '0.265', blocks: '5,480', color: 'orange', seed: 'bastion-keep-19', description: 'Weathered fortress with corner towers and elevated keep.' },
-  { id: 20, name: 'Glowcap Grove', creator: 'Mycelia', shape: 'mushroom', material: 'organic', type: 'World', rarity: 'Rare', price: '0.070', blocks: '1,540', color: 'mint', seed: 'glowcap-grove-20', description: 'Oversized mushroom with layered organic cap.' },
-  { id: 21, name: 'Orbit Relay', creator: 'SignalYard', shape: 'satellite', material: 'chrome', type: 'Vehicle', rarity: 'Rare', price: '0.085', blocks: '2,120', color: 'cyan', seed: 'orbit-relay-21', description: 'Orbital relay with extended solar panels and antenna.' },
-  { id: 22, name: 'Ancestor Totem', creator: 'Rootline', shape: 'totem', material: 'wood', type: 'Artifact', rarity: 'Epic', price: '0.155', blocks: '2,760', color: 'orange', seed: 'ancestor-totem-22', description: 'Carved wooden totem with stacked symbolic tiers.' },
-  { id: 23, name: 'Lava Warden', creator: 'MagmaWorks', shape: 'statue', material: 'lava', type: 'Character', rarity: 'Mythic', price: '0.380', blocks: '3,920', color: 'pink', seed: 'lava-warden-23', description: 'Guardian form with molten lava veins and stone shell.' },
-  { id: 24, name: 'Ice Cathedral', creator: 'FrostArchive', shape: 'temple', material: 'ice', type: 'Architecture', rarity: 'Legendary', price: '0.245', blocks: '4,650', color: 'blue', seed: 'ice-cathedral-24', description: 'Frozen temple structure with translucent ice surfaces.' },
-];
-
+const PAGE_SIZE = 12;
 const TABS = ['Discover', 'Collections', 'Offers', 'Auctions', 'Creators'];
 const FILTERS = ['All', 'Vehicle', 'Architecture', 'Creature', 'Character', 'Artifact', 'World'];
 
@@ -50,17 +25,51 @@ export default function PremiumMarketplace() {
   const [creatorRoyalty, setCreatorRoyalty] = useState('5');
   const [creatorFile, setCreatorFile] = useState(null);
 
+  // Endless catalog state
+  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
+  const [items, setItems] = useState(() => getCatalogWindow(0, PAGE_SIZE));
+  const sentinelRef = useRef(null);
+  const loadingMore = useRef(false);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore.current || loadedCount >= CATALOG_SIZE) return;
+    loadingMore.current = true;
+    const next = getCatalogWindow(loadedCount, PAGE_SIZE);
+    setItems((prev) => [...prev, ...next]);
+    setLoadedCount((c) => Math.min(c + PAGE_SIZE, CATALOG_SIZE));
+    loadingMore.current = false;
+  }, [loadedCount]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  // Reset window when filters change heavily (keep simple for now)
+  useEffect(() => {
+    setItems(getCatalogWindow(0, PAGE_SIZE));
+    setLoadedCount(PAGE_SIZE);
+  }, [filter, query]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const result = ITEMS.filter((item) => {
+    let result = items.filter((item) => {
       const matchesFilter = filter === 'All' || item.type === filter;
       const matchesQuery = !q || `${item.name} ${item.creator} ${item.type} ${item.rarity} ${item.material || ''}`.toLowerCase().includes(q);
       return matchesFilter && matchesQuery;
     });
-    if (sort === 'Price: Low') result.sort((a, b) => Number(a.price) - Number(b.price));
-    if (sort === 'Price: High') result.sort((a, b) => Number(b.price) - Number(a.price));
+    if (sort === 'Price: Low') result = [...result].sort((a, b) => Number(a.price) - Number(b.price));
+    if (sort === 'Price: High') result = [...result].sort((a, b) => Number(b.price) - Number(a.price));
     return result;
-  }, [filter, query, sort]);
+  }, [items, filter, query, sort]);
 
   async function connect() {
     try {
@@ -137,7 +146,7 @@ export default function PremiumMarketplace() {
           <div>
             <div className="marketKicker">DISCOVER · COLLECT · CREATE</div>
             <h2>Objects worth<br /><em>owning.</em></h2>
-            <p>Voxel Vault is a 3D-first marketplace. Inspect the geometry, discover the creator, then collect the object when you're ready.</p>
+            <p>Voxel Vault is a 3D-first marketplace. Inspect the geometry, discover the creator, then collect the object when you're ready. Endless deterministic vault · {CATALOG_SIZE.toLocaleString()} forms.</p>
           </div>
           <div className="heroObject">
             <VoxelViewer shape="dragon" material="crystal" rarity="Mythic" seed="obsidian-dragon-09" showcase interactive={false} label={false} />
@@ -156,26 +165,54 @@ export default function PremiumMarketplace() {
 
         {tab === 'Discover' && (
           <>
-            <div className="filterRow"><div>{FILTERS.map((name) => <button key={name} className={filter === name ? 'filter active' : 'filter'} onClick={() => setFilter(name)}>{name}</button>)}</div><select value={sort} onChange={(e) => setSort(e.target.value)}><option>Featured</option><option>Price: Low</option><option>Price: High</option></select></div>
-            <div className="marketGrid">{filtered.map((item, index) => (
-              <button key={item.id} className={`marketCard ${item.color}`} onClick={() => setSelected(item)}>
-                <div className="cardStage">
-                  <VoxelViewer shape={item.shape} material={item.material} rarity={item.rarity} seed={item.seed} compact label={false} interactive={false} showcase />
-                  <span className="rarityPill">{item.rarity}</span>
-                  <span className="cardIndex">{String(index + 1).padStart(2, '0')}</span>
-                </div>
-                <div className="cardInfo">
-                  <div><strong>{item.name}</strong><span>by {item.creator}</span></div>
-                  <div className="cardPrice"><small>PRICE</small><b>{item.price} ETH</b></div>
-                </div>
-                <div className="cardFoot"><span>{item.type} · {item.material}</span><i>View 3D ↗</i></div>
-              </button>
-            ))}</div>
-            <div className="marketFeatures"><div><span>01 · CREATOR ECONOMY</span><strong>Publish your world.</strong><p>Bring a GLB/GLTF model, define its price and royalty, and prepare it for on-chain ownership.</p><button onClick={() => setTab('Creators')}>Open Creator Studio →</button></div><div><span>02 · SECONDARY MARKET</span><strong>Trade beyond the mint.</strong><p>Offers and auctions give collectors more ways to discover and transact.</p><button onClick={() => setTab('Offers')}>Explore market →</button></div><div><span>03 · DIGITAL OWNERSHIP</span><strong>Your wallet is your vault.</strong><p>Connect MetaMask when you want to sign a mint, purchase, offer or bid.</p><button onClick={connect}>Connect wallet →</button></div></div>
+            <div className="filterRow">
+              <div>{FILTERS.map((name) => <button key={name} className={filter === name ? 'filter active' : 'filter'} onClick={() => setFilter(name)}>{name}</button>)}</div>
+              <select value={sort} onChange={(e) => setSort(e.target.value)}><option>Featured</option><option>Price: Low</option><option>Price: High</option></select>
+            </div>
+
+            <div className="marketGrid">
+              {filtered.map((item, index) => (
+                <button key={item.id} className={`marketCard ${item.color}`} onClick={() => setSelected(item)}>
+                  <div className="cardStage">
+                    <VoxelViewer
+                      shape={item.shape}
+                      material={item.material}
+                      rarity={item.rarity}
+                      seed={item.seed}
+                      compact
+                      label={false}
+                      interactive={false}
+                      showcase
+                    />
+                    <span className="rarityPill">{item.rarity}</span>
+                    <span className="cardIndex">{String(item.id).padStart(2, '0')}</span>
+                  </div>
+                  <div className="cardInfo">
+                    <div><strong>{item.name}</strong><span>by {item.creator}</span></div>
+                    <div className="cardPrice"><small>PRICE</small><b>{item.price} ETH</b></div>
+                  </div>
+                  <div className="cardFoot"><span>{item.type} · {item.material}</span><i>View 3D ↗</i></div>
+                </button>
+              ))}
+            </div>
+
+            <div ref={sentinelRef} className="loadMore">
+              {loadedCount < CATALOG_SIZE ? (
+                <span>Loading more from the vault… {loadedCount.toLocaleString()} / {CATALOG_SIZE.toLocaleString()}</span>
+              ) : (
+                <span>End of current window · {CATALOG_SIZE.toLocaleString()} forms available</span>
+              )}
+            </div>
+
+            <div className="marketFeatures">
+              <div><span>01 · CREATOR ECONOMY</span><strong>Publish your world.</strong><p>Bring a GLB/GLTF model, define its price and royalty, and prepare it for on-chain ownership.</p><button onClick={() => setTab('Creators')}>Open Creator Studio →</button></div>
+              <div><span>02 · SECONDARY MARKET</span><strong>Trade beyond the mint.</strong><p>Offers and auctions give collectors more ways to discover and transact.</p><button onClick={() => setTab('Offers')}>Explore market →</button></div>
+              <div><span>03 · DIGITAL OWNERSHIP</span><strong>Your wallet is your vault.</strong><p>Connect MetaMask when you want to sign a mint, purchase, offer or bid.</p><button onClick={connect}>Connect wallet →</button></div>
+            </div>
           </>
         )}
 
-        {tab === 'Collections' && <div className="collectionsView"><div className="collectionsIntro"><span>CURATED WORLDS</span><h3>Built by creators,<br /><em>collected by you.</em></h3><p>Explore vehicles, creatures, architecture, characters and artifacts through the same interactive 3D lens.</p></div><div className="collectionBands"><div><strong>GENESIS</strong><span>24 showcase objects</span><b>01</b></div><div><strong>VOXEL WORLDS</strong><span>Architecture + environments</span><b>02</b></div><div><strong>CREATURE LAB</strong><span>Living voxel studies</span><b>03</b></div></div></div>}
+        {tab === 'Collections' && <div className="collectionsView"><div className="collectionsIntro"><span>CURATED WORLDS</span><h3>Built by creators,<br /><em>collected by you.</em></h3><p>Explore vehicles, creatures, architecture, characters and artifacts through the same interactive 3D lens. Endless deterministic catalog of {CATALOG_SIZE.toLocaleString()} forms.</p></div><div className="collectionBands"><div><strong>GENESIS</strong><span>Endless showcase stream</span><b>01</b></div><div><strong>VOXEL WORLDS</strong><span>Architecture + environments</span><b>02</b></div><div><strong>CREATURE LAB</strong><span>Living voxel studies</span><b>03</b></div></div></div>}
 
         {tab === 'Offers' && <div className="actionPanel"><div className="actionCopy"><span>NEGOTIATE</span><h3>Make the object<br /><em>yours.</em></h3><p>Select any asset in Discover, then make a time-limited ETH offer directly from its collector view.</p><button onClick={() => setTab('Discover')}>Choose an asset →</button></div><div className="actionForm"><label>OFFER AMOUNT <input value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="0.080" inputMode="decimal" /></label><button disabled={!selected || busy} onClick={sendOffer}>{selected ? `Offer ${selected.name} →` : 'Select an asset first'}</button><small>{hasContracts() ? 'Marketplace contract detected.' : 'Collector preview. Live contract actions activate when contract addresses are configured.'}</small></div></div>}
 
@@ -186,7 +223,47 @@ export default function PremiumMarketplace() {
         {status && <div className="marketStatus"><span>●</span>{status}</div>}
       </div>
 
-      {selected && <div className="collectorOverlay" role="dialog" aria-modal="true"><div className="collectorModal"><button className="modalClose" onClick={() => setSelected(null)}>×</button><div className="collectorViewer"><VoxelViewer shape={selected.shape} material={selected.material} rarity={selected.rarity} seed={selected.seed} label={false} interactive showcase={false} /></div><div className="collectorInfo"><div className="collectorLabel"><span>{selected.rarity}</span><span>{selected.type}</span><span>{selected.material}</span></div><h3>{selected.name}</h3><p>{selected.description || `Created by ${selected.creator}. Inspect the geometry in real time.`}</p><div className="collectorPrice"><span>LISTED FOR</span><strong>{selected.price} ETH</strong><small>Showcase inventory · wallet-ready when contracts are live</small></div><div className="collectorActions"><button onClick={buy} disabled={busy}>Collect now</button><button onClick={sendOffer} disabled={busy}>Make offer</button><button onClick={() => { setTab('Auctions'); setSelected(null); }}>Auction</button></div><div className="collectorDNA"><span>VERIFIABLE DNA</span><b>{selected.seed} · {selected.material} · {selected.rarity}</b></div></div></div></div>}
+      {selected && (
+        <div className="collectorOverlay" role="dialog" aria-modal="true">
+          <div className="collectorModal">
+            <button className="modalClose" onClick={() => setSelected(null)}>×</button>
+            <div className="collectorViewer">
+              <VoxelViewer
+                shape={selected.shape}
+                material={selected.material}
+                rarity={selected.rarity}
+                seed={selected.seed}
+                label={false}
+                interactive
+                showcase={false}
+              />
+            </div>
+            <div className="collectorInfo">
+              <div className="collectorLabel">
+                <span>{selected.rarity}</span>
+                <span>{selected.type}</span>
+                <span>{selected.material}</span>
+              </div>
+              <h3>{selected.name}</h3>
+              <p>{selected.description || `Created by ${selected.creator}. Inspect the geometry in real time.`}</p>
+              <div className="collectorPrice">
+                <span>LISTED FOR</span>
+                <strong>{selected.price} ETH</strong>
+                <small>Showcase inventory · wallet-ready when contracts are live</small>
+              </div>
+              <div className="collectorActions">
+                <button onClick={buy} disabled={busy}>Collect now</button>
+                <button onClick={sendOffer} disabled={busy}>Make offer</button>
+                <button onClick={() => { setTab('Auctions'); setSelected(null); }}>Auction</button>
+              </div>
+              <div className="collectorDNA">
+                <span>VERIFIABLE DNA</span>
+                <b>{selected.seed} · {selected.material} · {selected.rarity}</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .premiumMarket{padding:18px 5vw 120px;background:#05060a;color:#f7f8ff}.marketShell{max-width:1320px;margin:auto;border:1px solid #25283a;border-radius:28px;background:radial-gradient(circle at 85% 10%,rgba(125,91,255,.12),transparent 28%),linear-gradient(145deg,#090b12,#0d0d16);overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.28)}
@@ -195,6 +272,7 @@ export default function PremiumMarketplace() {
         .marketNav{padding:18px 28px;display:flex;gap:15px;align-items:center;border-bottom:1px solid #1b1e2c}.tabs{display:flex;gap:3px;flex-wrap:wrap}.tab{border:0;background:transparent;color:#71788b;padding:10px 12px;border-radius:8px;font-size:10px;font-weight:850;cursor:pointer}.tab.active{background:#1a1530;color:#fff}.searchBox{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid #292d3c;background:#080a10;border-radius:9px;padding:0 11px;min-width:220px}.searchBox span{color:#737a8c}.searchBox input{border:0;outline:0;background:transparent;color:#fff;padding:10px 0;width:100%;font-size:10px}
         .filterRow{padding:24px 28px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}.filterRow>div{display:flex;gap:6px;flex-wrap:wrap}.filter{border:1px solid #252a39;background:#0a0c13;color:#737b8e;padding:7px 11px;border-radius:999px;font-size:9px;cursor:pointer}.filter.active{color:#fff;border-color:#7054dc;background:#19142e}.filterRow select{background:#0a0c13;color:#aaa;border:1px solid #282d3b;border-radius:8px;padding:8px;font-size:9px}
         .marketGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:0 28px 28px}.marketCard{border:1px solid #202433;background:#0a0c12;color:#fff;border-radius:14px;overflow:hidden;text-align:left;padding:0;cursor:pointer;transition:transform .22s,border-color .22s,box-shadow .22s}.marketCard:hover{transform:translateY(-5px);border-color:#4b3b76;box-shadow:0 25px 60px rgba(0,0,0,.35)}.cardStage{height:245px;position:relative;background:radial-gradient(circle at 50% 48%,rgba(122,88,255,.12),transparent 62%),#080a10}.cardStage .voxelViewer{height:100%;min-height:0}.rarityPill,.cardIndex{position:absolute;top:11px;border:1px solid #303448;background:rgba(5,6,10,.68);padding:6px 8px;border-radius:6px;font-size:7px;letter-spacing:1px;z-index:3}.rarityPill{left:11px}.cardIndex{right:11px;color:#6d7384}.cardInfo{padding:14px;display:flex;justify-content:space-between;gap:8px}.cardInfo>div:first-child{display:flex;flex-direction:column;gap:5px}.cardInfo strong{font-size:14px}.cardInfo span,.cardFoot{font-size:8px;color:#72798b}.cardPrice{text-align:right;display:flex;flex-direction:column;gap:5px}.cardPrice small{font-size:6px;color:#62697a;letter-spacing:1px}.cardPrice b{font-size:11px}.cardFoot{border-top:1px solid #1b1e2a;padding:10px 14px;display:flex;justify-content:space-between}.cardFoot i{color:#9a7dff;font-style:normal;font-weight:800}
+        .loadMore{padding:28px;text-align:center;color:#7a8296;font-size:11px;letter-spacing:1px}
         .marketFeatures{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border-top:1px solid #1b1e2c;background:#1b1e2c}.marketFeatures>div{background:#0b0d13;padding:25px 28px;min-height:180px}.marketFeatures span,.creatorCopy>span,.actionCopy>span,.collectionsIntro>span{font-size:7px;letter-spacing:2px;color:#8276ae}.marketFeatures strong{display:block;font-size:17px;margin:10px 0}.marketFeatures p{font-size:10px;color:#777f91;line-height:1.6;min-height:34px}.marketFeatures button,.actionCopy button,.studioForm button{border:1px solid #38304e;background:#14111f;color:#fff;border-radius:8px;padding:9px 11px;font-size:9px;font-weight:850;cursor:pointer}.marketFeatures button:hover,.actionCopy button:hover,.studioForm button:hover{background:#8a68ff;border-color:#8a68ff}
         .collectionsView,.actionPanel,.creatorStudio{margin:28px;padding:45px;border:1px solid #25293a;border-radius:18px;background:#0a0c12}.collectionsIntro h3,.actionCopy h3,.creatorCopy h3{font-size:45px;letter-spacing:-2px;line-height:.95;margin:13px 0}.collectionsIntro p,.actionCopy p,.creatorCopy p{max-width:500px;color:#7f8798;font-size:11px;line-height:1.7}.collectionBands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:35px}.collectionBands div{min-height:140px;border:1px solid #24293a;border-radius:12px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(145deg,#0e1018,#0a0c12)}.collectionBands strong{font-size:12px}.collectionBands span{color:#777f91;font-size:9px}.collectionBands b{color:#765ce1;font-size:10px}
         .actionPanel{display:grid;grid-template-columns:1.2fr .8fr;gap:45px;align-items:center}.actionForm{display:flex;flex-direction:column;gap:12px;border:1px solid #282d3d;border-radius:13px;padding:20px;background:#080a10}.actionForm label{display:flex;flex-direction:column;gap:7px;color:#6e7587;font-size:7px;letter-spacing:1.5px}.actionForm input,.studioForm input{background:#0c0e15;border:1px solid #2b3040;color:#fff;border-radius:8px;padding:12px;outline:0}.actionForm>button{border:0;background:#8967ff;color:#fff;border-radius:8px;padding:12px;font-weight:900;cursor:pointer}.actionForm small{color:#666e80;font-size:8px;line-height:1.5}
