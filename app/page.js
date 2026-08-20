@@ -1,5 +1,8 @@
 'use client';
 
+// Production storefront: the browser Supabase client is intentionally optional
+// so Vercel can build the public marketplace even before Supabase environment
+// variables are configured. Published GLB assets are loaded when the client exists.
 import { useEffect, useMemo, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import PremiumGLBViewer from './components/PremiumGLBViewer';
@@ -12,9 +15,8 @@ export default function Home(){
   const [loading,setLoading]=useState(false);
   const [filter,setFilter]=useState('All');
   const [wallet,setWallet]=useState('');
-
   useEffect(()=>{
-    if(!supabaseBrowser){setMessage('Marketplace data is not configured yet.');return;}
+    if(!supabaseBrowser){setMessage('Marketplace data is not configured yet.');return}
     let mounted=true;
     supabaseBrowser.auth.getUser().then(({data})=>{if(mounted)setUser(data.user??null)});
     const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>{if(mounted)setUser(s?.user??null)});
@@ -25,31 +27,11 @@ export default function Home(){
     });
     return()=>{mounted=false;listener?.subscription?.unsubscribe()};
   },[]);
-
-  async function connectWallet(){
-    try{
-      if(!window.ethereum){setMessage('MetaMask was not detected. Open Voxel Vault inside MetaMask Mobile or install MetaMask.');return}
-      setLoading(true);
-      const accounts=await window.ethereum.request({method:'eth_requestAccounts'});
-      const address=accounts?.[0]||'';
-      setWallet(address);
-      setMessage(address?`Wallet connected: ${address.slice(0,6)}…${address.slice(-4)}`:'Wallet connection cancelled.');
-    }catch(e){setMessage(e?.message||'Wallet connection failed.')}finally{setLoading(false)}
-  }
-
-  const live=useMemo(()=>assets.map((a,i)=>({
-    ...a,
-    creator:a.creator_name||a.creator||a.author||'VoxelVault Creator',
-    price:Number(a.price_eth??a.price??((a.price_cents||0)/100))||0,
-    rarity:a.rarity||a.tier||['Common','Uncommon','Rare','Epic','Legendary'][i%5],
-    type:a.type||a.category||'3D NFT',
-    note:a.note||a.description||'Premium 3D voxel asset',
-    modelUrl:a.model_url||a.glb_url||a.gltf_url||a.asset_url||a.animation_url||''
-  })),[assets]);
+  async function connectWallet(){try{if(!window.ethereum){setMessage('MetaMask was not detected. Open Voxel Vault inside MetaMask Mobile or install MetaMask.');return}setLoading(true);const accounts=await window.ethereum.request({method:'eth_requestAccounts'});const address=accounts?.[0]||'';setWallet(address);setMessage(address?`Wallet connected: ${address.slice(0,6)}…${address.slice(-4)}`:'Wallet connection cancelled.')}catch(e){setMessage(e?.message||'Wallet connection failed.')}finally{setLoading(false)}}
+  const live=useMemo(()=>assets.map((a,i)=>({...a,creator:a.creator_name||a.creator||a.author||'VoxelVault Creator',price:Number(a.price_eth??a.price??((a.price_cents||0)/100))||0,rarity:a.rarity||a.tier||['Common','Uncommon','Rare','Epic','Legendary'][i%5],type:a.type||a.category||'3D NFT',note:a.note||a.description||'Premium 3D voxel asset',modelUrl:a.model_url||a.glb_url||a.gltf_url||a.asset_url||a.animation_url||''})),[assets]);
   const filtered=useMemo(()=>filter==='All'?live:live.filter(a=>a.rarity===filter||a.type===filter),[live,filter]);
   const featured=filtered[0]||live[0]||null;
   const cards=(featured?filtered.slice(1):filtered).slice(0,6);
-
   return <main className="vaultPage">
     <nav className="nav"><div className="brand"><span className="brandMark">V</span><span>VOXEL<span className="accent">VAULT</span></span></div><div className="navLinks"><a href="#explore">Explore</a><a href="#collections">Collections</a><a href="#creators">Creators</a><a href="#create">Create</a></div><button className="walletBtn" onClick={connectWallet} disabled={loading}>{wallet?`${wallet.slice(0,6)}…${wallet.slice(-4)}`:'Connect MetaMask'}</button></nav>
     {message&&<div className="vaultMessage">{message}</div>}
