@@ -1,0 +1,61 @@
+name: Fix Voxel Vault live catalog
+
+on:
+  push:
+    branches:
+      - feature/100k-nft-engine
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-catalog:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/100k-nft-engine
+          fetch-depth: 0
+      - name: Patch catalog to use published assets only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('app/page.js')
+          s=p.read_text()
+          s,count=re.subn(r"const collections = \[.*?\];\s*\n\s*", "", s, count=1, flags=re.S)
+          if count:
+              pass
+          s=s.replace("useEffect(()=>{supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener.subscription.unsubscribe()},[]);", "useEffect(()=>{if(!supabaseBrowser)return; supabaseBrowser.auth.getUser().then(({data})=>setUser(data.user??null)); const {data:listener}=supabaseBrowser.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null)); supabaseBrowser.from('assets').select('id,title,description,price_cents,currency,metadata').eq('status','published').order('created_at',{ascending:false}).then(({data})=>setAssets(data??[])); return()=>listener?.subscription?.unsubscribe()},[]);")
+          s=re.sub(r"const live=useMemo\(\(\)=>assets\.map\(.*?\),\[assets\]\);\s*\n\s*const listings=\[\.\.\.live,\.\.\.collections\]\.filter\(.*?\);", "const live=useMemo(()=>assets.map(a=>{const m=a.metadata||{};return {...a,creator:m.creator||'VoxelVault Creator',price:(a.price_cents||0)/100,rarity:m.rarity||'Unranked',type:m.type||'3D Asset',shape:m.shape||'cube',note:m.note||m.description||'Published 3D asset'};}),[assets]);\n  const listings=live.filter(n=>filter==='All'||n.type===filter||n.rarity===filter);\n  const featured=live[0]||null;", s, count=1, flags=re.S)
+          s=s.replace("{collections.slice(0,6).map(n=>", "{live.slice(0,6).map(n=>")
+          s=s.replace('<VoxelViewer shape="statue"/><div className="modelCaption"><strong>Marble Guardian</strong><span>3,640 BLOCKS · LEGENDARY · 1/1</span></div>', '<VoxelViewer shape={featured?.shape||"cube"}/><div className="modelCaption"><strong>{featured?.title||"Your next voxel NFT"}</strong><span>{featured?`${featured.rarity} · ${featured.type} · LIVE ASSET`:"Publish a 3D asset to feature it here."}</span></div>')
+          s=s.replace("if(String(assetId).startsWith('demo-')){setMessage('This is a showcase listing. Published assets use the live checkout flow.');return}", "if(!supabaseBrowser){setMessage('Marketplace checkout is not configured yet.');return}")
+          s=s.replace("async function signIn(){setLoading(true);", "async function signIn(){if(!supabaseBrowser){setMessage('Sign-in is not configured yet.');return}setLoading(true);", 1)
+          if re.search(r'Midnight GT|Modern Villa|Forest Owl|Marble Guardian|Astra Robot 07|Deep Space Hauler|Red Fox Study|Crystal Tree', s):
+              raise SystemExit('demo NFT remains')
+          if re.search(r'\bcollections\b', s):
+              raise SystemExit('collections reference remains')
+          if 'const listings=live.filter' not in s:
+              raise SystemExit('dynamic listings were not installed')
+          p.write_text(s)
+          PY
+      - name: Verify
+        run: |
+          ! grep -E -q 'Midnight GT|Modern Villa|Forest Owl|Marble Guardian|Astra Robot 07|Deep Space Hauler|Red Fox Study|Crystal Tree' app/page.js
+          ! grep -E -q '\bcollections\b' app/page.js
+          grep -q 'const listings=live.filter' app/page.js
+          grep -q 'const featured=live\[0\]' app/page.js
+      - name: Commit migration if needed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet; then
+            echo 'Catalog already migrated.'
+          else
+            git add app/page.js
+            git commit -m 'fix: make NFT catalog fully data-driven'
+            git push origin HEAD:feature/100k-nft-engine
+          fi
