@@ -7,7 +7,10 @@ import { getCatalogWindow, CATALOG_SIZE } from '../../lib/catalog';
 import { buyAsset, hasContracts } from '../../lib/blockchain';
 
 const PAGE_SIZE = 8;
-const MAX_LIVE_VIEWERS = 6;
+// Keep the gallery to one live WebGL canvas. The hero is already a live canvas,
+// and the inspection modal adds another one. This keeps iPhone/Safari well below
+// the WebGL-context pressure that was causing the page to crash while scrolling.
+const MAX_LIVE_VIEWERS = 1;
 
 const CATEGORIES = ['All', 'Vehicles', 'Architecture', 'Creatures', 'Characters', 'Artifacts', 'Nature', 'Sci-Fi'];
 const CATEGORY_MAP = {
