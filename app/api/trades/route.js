@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createTradeOffer, canAcceptTrade, transitionTrade, isTradeExpired } from '../../../lib/tradingEngine';
 import { saveTradeOffer, getTradeOffer } from '../../../lib/claimAuthority';
 
+const PLACEHOLDER_RECIPIENT = '0x000000000000000000000000000000000000dead';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,7 +29,7 @@ export async function POST(request) {
     if (action === 'create') {
       const offer = createTradeOffer({
         offerer: body.offerer,
-        recipient: body.recipient || '0x000000000000000000000000000000000000dEaD',
+        recipient: body.recipient || PLACEHOLDER_RECIPIENT,
         offered: body.offered || [],
         requested: body.requested || [],
         expiresAt: body.expiresAt || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
@@ -48,13 +50,9 @@ export async function POST(request) {
       const wallet = String(body.walletAddress || '').trim().toLowerCase();
       if (!wallet) return NextResponse.json({ error: 'walletAddress is required' }, { status: 400 });
 
-      // Open QR handoff: placeholder recipient becomes the accepting wallet.
       const working = {
         ...existing,
-        recipient:
-          existing.recipient === '0x000000000000000000000000000000000000dead'
-            ? wallet
-            : existing.recipient,
+        recipient: existing.recipient === PLACEHOLDER_RECIPIENT ? wallet : existing.recipient,
       };
 
       if (!canAcceptTrade(working, wallet)) {
@@ -72,37 +70,23 @@ export async function POST(request) {
         offer: saved,
         ownershipChanged: false,
         nextStep: 'wallet_signatures_and_chain_settlement',
-        message:
-          'Offer accepted and marked submitted in application state. Ownership changes only after on-chain confirmation.',
+        message: 'Offer accepted and marked submitted. Ownership changes only after independently verified on-chain settlement.',
       });
     }
 
     if (action === 'confirm') {
-      // Demo helper: marks confirmed only when explicitly requested.
-      // Real production should set confirmed from a transaction receipt webhook/indexer.
-      const existing = await getTradeOffer(body.id);
-      if (!existing) return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
-      if (existing.state !== 'submitted') {
-        return NextResponse.json({ error: 'Only submitted offers can be confirmed' }, { status: 400 });
-      }
-      if (!body.txHash) {
-        return NextResponse.json(
-          {
-            error: 'txHash is required to confirm. Do not confirm without a chain transaction.',
-            ownershipChanged: false,
-          },
-          { status: 400 }
-        );
-      }
-      const confirmed = transitionTrade(existing, 'confirmed');
-      confirmed.txHash = body.txHash;
-      const saved = await saveTradeOffer(confirmed);
-      return NextResponse.json({
-        offer: saved,
-        ownershipChanged: true,
-        txHash: body.txHash,
-        message: 'Marked confirmed with provided txHash. Verify the hash on a block explorer.',
-      });
+      // Deliberately disabled. An arbitrary client-supplied txHash must never be
+      // enough to declare ownership changed. Production confirmation belongs to
+      // a chain indexer/webhook that verifies receipt status and the expected NFT
+      // Transfer event before moving the application state to confirmed.
+      return NextResponse.json(
+        {
+          error: 'Client-side trade confirmation is disabled. Verify the transaction on-chain before marking a trade confirmed.',
+          ownershipChanged: false,
+          nextStep: 'chain_indexer_verification',
+        },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
