@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -169,125 +169,169 @@ function createArtwork(family, materialName, seed) {
   return group;
 }
 
-export default function ArtPreview({ family = 'sculpture', material = 'metallic', seed = 'art-1', compact = false, interactive = false, showcase = false }) {
+function Fallback({ compact, message = '3D preview unavailable' }) {
+  return (
+    <div role="img" aria-label={message} style={{ width: '100%', height: '100%', minHeight: compact ? 140 : 260, display: 'grid', placeItems: 'center', borderRadius: 18, background: 'radial-gradient(circle at 50% 35%, rgba(125,96,255,.22), rgba(5,6,12,.96) 62%)', color: '#dfe3f5', padding: 24, textAlign: 'center' }}>
+      <div><div style={{ fontSize: 11, letterSpacing: '.18em', fontWeight: 900, color: '#a78bff' }}>VOXEL VAULT</div><div style={{ marginTop: 8, fontWeight: 800 }}>{message}</div><div style={{ marginTop: 6, color: '#858da5', fontSize: 12 }}>Open an object to retry its interactive viewer.</div></div>
+    </div>
+  );
+}
+
+class PreviewBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <Fallback compact={this.props.compact} message="3D preview recovered" /> : this.props.children; }
+}
+
+function WebGLPreview({ family, material, seed, compact, interactive, showcase, onFailure }) {
   const host = useRef(null);
+  const failedRef = useRef(false);
 
   useEffect(() => {
-    if (!host.current) return undefined;
+    if (!host.current || typeof window === 'undefined') return undefined;
     const root = host.current;
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#05060c');
-
-    const camera = new THREE.PerspectiveCamera(compact ? 42 : 34, 1, 0.05, 100);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.35 : 1.75));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = compact ? 1.15 : 1.25;
-    renderer.shadowMap.enabled = !compact;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.setAttribute('aria-label', 'Voxel Vault 3D artwork preview');
-    root.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.055;
-    controls.enablePan = false;
-    controls.enableZoom = interactive;
-    controls.autoRotate = showcase || !interactive;
-    controls.autoRotateSpeed = 0.42;
-
-    scene.add(new THREE.HemisphereLight(0xe9e5ff, 0x070912, compact ? 1.8 : 2.35));
-    const key = new THREE.DirectionalLight(0xfff5e8, compact ? 3.0 : 4.0);
-    key.position.set(7, 12, 10);
-    key.castShadow = !compact;
-    scene.add(key);
-    const violet = new THREE.PointLight(0x7657ff, compact ? 28 : 45, 28, 2);
-    violet.position.set(-8, 6, -8);
-    scene.add(violet);
-    const cyan = new THREE.PointLight(0x25d9ff, compact ? 14 : 24, 25, 2);
-    cyan.position.set(8, 4, -5);
-    scene.add(cyan);
-
-    const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(compact ? 5.8 : 8, 48),
-      new THREE.MeshStandardMaterial({ color: 0x080a13, roughness: 0.68, metalness: 0.2 })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -2.35;
-    floor.receiveShadow = !compact;
-    scene.add(floor);
-
-    const platform = new THREE.Mesh(
-      new THREE.CylinderGeometry(compact ? 2.8 : 4.1, compact ? 3.15 : 4.45, 0.2, 48),
-      new THREE.MeshStandardMaterial({ color: 0x111329, roughness: 0.34, metalness: 0.52, emissive: 0x17113a, emissiveIntensity: 0.25 })
-    );
-    platform.position.y = -2.17;
-    platform.receiveShadow = !compact;
-    scene.add(platform);
-
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(compact ? 2.45 : 3.65, compact ? 2.56 : 3.76, 64),
-      new THREE.MeshBasicMaterial({ color: 0x8667ff, transparent: true, opacity: 0.46, side: THREE.DoubleSide })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = -2.03;
-    scene.add(ring);
-
-    const group = createArtwork(family, material, seed);
-    scene.add(group);
-
-    // Intelligent framing: fit the actual generated artwork rather than using a fixed camera distance.
-    const bounds = new THREE.Box3().setFromObject(group);
-    const center = bounds.getCenter(new THREE.Vector3());
-    const size = bounds.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 0.1);
-    group.position.sub(center);
-    group.position.y += -2.02 + Math.max(0, size.y * 0.08);
-    const distance = (maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)))) * (compact ? 1.16 : 1.28);
-    camera.position.set(distance * 0.82, distance * 0.52, distance * 0.95);
-    camera.near = Math.max(0.03, distance / 100);
-    camera.far = Math.max(100, distance * 20);
-    camera.lookAt(0, 0.15, 0);
-    controls.target.set(0, 0.15, 0);
-    controls.minDistance = Math.max(2.4, distance * 0.68);
-    controls.maxDistance = Math.max(18, distance * 3.2);
-
-    const resize = () => {
-      const width = Math.max(1, root.clientWidth);
-      const height = Math.max(1, root.clientHeight);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height, false);
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(root);
-
+    let renderer;
+    let controls;
+    let scene;
+    let observer;
     let raf = 0;
-    const animate = () => {
-      raf = requestAnimationFrame(animate);
-      controls.update();
-      ring.rotation.z += 0.0015;
-      renderer.render(scene, camera);
+    let disposed = false;
+
+    const fail = () => {
+      if (failedRef.current || disposed) return;
+      failedRef.current = true;
+      cancelAnimationFrame(raf);
+      onFailure?.();
     };
-    animate();
+
+    try {
+      const probe = document.createElement('canvas');
+      const gl = probe.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) || probe.getContext('webgl', { failIfMajorPerformanceCaveat: true });
+      if (!gl) { fail(); return undefined; }
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color('#05060c');
+      const camera = new THREE.PerspectiveCamera(compact ? 42 : 34, 1, 0.05, 100);
+      renderer = new THREE.WebGLRenderer({ antialias: !compact, alpha: true, powerPreference: 'low-power', failIfMajorPerformanceCaveat: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.15 : 1.5));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = compact ? 1.1 : 1.2;
+      renderer.shadowMap.enabled = !compact;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.domElement.setAttribute('aria-label', 'Voxel Vault 3D artwork preview');
+      renderer.domElement.addEventListener('webglcontextlost', event => { event.preventDefault(); fail(); }, { passive: false });
+      renderer.domElement.addEventListener('webglcontextcreationerror', fail);
+      root.appendChild(renderer.domElement);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.055;
+      controls.enablePan = false;
+      controls.enableZoom = interactive;
+      controls.autoRotate = showcase || !interactive;
+      controls.autoRotateSpeed = 0.42;
+
+      scene.add(new THREE.HemisphereLight(0xe9e5ff, 0x070912, compact ? 1.8 : 2.35));
+      const key = new THREE.DirectionalLight(0xfff5e8, compact ? 3.0 : 4.0);
+      key.position.set(7, 12, 10);
+      key.castShadow = !compact;
+      scene.add(key);
+      const violet = new THREE.PointLight(0x7657ff, compact ? 20 : 34, 28, 2);
+      violet.position.set(-8, 6, -8);
+      scene.add(violet);
+      const cyan = new THREE.PointLight(0x25d9ff, compact ? 10 : 18, 25, 2);
+      cyan.position.set(8, 4, -5);
+      scene.add(cyan);
+
+      const floor = new THREE.Mesh(new THREE.CircleGeometry(compact ? 5.8 : 8, 48), new THREE.MeshStandardMaterial({ color: 0x080a13, roughness: 0.68, metalness: 0.2 }));
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -2.35;
+      floor.receiveShadow = !compact;
+      scene.add(floor);
+
+      const platform = new THREE.Mesh(new THREE.CylinderGeometry(compact ? 2.8 : 4.1, compact ? 3.15 : 4.45, 0.2, 48), new THREE.MeshStandardMaterial({ color: 0x111329, roughness: 0.34, metalness: 0.52, emissive: 0x17113a, emissiveIntensity: 0.25 }));
+      platform.position.y = -2.17;
+      platform.receiveShadow = !compact;
+      scene.add(platform);
+
+      const ring = new THREE.Mesh(new THREE.RingGeometry(compact ? 2.45 : 3.65, compact ? 2.56 : 3.76, 64), new THREE.MeshBasicMaterial({ color: 0x8667ff, transparent: true, opacity: 0.46, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = -2.03;
+      scene.add(ring);
+
+      const group = createArtwork(family, material, seed);
+      scene.add(group);
+      const bounds = new THREE.Box3().setFromObject(group);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const size = bounds.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z, 0.1);
+      group.position.sub(center);
+      group.position.y += -2.02 + Math.max(0, size.y * 0.08);
+      const distance = (maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)))) * (compact ? 1.16 : 1.28);
+      camera.position.set(distance * 0.82, distance * 0.52, distance * 0.95);
+      camera.near = Math.max(0.03, distance / 100);
+      camera.far = Math.max(100, distance * 20);
+      camera.lookAt(0, 0.15, 0);
+      controls.target.set(0, 0.15, 0);
+      controls.minDistance = Math.max(2.4, distance * 0.68);
+      controls.maxDistance = Math.max(18, distance * 3.2);
+
+      const resize = () => {
+        if (disposed || !renderer) return;
+        const width = Math.max(1, root.clientWidth);
+        const height = Math.max(1, root.clientHeight);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height, false);
+      };
+      resize();
+      if (typeof ResizeObserver !== 'undefined') { observer = new ResizeObserver(resize); observer.observe(root); }
+
+      const animate = () => {
+        if (disposed || failedRef.current) return;
+        raf = requestAnimationFrame(animate);
+        try {
+          controls.update();
+          ring.rotation.z += 0.0015;
+          renderer.render(scene, camera);
+        } catch {
+          fail();
+        }
+      };
+      animate();
+    } catch {
+      fail();
+    }
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(raf);
-      observer.disconnect();
-      controls.dispose();
-      scene.traverse((object) => {
+      observer?.disconnect();
+      controls?.dispose();
+      scene?.traverse(object => {
         if (object.geometry) object.geometry.dispose();
         if (object.material) {
           const materials = Array.isArray(object.material) ? object.material : [object.material];
-          materials.forEach((mat) => mat.dispose());
+          materials.forEach(mat => {
+            Object.values(mat).forEach(value => { if (value?.isTexture) value.dispose(); });
+            mat.dispose();
+          });
         }
       });
-      renderer.dispose();
-      if (renderer.domElement.parentNode === root) root.removeChild(renderer.domElement);
+      renderer?.dispose();
+      renderer?.forceContextLoss?.();
+      if (renderer?.domElement?.parentNode === root) root.removeChild(renderer.domElement);
     };
-  }, [family, material, seed, compact, interactive, showcase]);
+  }, [family, material, seed, compact, interactive, showcase, onFailure]);
 
-  return <div ref={host} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={host} style={{ width: '100%', height: '100%', minHeight: compact ? 140 : 260 }} />;
+}
+
+export default function ArtPreview(props) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [props.family, props.material, props.seed, props.compact, props.interactive, props.showcase]);
+  if (failed) return <Fallback compact={props.compact} />;
+  return <WebGLPreview {...props} onFailure={() => setFailed(true)} />;
 }
