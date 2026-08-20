@@ -1,0 +1,32 @@
+name: Voxel Vault Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'feat/**', 'security/**', 'qa/**']
+
+jobs:
+  web-and-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Universal smoke test
+        run: npm run test:universal
+      - name: Proximity smoke test
+        run: npm run test:proximity
+      - name: Proximity adversarial test
+        run: npm run test:proximity:adversarial
+      - name: Contract compile
+        run: npm run chain:compile
+      - name: Contract tests
+        run: npx hardhat test
+      - name: Next production build
+        run: npm run build
