@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { createTradeOffer, canAcceptTrade, transitionTrade, isTradeExpired } from '../../lib/tradingEngine';
 import { createUniversalCollectible, collectibleFingerprint } from '../../lib/universalCollectible';
 
 const DEMO_OBJECTS = [
@@ -20,19 +19,15 @@ function makeQrDataUrl(text) {
     hash ^= text.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
-  svg += `<rect width="100%" height="100%" fill="#0b0d15"/>`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="100%" height="100%" fill="#0b0d15"/>`;
   for (let y = 0; y < cells; y++) {
     for (let x = 0; x < cells; x++) {
       const bit = ((hash ^ (x * 17 + y * 31)) + x * y) & 1;
       const finder = (x < 7 && y < 7) || (x > cells - 8 && y < 7) || (x < 7 && y > cells - 8);
-      if (bit || finder) {
-        svg += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}" fill="${finder ? '#55e6ff' : '#e7e2ff'}"/>`;
-      }
+      if (bit || finder) svg += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}" fill="${finder ? '#55e6ff' : '#e7e2ff'}"/>`;
     }
   }
-  svg += `</svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg + '</svg>')}`;
 }
 
 export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
@@ -40,9 +35,7 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
   const [recipient, setRecipient] = useState('');
   const [selectedOffered, setSelectedOffered] = useState([DEMO_OBJECTS[0].name]);
   const [status, setStatus] = useState(
-    mode === 'accept' && initialOfferId
-      ? `Opened offer ${initialOfferId}. Connect wallet and accept.`
-      : ''
+    mode === 'accept' && initialOfferId ? `Opened offer ${initialOfferId}. Connect wallet and accept via server.` : ''
   );
   const [offer, setOffer] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -66,15 +59,10 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
     }
   }
 
-  function createOffer() {
-    if (!wallet) {
-      setStatus('Connect your wallet first');
-      return;
-    }
-    if (!selectedOffered.length) {
-      setStatus('Select at least one object to offer');
-      return;
-    }
+  async function createOffer() {
+    if (!wallet) { setStatus('Connect your wallet first'); return; }
+    if (!selectedOffered.length) { setStatus('Select at least one object to offer'); return; }
+    setBusy(true);
     try {
       const offered = DEMO_OBJECTS.filter((o) => selectedOffered.includes(o.name)).map((o) => ({
         type: 'collectible',
@@ -83,66 +71,50 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
         family: o.family,
         rarity: o.rarity,
       }));
-      const trade = createTradeOffer({
-        offerer: wallet,
-        recipient: recipient.trim() || '0x000000000000000000000000000000000000dEaD',
-        offered,
-        requested: [],
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      const response = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          offerer: wallet,
+          recipient: recipient.trim() || undefined,
+          offered,
+          requested: [],
+        }),
       });
-      trade.id = `trade-${Date.now().toString(36)}`;
-      setOffer(trade);
-      try {
-        window.localStorage.setItem(`voxel-vault-trade-${trade.id}`, JSON.stringify(trade));
-      } catch {
-        // ignore
-      }
-      setStatus('Trade offer created. Show the QR or share the link. Both wallets must approve before settlement.');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Could not create offer');
+      setOffer(data.offer);
+      setStatus(data.message || 'Trade offer stored on server. Ownership unchanged until chain confirmation.');
     } catch (e) {
       setStatus(e?.message || 'Could not create offer');
-    }
-  }
-
-  function acceptOffer() {
-    if (!wallet) {
-      setStatus('Connect wallet first');
-      return;
-    }
-    if (!offer) {
-      setStatus('Create or load an offer first');
-      return;
-    }
-    setBusy(true);
-    try {
-      const working = {
-        ...offer,
-        recipient:
-          offer.recipient === '0x000000000000000000000000000000000000dead'
-            ? wallet.toLowerCase()
-            : offer.recipient,
-      };
-      if (!canAcceptTrade(working, wallet)) {
-        throw new Error('This wallet cannot accept this offer (wrong recipient or expired)');
-      }
-      const accepted = transitionTrade(working, 'accepted');
-      const submitted = transitionTrade(accepted, 'submitted');
-      setOffer(submitted);
-      setStatus('Offer accepted & submitted. Confirm the transaction in your wallet. Ownership changes only after chain confirmation.');
-    } catch (e) {
-      setStatus(e?.message || 'Accept failed');
     } finally {
       setBusy(false);
     }
   }
 
-  function confirmOnChain() {
-    if (!offer) return;
+  async function acceptOffer() {
+    if (!wallet) { setStatus('Connect wallet first'); return; }
+    if (!offer?.id && !initialOfferId) { setStatus('Create or open an offer first'); return; }
+    setBusy(true);
     try {
-      const confirmed = transitionTrade(offer, 'confirmed');
-      setOffer(confirmed);
-      setStatus('Marked confirmed (demo). In production this step is driven by the actual transaction receipt.');
+      const response = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'accept',
+          id: offer?.id || initialOfferId,
+          walletAddress: wallet,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Accept failed');
+      setOffer(data.offer);
+      setStatus(data.message || 'Accepted. Ownership still requires chain settlement.');
     } catch (e) {
-      setStatus(e?.message || 'Confirm failed');
+      setStatus(e?.message || 'Accept failed');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -162,11 +134,11 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
       </nav>
 
       <header className="tradeHero">
-        <div className="eyebrow"><i /> TAP TO TRADE · DUAL APPROVAL</div>
+        <div className="eyebrow"><i /> TAP TO TRADE · SERVER + DUAL APPROVAL</div>
         <h1>Trade like <em>passing a card.</em></h1>
         <p>
-          Pick what you want to offer, generate a QR / deep link, and let the other person accept on their phone.
-          Both wallets approve. The blockchain settles ownership. No seed phrases. No automatic transfers.
+          Offers are stored through <strong>/api/trades</strong>. Accepting updates application state only.
+          Ownership changes after both wallets sign and a transaction confirms on-chain.
         </p>
       </header>
 
@@ -195,18 +167,12 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
               );
             })}
           </div>
-
           <label className="field">
             Recipient wallet (optional if using QR)
-            <input
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              placeholder="0x… or leave blank for open QR handoff"
-            />
+            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="0x… or leave blank for open QR handoff" />
           </label>
-
-          <button type="button" className="primary" onClick={createOffer} disabled={!wallet || !selectedOffered.length}>
-            Create trade offer
+          <button type="button" className="primary" onClick={createOffer} disabled={!wallet || !selectedOffered.length || busy}>
+            {busy ? 'Working…' : 'Create trade offer'}
           </button>
         </div>
 
@@ -220,33 +186,22 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
               </div>
               <p className="linkLabel">Deep link</p>
               <code className="deeplink">{deepLink}</code>
-              <p className="hint">
-                Recipient opens the link, connects their wallet, and taps Accept.
-                Both sides must approve before the trade is submitted on-chain.
-              </p>
+              <p className="hint">Recipient opens the link, connects wallet, taps Accept. Both sides must approve before chain settlement.</p>
               <div className="actions">
                 <button type="button" className="secondary" onClick={acceptOffer} disabled={busy || !wallet}>
                   {busy ? 'Working…' : 'Accept as recipient'}
                 </button>
-                {offer.state === 'submitted' && (
-                  <button type="button" className="primary" onClick={confirmOnChain}>Mark confirmed (demo)</button>
-                )}
               </div>
-              {isTradeExpired(offer) && <p className="expired">This offer has expired.</p>}
+              <p className="hint">Confirm requires a real txHash via API — the UI will not fake ownership.</p>
             </>
           ) : (
-            <div className="emptyHandoff">
-              <p>Create an offer to generate a QR and deep link for phone-to-phone handoff.</p>
-            </div>
+            <div className="emptyHandoff"><p>Create an offer to generate a QR and deep link for phone-to-phone handoff.</p></div>
           )}
         </div>
       </section>
 
       {status && (
-        <div className="statusBar">
-          <span>●</span>{status}
-          <button type="button" onClick={() => setStatus('')}>×</button>
-        </div>
+        <div className="statusBar"><span>●</span>{status}<button type="button" onClick={() => setStatus('')}>×</button></div>
       )}
 
       <style jsx>{`
@@ -279,7 +234,6 @@ export default function TapToTrade({ initialOfferId = '', mode = 'create' }) {
         .hint{font-size:12px;color:#8a91a5;line-height:1.5;margin:12px 0}
         .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;justify-content:center}.actions button{flex:1;min-width:140px}
         .emptyHandoff{padding:40px 20px;color:#7f879b}
-        .expired{color:#ff8f8f;font-size:13px}
         .statusBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:80;background:#11141e;border:1px solid rgba(255,255,255,.14);padding:11px 14px;border-radius:999px;display:flex;align-items:center;gap:9px;font-size:12px;max-width:min(920px,94vw)}.statusBar span{color:#9b7cff}.statusBar button{border:0;background:transparent;color:#8e94a7;cursor:pointer}
         @media(max-width:800px){.tradeGrid{grid-template-columns:1fr}.navLinks{display:none}}
       `}</style>
