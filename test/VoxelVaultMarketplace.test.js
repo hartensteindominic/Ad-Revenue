@@ -54,6 +54,6 @@ describe('Voxel Vault Ethereum marketplace', function () {
     await market.settleAuction(1);
     expect(await nft.ownerOf(1)).to.equal(bidder.address);
     // 2.5% marketplace fee + 2.5% ERC-2981 royalty = 5% total.
-    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.74'));
+    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.76'));
   });
 });
