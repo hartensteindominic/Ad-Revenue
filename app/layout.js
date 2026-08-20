@@ -1,4 +1,5 @@
 import CryptoAdSlot from './components/CryptoAdSlot';
+import NativeEnhancements from './components/NativeEnhancements';
 import WalletBridge from './components/WalletBridge';
 import './vault-fallback.css';
 import './futuristic-vault.css';
@@ -16,10 +17,7 @@ export const metadata = {
   manifest: '/manifest.webmanifest',
   applicationName: 'Voxel Vault',
   appleWebApp: { capable: true, title: 'Voxel Vault', statusBarStyle: 'black-translucent' },
-  icons: {
-    icon: [{ url: '/voxel-vault-icon.svg', type: 'image/svg+xml' }],
-    apple: [{ url: '/voxel-vault-icon.svg' }],
-  },
+  icons: { icon: [{ url: '/voxel-vault-icon.svg', type: 'image/svg+xml' }], apple: [{ url: '/voxel-vault-icon.svg' }] },
   openGraph: {
     title: 'Voxel Vault | 3D Collectibles',
     description: 'Explore original interactive 3D digital objects and discover the Vault.',
@@ -32,5 +30,5 @@ export const metadata = {
 export const viewport = { width: 'device-width', initialScale: 1, maximumScale: 1, viewportFit: 'cover', themeColor: '#05060b' };
 
 export default function RootLayout({ children }) {
-  return <html lang="en"><body>{children}<CryptoAdSlot slot="global"/><WalletBridge/></body></html>;
+  return <html lang="en"><body>{children}<NativeEnhancements/><CryptoAdSlot slot="global"/><WalletBridge/></body></html>;
 }
