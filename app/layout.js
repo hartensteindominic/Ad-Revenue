@@ -1,4 +1,5 @@
 import './design-overrides.css';
+import './voxel-vault-polish.css';
 import MarketplaceLayer from './components/MarketplaceLayer';
 import CryptoAdSlot from './components/CryptoAdSlot';
 import WalletBridge from './components/WalletBridge';
