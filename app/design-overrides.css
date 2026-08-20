@@ -1,0 +1,304 @@
+/* Voxel Vault visual polish layer. Keeps the existing Three.js architecture and layout intact. */
+
+:root {
+  --vv-purple: #8b6cff;
+  --vv-purple-2: #b08cff;
+  --vv-cyan: #45d7ff;
+  --vv-panel: rgba(14, 16, 27, 0.72);
+  --vv-border: rgba(255, 255, 255, 0.10);
+}
+
+.vault {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.vault::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 72%);
+}
+
+.nav, .hero, .ticker, .market, .showcase, .lab, .creatorSection, .create, .signin, footer {
+  position: relative;
+  z-index: 1;
+}
+
+.nav {
+  box-shadow: 0 10px 40px rgba(0,0,0,.16);
+}
+
+.nav::after {
+  content: '';
+  position: absolute;
+  left: 5vw;
+  right: 5vw;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,108,255,.55), rgba(69,215,255,.22), transparent);
+}
+
+.brandMark {
+  transform: rotate(-3deg);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.brand:hover .brandMark {
+  transform: rotate(3deg) scale(1.06);
+  box-shadow: 0 0 34px rgba(139,108,255,.6);
+}
+
+.navLinks a {
+  position: relative;
+  padding: 10px 0;
+  transition: color .2s ease;
+}
+
+.navLinks a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 3px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--vv-purple), var(--vv-cyan));
+  transition: right .22s ease;
+}
+
+.navLinks a:hover::after { right: 0; }
+
+.heroCopy, .heroStage { animation: vvRise .7s ease both; }
+.heroStage { animation-delay: .08s; }
+
+@keyframes vvRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero h1 {
+  text-shadow: 0 0 70px rgba(139,108,255,.12);
+}
+
+.hero h1 em, .showcase h2 em, .lab h2 em, .creatorSection em, .create h2 em {
+  background: linear-gradient(110deg, #8d6cff 10%, #c19aff 52%, #62dcff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.primaryBtn {
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 16px 48px rgba(112,76,255,.4);
+}
+
+.secondaryBtn {
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+
+.secondaryBtn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139,108,255,.65);
+  background: rgba(139,108,255,.06);
+}
+
+.stats div {
+  position: relative;
+}
+
+.stats div:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 30px;
+  right: -23px;
+  top: 4px;
+  background: rgba(255,255,255,.1);
+}
+
+.stageHalo {
+  animation: vvPulse 5s ease-in-out infinite;
+}
+
+@keyframes vvPulse {
+  0%,100% { transform: scale(.96); opacity: .72; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+.stageTag {
+  z-index: 4;
+  box-shadow: 0 12px 35px rgba(0,0,0,.25);
+}
+
+.stageTag.top { top: 18%; right: 2%; }
+.stageTag.bottom { bottom: 15%; left: 1%; }
+
+.ticker {
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: linear-gradient(90deg, rgba(139,108,255,.045), rgba(69,215,255,.025), rgba(139,108,255,.045));
+}
+
+.ticker span { transition: color .2s ease; }
+.ticker span:hover { color: #b7a7ff; }
+
+.sectionHead, .labHead {
+  align-items: flex-end;
+}
+
+.nftCard, .labCard, .creatorPanel, .createCard {
+  border-color: var(--vv-border);
+  background: linear-gradient(145deg, rgba(20,22,35,.88), rgba(9,10,17,.82));
+  box-shadow: 0 18px 55px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.035);
+}
+
+.nftCard {
+  transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+}
+
+.nftCard:hover {
+  transform: translateY(-7px);
+  border-color: rgba(139,108,255,.45);
+  box-shadow: 0 26px 70px rgba(0,0,0,.3), 0 0 34px rgba(139,108,255,.08);
+}
+
+.cardVisual {
+  background: radial-gradient(circle at 50% 45%, rgba(104,78,255,.13), transparent 58%), #090b12;
+}
+
+.rarity, .threeBadge {
+  backdrop-filter: blur(12px);
+}
+
+.viewBtn, .buyBtn, .filters button {
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.viewBtn:hover, .buyBtn:hover { transform: translateY(-1px); }
+
+.filters button:hover {
+  border-color: rgba(139,108,255,.5);
+  color: #fff;
+}
+
+.showcase {
+  background: radial-gradient(circle at 75% 50%, rgba(139,108,255,.10), transparent 32%);
+}
+
+.featureList > div {
+  transition: transform .2s ease, background .2s ease;
+  border-radius: 12px;
+  padding: 10px;
+  margin-left: -10px;
+}
+
+.featureList > div:hover {
+  transform: translateX(5px);
+  background: rgba(255,255,255,.025);
+}
+
+.labCard {
+  transition: transform .22s ease, border-color .22s ease;
+}
+
+.labCard:hover {
+  transform: translateY(-5px);
+  border-color: rgba(69,215,255,.28);
+}
+
+.creatorSection {
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: radial-gradient(circle at 80% 50%, rgba(69,215,255,.055), transparent 34%);
+}
+
+.creatorPanel {
+  overflow: hidden;
+  position: relative;
+}
+
+.creatorPanel::before {
+  content: '3D';
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.45);
+  z-index: 3;
+}
+
+.createCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.createCard::after {
+  content: '';
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  right: -100px;
+  bottom: -170px;
+  border-radius: 50%;
+  background: rgba(139,108,255,.12);
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.signin {
+  background: linear-gradient(180deg, rgba(139,108,255,.025), rgba(69,215,255,.025));
+}
+
+.signinForm input {
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.signinForm input:focus {
+  outline: none;
+  border-color: rgba(139,108,255,.65) !important;
+  box-shadow: 0 0 0 3px rgba(139,108,255,.10);
+}
+
+footer {
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+@media (max-width: 900px) {
+  .nav { padding: 0 20px; }
+  .navLinks { display: none; }
+  .navRight { min-width: auto; }
+  .hero { grid-template-columns: 1fr; padding-top: 55px; }
+  .heroStage { height: 430px; order: -1; }
+  .heroStage > .voxelViewer { width: min(92vw, 460px); height: 420px; }
+  .stageTag.top { top: 5%; right: 4%; }
+  .stageTag.bottom { bottom: 5%; left: 4%; }
+  .stats { margin-top: 35px; }
+}
+
+@media (max-width: 560px) {
+  .nav { height: 68px; }
+  .walletBtn { padding: 10px 11px; }
+  .hero { padding: 38px 20px 55px; }
+  .hero h1 { font-size: clamp(52px, 16vw, 78px); letter-spacing: -4px; }
+  .heroCopy > p { font-size: 15px; }
+  .heroActions { flex-direction: column; align-items: stretch; }
+  .heroActions a { justify-content: center; }
+  .stats { gap: 25px; }
+  .stats div:not(:last-child)::after { right: -13px; }
+  .stageTag { font-size: 7px; padding: 7px 9px; }
+  .ticker { overflow: hidden; white-space: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
