@@ -14,7 +14,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # Repository does not currently commit a package-lock.json.
+      # Use npm install so CI can still validate a production build.
+      - run: npm install
       - run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://voxel-vault.vercel.app
