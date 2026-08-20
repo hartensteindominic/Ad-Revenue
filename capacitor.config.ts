@@ -3,11 +3,14 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.voxelvault.app',
   appName: 'Voxel Vault',
-  webDir: '.next',
+  webDir: 'public',
   bundledWebRuntime: false,
   server: {
-    // Native builds should point at a production web build only when the hosted
-    // deployment is stable. Keep this unset for normal local builds.
+    // The current Next.js app is server-rendered and has API routes, so the
+    // first native shell loads the stable hosted app rather than treating a
+    // .next server bundle as a static Capacitor site.
+    url: process.env.CAPACITOR_SERVER_URL || 'https://voxel-vault.vercel.app',
+    cleartext: false,
     androidScheme: 'https',
   },
   ios: {
