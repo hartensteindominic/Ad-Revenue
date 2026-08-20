@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
-import { stripe, platformFee } from '../../../lib/stripe-server';
+import { getStripe, platformFee } from '../../../lib/stripe-server';
 import { getSupabaseAdmin } from '../../../lib/supabase-admin';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   try {
+    const stripe = getStripe();
     const supabaseAdmin = getSupabaseAdmin();
     const auth = request.headers.get('authorization');
     const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
