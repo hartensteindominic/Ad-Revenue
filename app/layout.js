@@ -1,4 +1,3 @@
-import PremiumMarketplace from './components/PremiumMarketplace';
 import CryptoAdSlot from './components/CryptoAdSlot';
 import WalletBridge from './components/WalletBridge';
 
@@ -19,5 +18,5 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return <html lang="en"><body>{children}<CryptoAdSlot slot="global"/><PremiumMarketplace/><WalletBridge/></body></html>;
+  return <html lang="en"><body>{children}<CryptoAdSlot slot="global"/><WalletBridge/></body></html>;
 }
