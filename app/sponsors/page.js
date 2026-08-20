@@ -19,7 +19,7 @@ export default function SponsorsPage() {
         <p>
           Voxel Vault turns campaign funding into collectible 3D and 2D objects. People can discover them, inspect them, hunt for them, own them and trade them. Sponsorship is disclosed instead of hidden.
         </p>
-        <div className="actions"><a href="mailto:partnerships@voxel-vault.example" className="primary">Start a campaign conversation</a><Link href="/" className="secondary">Explore the Vault</Link></div>
+        <div className="actions"><Link href="/#sponsored-collectibles" className="primary">View sponsor-ready formats</Link><Link href="/" className="secondary">Explore the Vault</Link></div>
       </section>
 
       <section className="formats">
