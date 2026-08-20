@@ -23,6 +23,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+      # No lockfile is committed yet, so do not enable setup-node's npm cache.
       - run: npm install
       - run: npm run chain:compile

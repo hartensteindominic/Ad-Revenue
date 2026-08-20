@@ -48,17 +48,18 @@ assert.equal(drops.isDropDiscoverable(drop, now), true);
 assert.equal(drops.isWithinDropZone(drop, 99), true);
 assert.equal(drops.isWithinDropZone(drop, 101), false);
 
-// Server authority path (memory storage when Supabase unset)
+const wallet = '0x0000000000000000000000000000000000000abc';
 authority.seedMemoryDrop({ ...drop, claimedCount: 0, collectible: camera });
-const auth1 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', distanceMeters: 50 });
+const auth1 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: wallet, distanceMeters: 50 });
 assert.equal(auth1.authorized, true);
 assert.equal(auth1.ownershipGranted === true, false);
 assert.ok(auth1.claimTicket);
 assert.equal(auth1.security.ownership.includes('not-granted'), true);
 
-const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', distanceMeters: 50 });
+const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: wallet, distanceMeters: 50 });
 assert.equal(auth2.authorized, false);
 assert.equal(auth2.reason, 'already_claimed');
+assert.throws(() => authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC' }), /valid wallet/);
 
 const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);

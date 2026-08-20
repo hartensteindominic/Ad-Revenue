@@ -3,36 +3,30 @@ import { authorizeClaim, seedMemoryDrop } from '../../../../lib/claimAuthority';
 import { createDrop } from '../../../../lib/dropEngine';
 import { createUniversalCollectible } from '../../../../lib/universalCollectible';
 
-/** Ensure known demo drops exist in memory before claim (cold start). */
+/** Demo drops are intentionally development-only. Production claims must be durable. */
 function ensureDemoDrop(dropId) {
+  if (process.env.NODE_ENV === 'production') return;
+
   const demos = {
     'drop-field-camera-001': {
-      name: 'Field Camera Drop',
-      quantity: 25,
-      radiusMeters: 120,
-      lat: 40.7648,
-      lng: -73.9808,
+      name: 'Field Camera Drop', quantity: 25, radiusMeters: 120,
+      lat: 40.7648, lng: -73.9808,
       collectible: { name: 'Field Camera', family: 'technology', subtype: 'camera', rarity: 'rare', seed: 'camera-001' },
     },
     'drop-survey-robot-001': {
-      name: 'Survey Robot Drop',
-      quantity: 10,
-      radiusMeters: 90,
-      lat: 40.7359,
-      lng: -73.9911,
+      name: 'Survey Robot Drop', quantity: 10, radiusMeters: 90,
+      lat: 40.7359, lng: -73.9911,
       collectible: { name: 'Survey Robot', family: 'technology', subtype: 'robot', rarity: 'epic', seed: 'robot-001' },
     },
     'drop-street-deck-001': {
-      name: 'Street Deck Drop',
-      quantity: 40,
-      radiusMeters: 150,
-      lat: 33.985,
-      lng: -118.4695,
+      name: 'Street Deck Drop', quantity: 40, radiusMeters: 150,
+      lat: 33.985, lng: -118.4695,
       collectible: { name: 'Street Deck', family: 'sports', subtype: 'skateboard', rarity: 'uncommon', seed: 'board-001' },
     },
   };
   const raw = demos[dropId];
   if (!raw) return;
+
   const drop = createDrop({
     id: dropId,
     name: raw.name,
@@ -53,9 +47,16 @@ function ensureDemoDrop(dropId) {
 
 export async function POST(request) {
   try {
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'Claim persistence is not configured. Production claims are fail-closed until Supabase service-role storage is available.', ownershipGranted: false },
+        { status: 503 },
+      );
+    }
+
     const body = await request.json();
-    const dropId = body.dropId;
-    const walletAddress = body.walletAddress;
+    const dropId = typeof body.dropId === 'string' ? body.dropId.trim() : '';
+    const walletAddress = typeof body.walletAddress === 'string' ? body.walletAddress.trim() : '';
     const distanceMeters = body.distanceMeters;
     const requireInZone = Boolean(body.requireInZone);
 
@@ -77,23 +78,20 @@ export async function POST(request) {
           ...result,
           error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied',
         },
-        { status: result.reason === 'already_claimed' ? 409 : 403 }
+        { status: result.reason === 'already_claimed' ? 409 : 403 },
       );
     }
 
-    // Authorized ticket only — UI must not show "You own this" until chain confirms.
     return NextResponse.json({
       ...result,
       ownershipGranted: false,
-      message:
-        'Server authorized a claim ticket. Sign a wallet transaction next. Ownership is only real after chain confirmation.',
+      message: 'Server authorized a claim ticket. Sign a wallet transaction next. Ownership is only real after chain confirmation.',
     });
   } catch (error) {
     const message = error?.message || 'Claim failed';
-    const status =
-      message.includes('not found') ? 404
-        : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside')
-          ? 403
+    const status = message.includes('not found') ? 404
+      : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside') ? 403
+        : message.includes('valid wallet') ? 400
           : 400;
     return NextResponse.json({ error: message, ownershipGranted: false }, { status });
   }
