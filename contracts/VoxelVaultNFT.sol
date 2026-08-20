@@ -13,13 +13,8 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, EIP712, Ownab
     uint96 public constant MAX_ROYALTY_BPS = 1500;
     mapping(address => bool) public minters;
 
-    /// @notice Public mint is disabled by default. Explicitly enable only for controlled demos/tests.
     bool public publicMintEnabled = false;
-
-    /// @notice Signer authorized to issue server-backed claim vouchers.
-    /// Supports EOAs and ERC-1271 smart-contract wallets such as Safe.
     address public claimSigner;
-
     mapping(bytes32 => bool) public usedClaimTickets;
 
     bytes32 public constant CLAIM_VOUCHER_TYPEHASH = keccak256(
@@ -76,9 +71,7 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, EIP712, Ownab
         return _mintTo(recipient, royaltyReceiver, uri, royaltyBps);
     }
 
-    /// @notice Redeem a server-issued, EIP-712 signed claim voucher.
-    /// The signature binds the recipient, drop, one-time ticket, exact metadata URI,
-    /// royalty receiver, nonce and deadline. Anyone may relay the transaction.
+    /// @notice Redeem a server-issued EIP-712 claim voucher. Anyone may relay the transaction.
     function claim(
         address recipient,
         address royaltyReceiver,
@@ -93,9 +86,8 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, EIP712, Ownab
         require(block.timestamp <= deadline, "Claim voucher expired");
         require(recipient != address(0), "Recipient required");
         require(royaltyReceiver != address(0), "Royalty receiver required");
+        require(bytes(uri).length > 0, "Metadata URI required");
         require(!usedClaimTickets[claimTicketHash], "Claim ticket already used");
-        require(keccak256(bytes(uri)) != bytes32(0), "Metadata URI required");
-        require(keccak256(bytes(uri)) == keccak256(abi.encodePacked(uri)), "Invalid metadata URI");
 
         bytes32 uriHash = keccak256(bytes(uri));
         bytes32 structHash = keccak256(
