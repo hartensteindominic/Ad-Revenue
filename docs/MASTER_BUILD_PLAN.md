@@ -6,7 +6,7 @@ Voxel Vault is a 3D collectible network: create, mint, discover, own, display, h
 
 The product loop is:
 
-**CREATE → DISCOVER → OWN → DISPLAY → TRADE → DISCOVER AGAIN**
+**CREATE → DROP → DISCOVER → CLAIM → OWN → DISPLAY → TRADE → DROP AGAIN**
 
 ## Build order
 
@@ -45,8 +45,8 @@ Support listing, buying, offers, auctions, royalties and withdrawals. Maintain e
 ### 6. Universal mobile trade
 QR, deep links and eventually NFC are transport mechanisms. They identify or carry a trade intent; they do not themselves transfer an NFT. The wallet authorizes the transaction and the blockchain settles ownership.
 
-### 7. Voxel Hunt
-Add map-based drops, discovery, signed claims, rate limits and anti-abuse controls. GPS is treated as an input and never as unquestionable proof of location.
+### 7. Voxel Hunt + Drop Economy
+Add map-based drops, discovery, signed claims, rate limits and anti-abuse controls. GPS is treated as an input and never as unquestionable proof of location. Drops have explicit status, quantity, schedule, discovery radius and per-wallet claim rules. Platform-funded drops are accounted for separately through a Drop Pool allocation calculation. Revenue allocation is accounting logic only until treasury controls and legal/product policy are finalized.
 
 ### 8. Creator Studio
 Creators can stage GLB/GLTF assets, define metadata, traits, rarity, supply and royalties, preview the collectible and initiate minting.
@@ -72,7 +72,7 @@ Separate frontend, API, database, blockchain, indexing, object storage and CDN r
 ### Gate B: testnet lifecycle
 Run repeatedly:
 
-`CREATE → MINT → VIEW → LIST → BUY → OFFER → AUCTION → SETTLE → TRANSFER → TRADE → HUNT → CLAIM`
+`CREATE → MINT → VIEW → LIST → BUY → OFFER → AUCTION → SETTLE → TRANSFER → TRADE → DROP → HUNT → CLAIM`
 
 Test wallet disconnects, rejected transactions, refreshes, slow connections, RPC failures and database failures.
 
@@ -92,7 +92,7 @@ Test wallet disconnects, rejected transactions, refreshes, slow connections, RPC
 
 ## Current milestone
 
-The current feature branch begins the next foundation milestone by replacing the old fixed demo-object panel with a procedural universal collectible generator. Generated records are validated against the canonical schema and explicitly remain unminted until a wallet-signed blockchain action occurs.
+The current feature branch adds the first Drop Economy foundation. `lib/dropEconomy.js` validates Drop Pool configuration, calculates a bounded allocation from platform-fee accounting, and normalizes drop records. `/api/drops/pool` exposes the allocation calculation without moving funds. Existing claim authorization remains the authority for actual claims, and ownership remains false until a wallet transaction confirms on-chain.
 
 ## Non-goals
 
@@ -101,3 +101,4 @@ The current feature branch begins the next foundation milestone by replacing the
 - Do not claim automatic compatibility with an external metaverse without verifying its requirements.
 - Do not launch unrestricted public minting with real mainnet funds.
 - Do not put private keys in frontend environment variables or source code.
+- Do not treat accounting calculations as treasury transfers.
