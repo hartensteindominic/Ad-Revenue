@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Pausable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @notice Sponsor-funded collectible ads. The ad is the collectible, but sponsorship is explicit.
 /// @dev Sponsor funds are escrowed per campaign. Claims are wallet-authorized and chain-authoritative.
-contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pausable, ReentrancyGuard {
+contract VoxelVaultSponsoredCollectible is ERC721, ERC721Pausable, ERC721URIStorage, Ownable, ReentrancyGuard {
     uint256 public constant BPS = 10_000;
     uint256 public constant MAX_EDITIONS = 100_000;
     uint256 public constant MAX_RESERVATIONS_PER_WALLET = 10;
@@ -42,7 +42,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
 
     uint256 private _nextTokenId = 1;
     uint256 public nextCampaignId = 1;
-    string public baseTokenURI;
     address payable public platformWallet;
     address payable public reserveWallet;
 
@@ -77,14 +76,12 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
     constructor(
         string memory name_,
         string memory symbol_,
-        string memory baseTokenURI_,
         address payable platformWallet_,
         address payable reserveWallet_,
         address initialOwner
     ) ERC721(name_, symbol_) Ownable(initialOwner) {
         require(platformWallet_ != address(0), "Invalid platform wallet");
         require(reserveWallet_ != address(0), "Invalid reserve wallet");
-        baseTokenURI = baseTokenURI_;
         platformWallet = platformWallet_;
         reserveWallet = reserveWallet_;
     }
@@ -148,7 +145,7 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         emit CampaignPaused(campaignId);
     }
 
-    function reserve(uint256 campaignId, bytes32 nonce, uint256 quantity)
+    function reserve(uint256 campaignId, bytes32 nonce)
         external
         whenNotPaused
         campaignExists(campaignId)
@@ -156,7 +153,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         Campaign storage c = campaigns[campaignId];
         require(c.active, "Campaign inactive");
         require(block.timestamp >= c.startTime && block.timestamp <= c.endTime, "Campaign not live");
-        require(quantity == 1, "One collectible per reservation");
         require(c.editionsMinted + c.editionsReserved < c.editionsTotal, "Sold out");
         require(reservations[campaignId][nonce].wallet == address(0), "Nonce already used");
         require(walletReservationCount[campaignId][msg.sender] < MAX_RESERVATIONS_PER_WALLET, "Wallet reservation limit");
@@ -177,6 +173,7 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         emit ReservationExpired(campaignId, nonce);
     }
 
+    /// @notice Mints the sponsor-funded ad collectible. The collector pays no mint price.
     function mintSponsored(
         uint256 campaignId,
         bytes32 reservationNonce,
@@ -243,10 +240,8 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
     function _removeReservation(uint256 campaignId, bytes32 nonce) internal {
         Reservation memory r = reservations[campaignId][nonce];
         Campaign storage c = campaigns[campaignId];
-        if (c.editionsReserved >= r.quantity) c.editionsReserved -= r.quantity;
-        if (walletReservationCount[campaignId][r.wallet] >= r.quantity) {
-            walletReservationCount[campaignId][r.wallet] -= r.quantity;
-        }
+        if (c.editionsReserved > 0) c.editionsReserved -= 1;
+        if (walletReservationCount[campaignId][r.wallet] > 0) walletReservationCount[campaignId][r.wallet] -= 1;
         delete reservations[campaignId][nonce];
     }
 
@@ -255,8 +250,6 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         (bool ok, ) = recipient.call{value: amount}("");
         require(ok, "Payment failed");
     }
-
-    function setBaseURI(string calldata newBaseURI) external onlyOwner { baseTokenURI = newBaseURI; }
 
     function setPlatformWallet(address payable wallet) external onlyOwner {
         require(wallet != address(0), "Invalid platform wallet");
@@ -275,9 +268,12 @@ contract VoxelVaultSponsoredCollectible is ERC721, ERC721URIStorage, Ownable, Pa
         return super.tokenURI(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
-
-    receive() external payable {}
 }
