@@ -1,25 +1,56 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const files = {
-  collectible: await readFile(new URL('../lib/universalCollectible.js', import.meta.url), 'utf8'),
-  generation: await readFile(new URL('../lib/generation/realisticRules.js', import.meta.url), 'utf8'),
-  drops: await readFile(new URL('../lib/dropEngine.js', import.meta.url), 'utf8'),
-  trading: await readFile(new URL('../lib/tradingEngine.js', import.meta.url), 'utf8'),
-};
+const root = new URL('../', import.meta.url);
+const temp = await mkdtemp(join(tmpdir(), 'voxel-vault-engine-'));
+const libDir = join(temp, 'lib');
+const generationDir = join(libDir, 'generation');
+await mkdir(generationDir, { recursive: true });
+await writeFile(join(temp, 'package.json'), '{"type":"module"}\n');
 
-assert.match(files.collectible, /voxel-vault\\/universal-collectible/);
-assert.match(files.collectible, /procedural.*ai_assisted.*creator_upload/s);
-assert.match(files.collectible, /collectibleFingerprint/);
-assert.match(files.generation, /vehicles/);
-assert.match(files.generation, /technology/);
-assert.match(files.generation, /creatures/);
-assert.match(files.generation, /validateGenerationRequest/);
-assert.match(files.drops, /prepareClaim/);
-assert.match(files.drops, /isWithinDropZone/);
-assert.match(files.drops, /maxClaimsPerWallet/);
-assert.match(files.trading, /createTradeOffer/);
-assert.match(files.trading, /canAcceptTrade/);
-assert.match(files.trading, /transitionTrade/);
+const copy = async (source, target) => writeFile(target, await readFile(new URL(source, root), 'utf8'));
+await copy('lib/universalCollectible.js', join(libDir, 'universalCollectible.js'));
+await copy('lib/generation/realisticRules.js', join(generationDir, 'realisticRules.js'));
+await copy('lib/dropEngine.js', join(libDir, 'dropEngine.js'));
+await copy('lib/tradingEngine.js', join(libDir, 'tradingEngine.js'));
 
-console.log('Universal engine source smoke checks passed.');
+const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
+const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
+const drops = await import(pathToFileURL(join(libDir, 'dropEngine.js')).href);
+const trading = await import(pathToFileURL(join(libDir, 'tradingEngine.js')).href);
+
+const camera = collectible.createUniversalCollectible({
+  name: 'Field Camera', family: 'technology', subtype: 'camera', creationMode: 'procedural',
+  seed: 'camera-001', rarity: 'rare', realityBasis: { inspiredBy: 'vintage field camera', plausibility: 'realistic' },
+});
+const robot = collectible.createUniversalCollectible({ name: 'Survey Robot', family: 'technology', subtype: 'robot', seed: 'robot-001' });
+const skateboard = collectible.createUniversalCollectible({ name: 'Street Deck', family: 'sports', subtype: 'skateboard', seed: 'board-001' });
+
+for (const item of [camera, robot, skateboard]) {
+  assert.equal(collectible.validateUniversalCollectible(item).valid, true);
+  assert.equal(collectible.collectibleFingerprint(item).length, 16);
+}
+assert.notEqual(collectible.collectibleFingerprint(camera), collectible.collectibleFingerprint(robot));
+assert.equal(generation.validateGenerationRequest({ family: 'technology', rarity: 'rare', quantity: 3 }).valid, true);
+assert.equal(generation.validateGenerationRequest({ family: 'not-a-family' }).valid, false);
+
+const now = new Date('2026-08-20T12:00:00.000Z');
+const drop = drops.createDrop({ id: 'drop-1', name: 'Test Drop', status: 'active', startAt: '2026-08-20T11:00:00.000Z', endAt: '2026-08-20T13:00:00.000Z', radiusMeters: 100 });
+assert.equal(drops.isDropDiscoverable(drop, now), true);
+assert.equal(drops.isWithinDropZone(drop, 99), true);
+assert.equal(drops.isWithinDropZone(drop, 101), false);
+const claim = drops.prepareClaim({ drop, collectible: camera, walletAddress: '0x123', distanceMeters: 50 });
+assert.equal(claim.type, 'claim-intent');
+
+const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
+assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
+const accepted = trading.transitionTrade(offer, 'accepted', now);
+assert.equal(accepted.state, 'accepted');
+const expired = trading.transitionTrade({ ...offer, state: 'pending' }, 'expired', new Date('2026-08-20T14:00:00.000Z'));
+assert.equal(expired.state, 'expired');
+assert.equal(trading.canAcceptTrade(offer, '0xbbb', new Date('2026-08-20T14:00:00.000Z')), false);
+
+console.log('Voxel Vault universal engine executable smoke tests passed.');
