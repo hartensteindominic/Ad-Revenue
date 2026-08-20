@@ -11,8 +11,12 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
     uint96 public constant MAX_ROYALTY_BPS = 1500;
     mapping(address => bool) public minters;
 
+    /// @notice When false, only minters/owner may mint (recommended for mainnet).
+    bool public publicMintEnabled = true;
+
     event VoxelMinted(uint256 indexed tokenId, address indexed creator, string tokenURI, uint96 royaltyBps);
     event MinterUpdated(address indexed account, bool allowed);
+    event PublicMintEnabledUpdated(bool enabled);
 
     constructor(address initialOwner) ERC721("Voxel Vault", "VOXEL") Ownable(initialOwner) {}
 
@@ -27,7 +31,14 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         emit MinterUpdated(account, allowed);
     }
 
+    function setPublicMintEnabled(bool enabled) external onlyOwner {
+        publicMintEnabled = enabled;
+        emit PublicMintEnabledUpdated(enabled);
+    }
+
+    /// @notice Public mint path. Disable via setPublicMintEnabled(false) before mainnet if desired.
     function mint(string calldata uri, uint96 royaltyBps) external returns (uint256 tokenId) {
+        require(publicMintEnabled, "Public mint disabled");
         return _mintTo(msg.sender, msg.sender, uri, royaltyBps);
     }
 
