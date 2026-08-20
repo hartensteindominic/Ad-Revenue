@@ -111,16 +111,25 @@ export default function VaultUniverse() {
     <div className="ambient a1"/><div className="ambient a2"/>
     <nav className="vaultNav">
       <a className="brand" href="/">V<span>V</span>OXELVAULT</a>
-      <div className="navLinks"><a href="#discover">Discover</a><a href="#drops">Drops</a><a href="#creators">Creators</a><a href="#about">About</a></div>
+      <div className="navLinks">
+        <a href="/discover">Discover</a>
+        <a href="#drops">Gallery</a>
+        <a href="/trade">Trade</a>
+        <a href="#creators">Creators</a>
+        <a href="/marketplace">Marketplace</a>
+      </div>
       <button className="walletButton" onClick={connectWallet}>{wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : '◈ Connect Wallet'}</button>
     </nav>
 
     <section className="hero" id="discover">
       <div className="heroCopy">
-        <div className="eyebrow"><i/> 3D DIGITAL OBJECTS · REAL OWNERSHIP</div>
+        <div className="eyebrow"><i/> 3D DIGITAL OBJECTS · REAL OWNERSHIP · REAL-WORLD DROPS</div>
         <h1>Objects worth <em>owning.</em></h1>
-        <p>Discover original 3D collectibles inspired by vehicles, creatures, architecture, science and the strange corners of reality. Pick one, spin it in full 3D, then connect it to your wallet.</p>
-        <div className="heroActions"><a className="primaryAction" href="#drops">Explore the Vault ↓</a><a className="secondaryAction" href="#creators">Create a drop →</a></div>
+        <p>Discover original 3D collectibles inspired by vehicles, creatures, architecture, science and the strange corners of reality. Find them in the real world, spin them in full 3D, then connect them to your wallet and trade by tapping phones.</p>
+        <div className="heroActions">
+          <a className="primaryAction" href="/discover">Find drops near you ↓</a>
+          <a className="secondaryAction" href="/trade">Tap to trade →</a>
+        </div>
         <div className="heroStats"><span><b>{CATALOG_SIZE.toLocaleString()}</b> forms</span><span><b>8</b> families</span><span><b>14</b> materials</span><span><b>3D</b> native</span></div>
       </div>
       <div className="heroViewer">
