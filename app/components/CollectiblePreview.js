@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 const FAMILY_SHAPES = {
@@ -21,21 +21,28 @@ const FAMILY_SHAPES = {
 
 export default function CollectiblePreview({ family = 'technology', rarity = 'rare', seed = 'preview' }) {
   const mountRef = useRef(null);
+  const [fallback, setFallback] = useState(false);
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || typeof window === 'undefined') return undefined;
 
     let renderer;
+    let scene;
     let geometry;
     let material;
     let frame;
     let resizeObserver;
     let dragging = false;
     let lastX = 0;
+    let disposed = false;
+
+    const showFallback = () => {
+      if (!disposed) setFallback(true);
+    };
 
     try {
-      const scene = new THREE.Scene();
+      scene = new THREE.Scene();
       scene.background = new THREE.Color(0x080b13);
 
       const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
@@ -85,8 +92,10 @@ export default function CollectiblePreview({ family = 'technology', rarity = 'ra
       };
 
       resize();
-      resizeObserver = new ResizeObserver(resize);
-      resizeObserver.observe(mount);
+      if ('ResizeObserver' in window) {
+        resizeObserver = new ResizeObserver(resize);
+        resizeObserver.observe(mount);
+      }
 
       const onPointerDown = event => {
         dragging = true;
@@ -108,14 +117,21 @@ export default function CollectiblePreview({ family = 'technology', rarity = 'ra
       renderer.domElement.addEventListener('pointercancel', onPointerUp);
 
       const animate = () => {
+        if (disposed) return;
         frame = requestAnimationFrame(animate);
         if (!dragging) group.rotation.y += 0.004;
         group.rotation.x = Math.sin(Date.now() * 0.0007) * 0.08;
-        renderer.render(scene, camera);
+        try {
+          renderer.render(scene, camera);
+        } catch {
+          cancelAnimationFrame(frame);
+          showFallback();
+        }
       };
       animate();
 
       return () => {
+        disposed = true;
         cancelAnimationFrame(frame);
         resizeObserver?.disconnect();
         renderer?.domElement.removeEventListener('pointerdown', onPointerDown);
@@ -128,8 +144,8 @@ export default function CollectiblePreview({ family = 'technology', rarity = 'ra
         if (renderer?.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       };
     } catch {
+      showFallback();
       if (renderer?.domElement?.parentNode === mount) mount.removeChild(renderer.domElement);
-      mount.dataset.webglFallback = 'true';
       return undefined;
     }
   }, [family, rarity, seed]);
@@ -140,7 +156,19 @@ export default function CollectiblePreview({ family = 'technology', rarity = 'ra
       ref={mountRef}
       role="img"
       aria-label={`Interactive 3D ${family} collectible preview`}
-      style={{ minHeight: 220, width: '100%', overflow: 'hidden', borderRadius: 14 }}
-    />
+      style={{ minHeight: 220, width: '100%', overflow: 'hidden', borderRadius: 14, position: 'relative' }}
+    >
+      {fallback && (
+        <div
+          role="status"
+          style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 20, textAlign: 'center', color: '#bfc7dc', background: 'radial-gradient(circle at 50% 35%, rgba(85,230,255,.1), transparent 65%)' }}
+        >
+          <div>
+            <strong style={{ display: 'block', color: '#fff', marginBottom: 6 }}>3D preview unavailable</strong>
+            <span style={{ fontSize: 12 }}>Your device or browser could not start WebGL. The collectible record is still safe.</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
