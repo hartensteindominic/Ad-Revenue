@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { buildSponsoredCollectible, createSponsoredCampaign } from '../../lib/sponsoredCollectibles';
+import { buildSponsoredCollectible, createSponsoredCampaign } from '../../lib/sponsoredCollectibles.mjs';
 
 const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
 
@@ -31,10 +31,7 @@ export default function SponsoredCollectibleShowcase() {
       <div className="sponsoredCopy">
         <div className="sponsoredEyebrow">SPONSORED COLLECTIBLE · PROTOTYPE</div>
         <h2 id="sponsored-title">Brands fund the hunt.<br /><em>Collectors keep the object.</em></h2>
-        <p>
-          A sponsor-funded campaign can create a limited 3D object, place it inside a real-world hunt,
-          and fund collector rewards. Sponsorship is disclosed as part of provenance. Discovery never grants ownership.
-        </p>
+        <p>A sponsor-funded campaign can create a limited 3D object, place it inside a real-world hunt, and fund collector rewards. Sponsorship is disclosed as part of provenance. Discovery never grants ownership.</p>
         <div className="sponsorMeta">
           <span><b>SPONSOR</b>{collectible.sponsorship.sponsorName}</span>
           <span><b>CAMPAIGN</b>{campaign.title}</span>
@@ -42,16 +39,7 @@ export default function SponsoredCollectibleShowcase() {
         </div>
       </div>
       <div className="sponsoredObject" aria-label="Sponsored collectible 3D preview">
-        <VoxelViewer
-          shape={collectible.shape}
-          seed={collectible.seed}
-          rarity={collectible.rarity}
-          material={collectible.material}
-          compact
-          showcase
-          interactive={false}
-          label={false}
-        />
+        <VoxelViewer shape={collectible.shape} seed={collectible.seed} rarity={collectible.rarity} material={collectible.material} compact showcase interactive={false} label={false} />
         <div className="sponsoredObjectLabel">
           <strong>{collectible.name}</strong>
           <span>Sponsored collectible · Ownership requires wallet authorization</span>
