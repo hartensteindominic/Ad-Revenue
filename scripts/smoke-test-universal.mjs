@@ -37,13 +37,19 @@ assert.notEqual(collectible.collectibleFingerprint(camera), collectible.collecti
 assert.equal(generation.validateGenerationRequest({ family: 'technology', rarity: 'rare', quantity: 3 }).valid, true);
 assert.equal(generation.validateGenerationRequest({ family: 'not-a-family' }).valid, false);
 
+assert.throws(() => drops.createDrop({ startAt: 'not-a-date' }), /startAt must be a valid date/);
+assert.throws(() => drops.createDrop({ startAt: '2026-08-20T13:00:00.000Z', endAt: '2026-08-20T12:00:00.000Z' }), /endAt must be later/);
+
 const now = new Date('2026-08-20T12:00:00.000Z');
 const drop = drops.createDrop({ id: 'drop-1', name: 'Test Drop', status: 'active', startAt: '2026-08-20T11:00:00.000Z', endAt: '2026-08-20T13:00:00.000Z', radiusMeters: 100 });
 assert.equal(drops.isDropDiscoverable(drop, now), true);
 assert.equal(drops.isWithinDropZone(drop, 99), true);
 assert.equal(drops.isWithinDropZone(drop, 101), false);
-const claim = drops.prepareClaim({ drop, collectible: camera, walletAddress: '0x123', distanceMeters: 50 });
+const claim = drops.prepareClaim({ drop, collectible: camera, walletAddress: '  0xABC  ', distanceMeters: 50 });
 assert.equal(claim.type, 'claim-intent');
+assert.equal(claim.walletAddress, '0xabc');
+assert.equal(claim.security.serverValidationRequired, true);
+assert.throws(() => drops.prepareClaim({ drop, collectible: camera, walletAddress: '', distanceMeters: 50 }), /Wallet connection is required/);
 
 const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
