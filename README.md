@@ -52,3 +52,7 @@ Add those two values to the Vercel project's environment variables, redeploy, an
 ## Important production note
 
 The contracts are an initial marketplace implementation, not a substitute for an independent smart-contract security audit. Test on Sepolia first, verify every transaction and event, and do not fund a mainnet deployment until the contract behavior has been reviewed.
+
+## Production build status
+
+Voxel Vault production build fixes are being verified before the next marketplace upgrade.
