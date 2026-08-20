@@ -8,7 +8,10 @@ import { generateVoxelAsset } from '@/lib/nft-engine';
 
 const DEFAULT_RARITY = {
   car: 'Epic', villa: 'Legendary', owl: 'Rare', fox: 'Rare', robot: 'Rare',
-  statue: 'Legendary', ship: 'Epic', tree: 'Rare',
+  statue: 'Legendary', ship: 'Epic', tree: 'Rare', dragon: 'Mythic', mech: 'Legendary',
+  crystal: 'Epic', portal: 'Legendary', temple: 'Epic', motorcycle: 'Rare',
+  alien: 'Epic', jewelry: 'Legendary', abstract: 'Mythic', sword: 'Epic',
+  fortress: 'Legendary', mushroom: 'Rare', satellite: 'Rare', totem: 'Epic',
 };
 
 function hashSeed(value) {
@@ -42,6 +45,7 @@ export default function VoxelViewer({
   rarity,
   seed = 'showcase',
   assetUrl = '',
+  material,
 }) {
   const host = useRef(null);
   const frame = useRef(0);
@@ -175,7 +179,7 @@ export default function VoxelViewer({
     const geometry = new THREE.BoxGeometry(0.72, 0.72, 0.72);
     const wireGeometry = geometry.clone();
     const buckets = new Map();
-    const asset = generateVoxelAsset({ shape, seed, rarity: effectiveRarity });
+    const asset = generateVoxelAsset({ shape, seed, rarity: effectiveRarity, material });
     const colors = asset.palette;
     const voxels = asset.voxels;
     voxels.forEach((voxel) => {
@@ -448,7 +452,7 @@ export default function VoxelViewer({
       root.removeChild(renderer.domElement);
       controlsRef.current = null;
     };
-  }, [shape, compact, interactive, effectiveRarity, seed, assetUrl]);
+  }, [shape, compact, interactive, effectiveRarity, seed, assetUrl, material]);
 
   const setRotation = () => {
     const next = !autoRotate;
