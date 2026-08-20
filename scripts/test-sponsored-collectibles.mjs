@@ -4,7 +4,7 @@ import {
   calculateCollectorReward,
   canFundDrop,
   buildSponsoredCollectible,
-} from '../lib/sponsoredCollectibles.js';
+} from '../lib/sponsoredCollectibles.mjs';
 
 const campaign = createSponsoredCampaign({
   sponsorName: 'Example Brand',
