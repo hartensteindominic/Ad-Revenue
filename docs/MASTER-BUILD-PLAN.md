@@ -4,7 +4,7 @@
 
 Voxel Vault is a universal network for realistic, interactive 3D digital objects that can be created, owned, displayed, discovered, transferred, traded, and used across compatible platforms.
 
-The NFT is the ownership layer. The 3D object is the product.
+**The NFT is the ownership layer. The 3D object is the product. Sponsorship is the funding layer.**
 
 ## Non-negotiable product rules
 
@@ -16,6 +16,10 @@ The NFT is the ownership layer. The 3D object is the product.
 6. Mobile browsing must remain lightweight; load a heavy 3D renderer only when needed and dispose it when closed.
 7. Every major feature must have loading, empty, rejection, failure, and success states.
 8. Experimental architecture stays on feature branches until the full vertical slice passes review.
+9. Sponsored content must be disclosed. Native advertising is allowed; deceptive advertising is not.
+10. Sponsor money may fund rewards, creator economics and infrastructure, but sponsorship can never bypass wallet authorization or blockchain settlement.
+11. Bootstrap funding is treated as runway, not as permanent fake revenue. The system must measure when sponsor and marketplace revenue can sustainably replace it.
+12. No fake scarcity, fake volume, fake users, fake claims, fake ownership or fabricated performance metrics.
 
 ## Architecture
 
@@ -23,7 +27,7 @@ The NFT is the ownership layer. The 3D object is the product.
 
 One schema supports procedural, AI-assisted, and creator-uploaded objects.
 
-Core fields include identity, family, subtype, creation mode, seed, rarity, traits, reality basis, 3D asset references, creator, blockchain identity, ownership, platform profiles, and provenance.
+Core fields include identity, family, subtype, creation mode, seed, rarity, traits, reality basis, 3D asset references, creator, blockchain identity, ownership, platform profiles, provenance, and optional sponsorship provenance.
 
 ### Realistic generation
 
@@ -47,11 +51,23 @@ Transfers, sales, offers, swaps, bundles, and auctions are separate concepts. Of
 
 ### Drops
 
-A creator can publish a public discovery zone, schedule it, define claim limits, and attach a collection. The system validates that a claimant is inside the public drop zone before creating a claim intent.
+A creator or sponsor can publish a public discovery zone, schedule it, define claim limits, and attach a collection. The system validates that a claimant is inside the public drop zone before creating a claim intent.
+
+### Physical discovery
+
+Bluetooth is an enhancement where supported. QR remains a first-class cross-platform discovery path. NFC can be an enhancement on compatible devices. Physical proximity identifies a drop; it never directly grants ownership.
 
 ### Game layer
 
 Quests, collections, events, rarity hunts, seasonal drops, and sponsored real-world campaigns build engagement around genuinely owned objects.
+
+### Sponsored collectibles
+
+A sponsor funds a campaign that creates genuinely collectible 3D/2D objects. The object is art-first and can be branded, useful, limited, location-aware or quest-linked. Sponsorship is part of provenance and is disclosed without overwhelming the collecting experience.
+
+Campaign economics are explicit: creator share, collector-reward pool, platform share and operating reserve. Reward capacity is funded before a campaign is launched.
+
+See `docs/SPONSORED-COLLECTIBLES-REVENUE-PLAN.md`.
 
 ### AI
 
@@ -72,6 +88,14 @@ Prove the same pipeline with three unrelated objects:
 Each must use the same universal collectible, 3D presentation, metadata, wallet, ownership, transfer, trade, drop, discovery, and claim architecture.
 
 The skateboard is not the product. It is only one test category.
+
+## Sponsored vertical slice
+
+Prove one complete commercial loop:
+
+**Sponsor funds campaign → creator produces 3D object → disclosed sponsored collectible publishes → user discovers it via QR/Bluetooth → 3D object is revealed → wallet authorizes claim → blockchain settles → server verifies settlement → collector owns object → campaign records verified claim → reward pool reconciles → sponsor receives transparent campaign metrics.**
+
+No sponsor dashboard or ad marketplace is considered complete until this loop is trustworthy.
 
 ## Build sequence
 
@@ -94,32 +118,48 @@ The skateboard is not the product. It is only one test category.
 17. Verified external-platform integrations
 18. AR
 19. Sponsored/event drops
-20. Scale, observability, and optimization
+20. Sponsored collectible economics and provenance
+21. Campaign funding / reward accounting
+22. Sponsor analytics based on verified events
+23. End-to-end commercial vertical slice
+24. Adversarial security review
+25. Scale, observability, and optimization
 
 ## Review matrix
 
-Every major milestone is reviewed through 100 lenses covering visual design, responsive behavior, WebGL lifecycle, asset validation, wallet states, blockchain failures, marketplace states, trading authorization, creator workflows, drops, AI boundaries, interoperability claims, security, performance, accessibility, and human usability.
+Every major milestone is reviewed through 100+ changing lenses covering visual design, responsive behavior, WebGL lifecycle, asset validation, wallet states, blockchain failures, marketplace states, trading authorization, creator workflows, drops, AI boundaries, interoperability claims, sponsorship disclosure, campaign economics, security, performance, accessibility, abuse resistance, observability, and human usability.
 
 A review is only useful when it attempts to break the implementation. Repeating a checklist without changing the test lens does not count as another review.
 
+Every vertical slice gets:
+
+- happy-path tests
+- failure-path tests
+- adversarial tests
+- replay tests
+- stale-state tests
+- permission tests
+- mobile tests
+- accessibility tests
+- performance tests
+- trust-language review
+
 ## Current implementation status (2026-08-20)
 
-**On `feature/universal-collectible-engine` (PR #12, still draft):**
+The project has universal collectible, category-aware generation, drop, discovery and trade foundations, plus transaction verification and adversarial proximity work on feature branches.
 
-- Universal collectible schema, validation, fingerprints
-- Category-aware generation grammars
-- Drop engine with security boundaries (client location = UX only)
-- Trade state machine with dual authorization
-- **Discovery Experience** (`/discover`): map, geolocation, sample drops for Field Camera / Survey Robot / Street Deck, place-a-drop form, claim-intent flow
-- **Tap-to-Trade** (`/trade`): object selection, QR + deep-link handoff, accept/submit/confirm path
-- Homepage nav wired to Discover + Trade
+The new `feature/sponsored-collectibles` branch adds the sponsor-funded collectible economics engine and its tests, plus this revenue/trust architecture.
 
-**Still required before calling it production-ready:**
+Still required before calling the product production-ready:
 
-- Server-side claim validation + anti-replay
-- Real on-chain settlement for claims and trades
-- Persistent drop storage (Supabase or equivalent)
-- Full 3D asset generation pipeline for the three test objects
-- End-to-end vertical slice proof (Generate → Mint → Vault → Drop → Claim → Trade)
+- server-side claim validation + anti-replay fully integrated with the UI
+- real on-chain settlement for claims and trades
+- persistent drop storage
+- full 3D asset generation pipeline for the vertical-slice objects
+- end-to-end vertical slice proof
+- sponsored collectible UI and provenance presentation
+- funded campaign settlement and payout reconciliation
+- live observability
+- clean Vercel build/deployment
 
 Do not merge to main until the vertical slice is proven and Vercel builds are clean.
