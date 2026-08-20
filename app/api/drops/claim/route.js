@@ -24,6 +24,29 @@ function ensureDemoDrop(dropId) {
   seedMemoryDrop({ ...drop, lat: raw.lat, lng: raw.lng, collectible: createUniversalCollectible(raw.collectible), claimedCount: 0 });
 }
 
+async function buildVoucher({ result, dropId, walletAddress }) {
+  const config = getClaimVoucherConfig();
+  if (!config.privateKey || !config.contract || !config.royaltyReceiver || !result.claimTicket) {
+    return { claimMode: 'ticket-only', claimVoucher: null, claimSignature: null, metadataUri: null };
+  }
+
+  const deadline = result.expiresAt
+    ? Math.floor(new Date(result.expiresAt).getTime() / 1000)
+    : Math.floor(Date.now() / 1000) + 10 * 60;
+  const uri = buildClaimMetadataUri({ collectible: result.collectible, claimTicket: result.claimTicket, dropId });
+  const issued = await issueClaimVoucher({
+    recipient: walletAddress,
+    dropId,
+    claimTicket: result.claimTicket,
+    uri,
+    royaltyBps: 500,
+    deadline,
+    nonce: BigInt(`0x${randomBytes(16).toString('hex')}`),
+  });
+
+  return { claimMode: 'signed-voucher', claimVoucher: issued.voucher, claimSignature: issued.signature, metadataUri: uri };
+}
+
 export async function POST(request) {
   try {
     if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -52,48 +75,33 @@ export async function POST(request) {
     });
 
     if (!result.authorized) {
-      return NextResponse.json(
-        { ...result, error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied' },
-        { status: result.reason === 'already_claimed' ? 409 : 403 }
-      );
+      if (result.reason === 'already_claimed' && result.claimTicket) {
+        const voucher = await buildVoucher({ result, dropId, walletAddress });
+        return NextResponse.json(
+          {
+            ...result,
+            ...voucher,
+            ownershipGranted: false,
+            error: 'This wallet already has a claim reservation for this drop',
+            message: voucher.claimMode === 'signed-voucher'
+              ? 'Your existing claim reservation was found. You can safely retry the on-chain redemption; the contract prevents ticket replay.'
+              : 'Your existing claim reservation was found. Configure the claim signer to enable on-chain voucher redemption.',
+          },
+          { status: 409, headers: { 'Cache-Control': 'no-store' } }
+        );
+      }
+      return NextResponse.json({ ...result, error: 'Claim denied', ownershipGranted: false }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const voucherConfig = getClaimVoucherConfig();
-    const claimTicket = result.claimTicket;
-    const deadline = result.expiresAt
-      ? Math.floor(new Date(result.expiresAt).getTime() / 1000)
-      : Math.floor(Date.now() / 1000) + 10 * 60;
-    const uri = buildClaimMetadataUri({ collectible: result.collectible, claimTicket, dropId });
-
-    let voucher = null;
-    let signature = null;
-    let claimMode = 'ticket-only';
-
-    if (voucherConfig.privateKey && voucherConfig.contract && voucherConfig.royaltyReceiver) {
-      const issued = await issueClaimVoucher({
-        recipient: walletAddress,
-        dropId,
-        claimTicket,
-        uri,
-        royaltyBps: 500,
-        deadline,
-        nonce: BigInt(`0x${randomBytes(16).toString('hex')}`),
-      });
-      voucher = issued.voucher;
-      signature = issued.signature;
-      claimMode = 'signed-voucher';
-    }
+    const voucher = await buildVoucher({ result, dropId, walletAddress });
 
     return NextResponse.json(
       {
         ...result,
-        claimMode,
-        claimVoucher: voucher,
-        claimSignature: signature,
-        metadataUri: uri,
+        ...voucher,
         ownershipGranted: false,
         message:
-          claimMode === 'signed-voucher'
+          voucher.claimMode === 'signed-voucher'
             ? 'Claim reserved and cryptographically authorized. Redeem the signed voucher on-chain; ownership is granted only after the transaction confirms.'
             : 'Claim reserved. Configure the claim signer and NFT contract to enable cryptographically bound on-chain redemption.',
       },
