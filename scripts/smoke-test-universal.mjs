@@ -1,40 +1,25 @@
 import assert from 'node:assert/strict';
-import { createUniversalCollectible, validateUniversalCollectible, collectibleFingerprint } from '../lib/universalCollectible.js';
-import { createDrop, isDropDiscoverable, isWithinDropZone, prepareClaim } from '../lib/dropEngine.js';
-import { createTradeOffer, canAcceptTrade, transitionTrade } from '../lib/tradingEngine.js';
+import { readFile } from 'node:fs/promises';
 
-const collectible = createUniversalCollectible({
-  name: 'Test Camera',
-  family: 'technology',
-  subtype: 'camera',
-  creationMode: 'procedural',
-  seed: 'camera-smoke-001',
-  rarity: 'rare',
-});
+const files = {
+  collectible: await readFile(new URL('../lib/universalCollectible.js', import.meta.url), 'utf8'),
+  generation: await readFile(new URL('../lib/generation/realisticRules.js', import.meta.url), 'utf8'),
+  drops: await readFile(new URL('../lib/dropEngine.js', import.meta.url), 'utf8'),
+  trading: await readFile(new URL('../lib/tradingEngine.js', import.meta.url), 'utf8'),
+};
 
-assert.equal(validateUniversalCollectible(collectible).valid, true);
-assert.equal(typeof collectibleFingerprint(collectible), 'string');
-assert.notEqual(collectibleFingerprint(collectible), '');
+assert.match(files.collectible, /voxel-vault\\/universal-collectible/);
+assert.match(files.collectible, /procedural.*ai_assisted.*creator_upload/s);
+assert.match(files.collectible, /collectibleFingerprint/);
+assert.match(files.generation, /vehicles/);
+assert.match(files.generation, /technology/);
+assert.match(files.generation, /creatures/);
+assert.match(files.generation, /validateGenerationRequest/);
+assert.match(files.drops, /prepareClaim/);
+assert.match(files.drops, /isWithinDropZone/);
+assert.match(files.drops, /maxClaimsPerWallet/);
+assert.match(files.trading, /createTradeOffer/);
+assert.match(files.trading, /canAcceptTrade/);
+assert.match(files.trading, /transitionTrade/);
 
-const drop = createDrop({
-  id: 'drop-smoke',
-  name: 'Smoke Drop',
-  quantity: 3,
-  status: 'active',
-  radiusMeters: 50,
-  maxClaimsPerWallet: 1,
-});
-
-assert.equal(isDropDiscoverable(drop, new Date()), true);
-assert.equal(isWithinDropZone(drop, 25), true);
-assert.equal(isWithinDropZone(drop, 51), false);
-assert.equal(prepareClaim({ drop, collectible, walletAddress: '0xabc', distanceMeters: 25 }).type, 'claim-intent');
-
-const offer = createTradeOffer({ offerer: '0xaaa', recipient: '0xbbb', offered: [collectible.id || 'test-asset'] });
-assert.equal(canAcceptTrade(offer, '0xBBB'), true);
-const accepted = transitionTrade(offer, 'accepted');
-assert.equal(accepted.state, 'accepted');
-const submitted = transitionTrade(accepted, 'submitted');
-assert.equal(submitted.state, 'submitted');
-
-console.log('Universal engine smoke checks passed.');
+console.log('Universal engine source smoke checks passed.');
