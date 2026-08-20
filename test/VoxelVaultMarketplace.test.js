@@ -43,7 +43,7 @@ describe('Voxel Vault Ethereum marketplace', function () {
     expect((await market.offers(1)).amount).to.equal(ethers.parseEther('0.7'));
   });
 
-  it('runs an auction and settles the winning bid', async function () {
+  it('runs an auction and settles the winning bid with fee and royalty accounting', async function () {
     const { creator, bidder, nft, market } = await deploy();
     await nft.connect(creator).mint('ipfs://asset-4', 250);
     await nft.connect(creator).approve(await market.getAddress(), 1);
@@ -53,6 +53,7 @@ describe('Voxel Vault Ethereum marketplace', function () {
     await ethers.provider.send('evm_mine');
     await market.settleAuction(1);
     expect(await nft.ownerOf(1)).to.equal(bidder.address);
-    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.78'));
+    // 2.5% marketplace fee + 2.5% ERC-2981 royalty = 5% total.
+    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.74'));
   });
 });
