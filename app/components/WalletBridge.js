@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-const SEPOLIA_CHAIN_ID = 11155111;
+const MAINNET_CHAIN_ID = 1;
 let walletConnectProviderPromise = null;
 
 function dappUrl() {
@@ -55,8 +55,8 @@ async function getWalletConnectProvider() {
   if (!walletConnectProviderPromise) {
     walletConnectProviderPromise = import('@walletconnect/ethereum-provider').then(({ EthereumProvider }) =>
       EthereumProvider.init({
-        projectId, optionalChains: [SEPOLIA_CHAIN_ID], showQrModal: true,
-        rpcMap: { [SEPOLIA_CHAIN_ID]: 'https://rpc.sepolia.org' },
+        projectId, optionalChains: [MAINNET_CHAIN_ID], showQrModal: true,
+        rpcMap: { [MAINNET_CHAIN_ID]: 'https://cloudflare-eth.com' },
         metadata: { name: 'Voxel Vault', description: 'Interactive 3D voxel NFT marketplace', url: window.location.origin, icons: [`${window.location.origin}/icon.png`] },
       })
     );
@@ -81,7 +81,7 @@ function showWalletModal() {
   if (document.getElementById('vv-wallet-modal')) return;
   const modal = document.createElement('div');
   modal.id = 'vv-wallet-modal';
-  modal.innerHTML = `<div class="vv-wallet-backdrop"><section class="vv-wallet-card" role="dialog" aria-modal="true" aria-label="Choose a wallet"><button class="vv-wallet-close" aria-label="Close wallet picker">×</button><div class="vv-wallet-orb"><span>V</span></div><div class="vv-wallet-kicker">VOXEL VAULT · SECURE CONNECT</div><h2>Choose your wallet</h2><p>Connect to explore ownership, mint 3D creations and use the marketplace. Voxel Vault never asks for your recovery phrase.</p><div class="vv-wallet-list"></div><div class="vv-wallet-status"><span></span> Sepolia test network · transactions require wallet approval</div></section></div>`;
+  modal.innerHTML = `<div class="vv-wallet-backdrop"><section class="vv-wallet-card" role="dialog" aria-modal="true" aria-label="Choose a wallet"><button class="vv-wallet-close" aria-label="Close wallet picker">×</button><div class="vv-wallet-orb"><span>V</span></div><div class="vv-wallet-kicker">VOXEL VAULT · SECURE CONNECT</div><h2>Choose your wallet</h2><p>Connect to explore ownership, mint 3D creations and use the marketplace. Voxel Vault never asks for your recovery phrase.</p><div class="vv-wallet-list"></div><div class="vv-wallet-status"><span></span> Ethereum mainnet · real ETH transactions require wallet approval</div></section></div>`;
   const style = document.createElement('style');
   style.textContent = `#vv-wallet-modal{position:fixed;inset:0;z-index:99999;font-family:Inter,ui-sans-serif,system-ui;color:#fff}.vv-wallet-backdrop{position:absolute;inset:0;display:grid;place-items:center;padding:18px;background:rgba(2,3,8,.78);backdrop-filter:blur(22px)}.vv-wallet-card{position:relative;width:min(460px,100%);padding:30px;border:1px solid rgba(145,119,255,.28);border-radius:26px;background:linear-gradient(145deg,#111421,#08090f 72%);box-shadow:0 35px 120px rgba(0,0,0,.7),0 0 80px rgba(105,71,255,.12)}.vv-wallet-close{position:absolute;right:16px;top:13px;width:34px;height:34px;border:1px solid #292c3c;border-radius:10px;background:#0d0f17;color:#858b9e;font-size:23px;cursor:pointer}.vv-wallet-orb{width:54px;height:54px;display:grid;place-items:center;border-radius:17px;background:linear-gradient(135deg,#6e4cff,#a57fff);margin-bottom:18px;font-weight:950;font-size:21px}.vv-wallet-kicker{font-size:8px;letter-spacing:2.4px;color:#9b82ff;font-weight:950}.vv-wallet-card h2{margin:8px 0;font-size:30px}.vv-wallet-card p{margin:0 0 20px;color:#9299ab;font-size:12px;line-height:1.65}.vv-wallet-list{display:grid;gap:9px}.vv-wallet-option{width:100%;padding:14px 15px;border:1px solid #292c3d;border-radius:13px;background:#0d0f17;color:#f5f6ff;text-align:left;font-size:12px;font-weight:850;cursor:pointer}.vv-wallet-option:hover{border-color:#7d62ef;background:#151229}.vv-wallet-option.primary{border-color:#7355ed;background:#1b1236}.vv-wallet-status{display:flex;justify-content:center;gap:7px;margin-top:16px;color:#656d80;font-size:9px;text-align:center}.vv-wallet-status span{width:6px;height:6px;border-radius:50%;background:#8c72ff;box-shadow:0 0 10px #8c72ff}@media(max-width:520px){.vv-wallet-card{padding:24px}}`;
   document.head.appendChild(style); document.body.appendChild(modal);
