@@ -1,0 +1,14 @@
+{
+  "name": "Voxel Vault",
+  "short_name": "Voxel Vault",
+  "description": "Discover, inspect and collect interactive 3D digital objects.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "background_color": "#05060b",
+  "theme_color": "#05060b",
+  "categories": ["entertainment", "games", "shopping"],
+  "icons": [{ "src": "/voxel-vault-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
