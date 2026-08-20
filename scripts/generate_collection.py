@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
-"""Generate deterministic Voxel Vault images + metadata.
-
-Examples:
-  python scripts/generate_collection.py --start 1 --end 1000 --workers 8 --output ./collection
-  python scripts/generate_collection.py --start 1 --end 100000 --workers 8 --output ./collection
-  python scripts/generate_collection.py --start 1 --end 100000 --preview
-"""
+"""Generate deterministic Voxel Vault images + metadata."""
 
 import argparse
 import json
 import os
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -26,28 +20,18 @@ from lib.nft_engine.renderer import VoxelRenderer
 def generate_one(args):
     token_id, rarity, output, image_base_uri = args
     try:
-        generator = DeterministicGenerator()
-        traits = generator.generate_traits(token_id, rarity=rarity)
-        traits["_palette_hex"] = PALETTE_COLORS[traits["Palette"]]
-
+        traits = DeterministicGenerator().generate_traits(token_id, rarity=rarity)
         output = Path(output)
-        image_dir = output / "images"
-        metadata_dir = output / "metadata"
+        image_dir, metadata_dir = output / "images", output / "metadata"
         image_dir.mkdir(parents=True, exist_ok=True)
         metadata_dir.mkdir(parents=True, exist_ok=True)
 
         image_path = image_dir / f"{token_id}.png"
-        metadata_path = metadata_dir / f"{token_id}.json"
-
         if not image_path.exists():
             VoxelRenderer(1024).render(token_id, traits).save(image_path, "PNG", optimize=True)
 
-        metadata = MetadataBuilder(image_base_uri).build(
-            token_id,
-            traits,
-            image_uri=f"{image_base_uri.rstrip('/')}/{token_id}.png",
-        )
-        metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+        metadata = MetadataBuilder(image_base_uri).build(token_id, traits, image_uri=f"{image_base_uri.rstrip('/')}/{token_id}.png")
+        (metadata_dir / f"{token_id}.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         return token_id, True, traits["Rarity"], traits["_hash"], ""
     except Exception as exc:
         return token_id, False, rarity, "", repr(exc)
@@ -65,7 +49,6 @@ def main():
 
     if args.start < 1 or args.end > MAX_SUPPLY or args.start > args.end:
         raise SystemExit(f"Token range must be 1..{MAX_SUPPLY:,}")
-
     count = args.end - args.start + 1
     print(f"Voxel Vault | #{args.start:,} -> #{args.end:,} | {count:,} editions")
 
@@ -80,21 +63,16 @@ def main():
     output = Path(args.output)
     (output / "images").mkdir(parents=True, exist_ok=True)
     (output / "metadata").mkdir(parents=True, exist_ok=True)
-
-    # Build the exact global rarity assignment once. Workers receive only their
-    # assigned tier, avoiding a 100k-item rarity sort in every worker process.
     all_rarities = rarity_map()
-    tasks = [(tid, all_rarities[tid], str(output), args.image_base_uri) for tid in range(args.start, args.end + 1)]
+    tasks = ((tid, all_rarities[tid], str(output), args.image_base_uri) for tid in range(args.start, args.end + 1))
 
     started = time.time()
     successes = 0
     failures = []
     dna = set()
-
     with ProcessPoolExecutor(max_workers=args.workers) as executor:
-        futures = [executor.submit(generate_one, task) for task in tasks]
-        for index, future in enumerate(as_completed(futures), 1):
-            token_id, ok, rarity, dna_hash, error = future.result()
+        for index, result in enumerate(executor.map(generate_one, tasks, chunksize=8), 1):
+            token_id, ok, rarity, dna_hash, error = result
             if ok:
                 successes += 1
                 if dna_hash in dna:
@@ -124,7 +102,6 @@ def main():
     (output / "_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     if failures:
         (output / "_failures.json").write_text(json.dumps(failures, indent=2) + "\n", encoding="utf-8")
-
     elapsed = time.time() - started
     print(f"Complete: {successes:,}/{count:,} in {elapsed / 60:.1f}m")
     if failures:
