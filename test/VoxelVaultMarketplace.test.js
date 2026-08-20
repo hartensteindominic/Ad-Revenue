@@ -12,6 +12,9 @@ describe('Voxel Vault Ethereum marketplace', function () {
     const market = await Market.deploy(owner.address, await nft.getAddress(), owner.address);
     await market.waitForDeployment();
     await nft.connect(owner).setMinter(await market.getAddress(), true);
+    // Public mint is intentionally off by default. Tests that exercise the
+    // public mint path opt in explicitly rather than weakening the contract default.
+    await nft.connect(owner).setPublicMintEnabled(true);
     return { owner, creator, buyer, bidder, nft, market };
   }
 
@@ -54,5 +57,13 @@ describe('Voxel Vault Ethereum marketplace', function () {
     await market.settleAuction(1);
     expect(await nft.ownerOf(1)).to.equal(bidder.address);
     expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.78'));
+  });
+
+  it('keeps public mint disabled on a fresh deployment', async function () {
+    const [owner] = await ethers.getSigners();
+    const NFT = await ethers.getContractFactory('VoxelVaultNFT');
+    const nft = await NFT.deploy(owner.address);
+    await nft.waitForDeployment();
+    expect(await nft.publicMintEnabled()).to.equal(false);
   });
 });
