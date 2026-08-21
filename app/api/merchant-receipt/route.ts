@@ -12,13 +12,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const merchantId = typeof body.merchantId === 'string' ? body.merchantId.trim() : '';
     const receiptReference = typeof body.receiptReference === 'string' ? body.receiptReference.trim() : '';
+    const signature = typeof body.signature === 'string' ? body.signature.trim() : '';
     const amountCents = Number.isInteger(body.amountCents) ? body.amountCents : 0;
     const category = typeof body.category === 'string' ? body.category.trim().toLowerCase() : 'purchase';
-    if (!merchantId || !receiptReference || amountCents < 50) return NextResponse.json({ error: 'Verified merchant receipt data required' }, { status: 400 });
-    if (receiptReference.length > 128 || merchantId.length > 128) return NextResponse.json({ error: 'Invalid receipt data' }, { status: 400 });
-    // Merchant authentication, receipt signature verification, and minting belong in the server-side merchant adapter.
-    // This endpoint deliberately creates no NFT and trusts no client-side claim of payment.
-    return NextResponse.json({ ok: true, status: 'verification_pending', userId: user.id, merchantId, receiptReference, amountCents, category, note: 'A verified merchant webhook must authorize minting.' }, { status: 202 });
+    if (!merchantId || !receiptReference || !signature || amountCents < 50) return NextResponse.json({ error: 'Signed merchant receipt required' }, { status: 400 });
+    if (receiptReference.length > 128 || merchantId.length > 128 || signature.length > 4096) return NextResponse.json({ error: 'Invalid receipt data' }, { status: 400 });
+    // The signature must be verified by a configured merchant adapter before mint authorization.
+    // Client assertions, screenshots, or raw receipt text are never sufficient proof of payment.
+    return NextResponse.json({ ok: true, status: 'verification_pending', userId: user.id, merchantId, receiptReference, amountCents, category }, { status: 202 });
   } catch (error) {
     console.error('merchant receipt intake failed', error);
     return NextResponse.json({ error: 'Unable to process receipt' }, { status: 500 });
