@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createClaimIntent } from '@/lib/collect/claimPolicy';
 
+/** Proximity discovery intentionally does not request or use camera access. */
 export function useNearbyClaim({ drop, wallet, enabled = true } = {}) {
   const [position, setPosition] = useState(null);
   const [permission, setPermission] = useState('unknown');
@@ -10,7 +11,10 @@ export function useNearbyClaim({ drop, wallet, enabled = true } = {}) {
   useEffect(() => {
     if (!enabled || typeof navigator === 'undefined' || !navigator.geolocation) return undefined;
     const watchId = navigator.geolocation.watchPosition(
-      ({ coords }) => { setPermission('granted'); setPosition({ lat: coords.latitude, lng: coords.longitude }); },
+      ({ coords }) => {
+        setPermission('granted');
+        setPosition({ lat: coords.latitude, lng: coords.longitude });
+      },
       () => setPermission('denied'),
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 },
     );
@@ -24,5 +28,13 @@ export function useNearbyClaim({ drop, wallet, enabled = true } = {}) {
     dropLocation: drop?.location,
   }), [drop?.id, drop?.location?.lat, drop?.location?.lng, wallet, position?.lat, position?.lng]);
 
-  return { position, permission, intent, nearby: Boolean(intent.eligible), requestLocation: () => navigator.geolocation?.getCurrentPosition(() => {}, () => {}) };
+  return {
+    position,
+    permission,
+    intent,
+    nearby: Boolean(intent.eligible),
+    cameraRequired: false,
+    arAvailable: true,
+    requestLocation: () => navigator.geolocation?.getCurrentPosition(() => {}, () => {}),
+  };
 }

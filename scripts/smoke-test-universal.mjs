@@ -11,12 +11,14 @@ const generationDir = join(libDir, 'generation');
 await mkdir(generationDir, { recursive: true });
 await writeFile(join(temp, 'package.json'), '{"type":"module"}\n');
 
+// Keep copied smoke fixtures isolated in /tmp, while normalizing the complete
+// copied local module graph for Node ESM resolution. Claim authority stays a
+// real repository import so its production dependency graph is exercised.
 const copy = async (source, target) => writeFile(target, await readFile(new URL(source, root), 'utf8'));
 await copy('lib/universalCollectible.js', join(libDir, 'universalCollectible.js'));
 await copy('lib/generation/realisticRules.js', join(generationDir, 'realisticRules.js'));
 await copy('lib/dropEngine.js', join(libDir, 'dropEngine.js'));
 await copy('lib/tradingEngine.js', join(libDir, 'tradingEngine.js'));
-await copy('lib/claimAuthority.js', join(libDir, 'claimAuthority.js'));
 
 const normalizeLocalImports = async (file) => {
   const target = join(temp, file);
@@ -27,14 +29,23 @@ const normalizeLocalImports = async (file) => {
   });
   await writeFile(target, normalized);
 };
-await normalizeLocalImports('lib/generation/realisticRules.js');
-await normalizeLocalImports('lib/dropEngine.js');
+
+// Normalize every copied module, not only the two modules that previously
+// failed, so newly exposed extensionless imports cannot break the sandbox.
+for (const file of [
+  'lib/universalCollectible.js',
+  'lib/generation/realisticRules.js',
+  'lib/dropEngine.js',
+  'lib/tradingEngine.js',
+]) {
+  await normalizeLocalImports(file);
+}
 
 const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
 const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
 const drops = await import(pathToFileURL(join(libDir, 'dropEngine.js')).href);
 const trading = await import(pathToFileURL(join(libDir, 'tradingEngine.js')).href);
-const authority = await import(pathToFileURL(join(libDir, 'claimAuthority.js')).href);
+const authority = await import(new URL('../lib/claimAuthority.js', import.meta.url).href);
 
 const camera = collectible.createUniversalCollectible({
   name: 'Field Camera', family: 'technology', subtype: 'camera', creationMode: 'procedural',
@@ -71,7 +82,8 @@ assert.equal(auth1.security.ownership.includes('not-granted'), true);
 
 const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', distanceMeters: 50 });
 assert.equal(auth2.authorized, false);
-assert.equal(auth2.reason, 'already_claimed');
+assert.equal(auth2.reason, 'claim_reserved');
+assert.equal(auth2.status, 'reserved');
 
 const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: new Date(now.getTime() + 60 * 60_000).toISOString() });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
