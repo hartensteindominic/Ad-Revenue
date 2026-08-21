@@ -1,0 +1,1 @@
+3D release check: use Safe3DViewer, validate model URLs, detect WebGL, show loading, catch errors, use ArtPreview fallback, preserve touch, and avoid forced context loss.

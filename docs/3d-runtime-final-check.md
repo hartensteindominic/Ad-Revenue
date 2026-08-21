@@ -1,0 +1,1 @@
+Final 3D runtime check: interactive viewer is client-only; external model failures fall back; WebGL failure falls back; unsupported model URLs are rejected; loading is visible; touch is preserved; cleanup avoids forced context loss; gallery isolation prevents one broken model from taking down neighboring collectibles.

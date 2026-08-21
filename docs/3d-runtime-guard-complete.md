@@ -1,0 +1,1 @@
+Implementation complete for the guarded 3D layer: Safe3DViewer, asset URL validation, WebGL capability probing, loading/error fallback, and QA criteria.

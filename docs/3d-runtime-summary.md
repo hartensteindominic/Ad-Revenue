@@ -1,0 +1,1 @@
+3D runtime hardened for mobile and failure isolation. Use Safe3DViewer for guarded rendering, 3d-asset-guard for external model validation, and ArtPreview as the deterministic recovery path.

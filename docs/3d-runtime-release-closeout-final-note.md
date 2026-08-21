@@ -1,0 +1,1 @@
+Guarded 3D layer is ready for automated review. Production readiness still requires CI and real-device testing.

@@ -1,0 +1,1 @@
+Safe3DViewer is browser-only, uses a loading skeleton, catches render errors, and falls back to ArtPreview. Model URLs can be checked with lib/3d-asset-guard.js. Avoid forcing WebGL context loss during cleanup on mobile.
