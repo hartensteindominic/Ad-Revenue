@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { createVisualDNA } from '@/lib/assetDNA';
+import { generateVisualDNA } from '@/lib/universalCollectible';
 
 export function useVisualDNA(collectible) {
-  return useMemo(() => createVisualDNA({
-    seed: collectible?.seed ?? collectible?.id ?? collectible?.name ?? 'voxel',
-    family: collectible?.family,
-    rarity: collectible?.rarity,
-    traits: collectible?.traits,
-  }), [collectible?.seed, collectible?.id, collectible?.name, collectible?.family, collectible?.rarity, collectible?.traits]);
+  return useMemo(() => generateVisualDNA(
+    collectible?.seed ?? collectible?.id ?? collectible?.name ?? 'voxel',
+    collectible?.rarity ?? 'common',
+    collectible?.family ?? 'other',
+  ), [collectible?.seed, collectible?.id, collectible?.name, collectible?.family, collectible?.rarity]);
 }
