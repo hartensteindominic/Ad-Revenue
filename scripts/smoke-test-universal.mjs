@@ -16,6 +16,8 @@ await copy('lib/universalCollectible.js', join(libDir, 'universalCollectible.js'
 await copy('lib/generation/realisticRules.js', join(generationDir, 'realisticRules.js'));
 await copy('lib/dropEngine.js', join(libDir, 'dropEngine.js'));
 await copy('lib/tradingEngine.js', join(libDir, 'tradingEngine.js'));
+await copy('lib/claimReservation.js', join(libDir, 'claimReservation.js'));
+await copy('lib/proximityProof.js', join(libDir, 'proximityProof.js'));
 await copy('lib/claimAuthority.js', join(libDir, 'claimAuthority.js'));
 
 const normalizeLocalImports = async (file) => {
@@ -29,6 +31,7 @@ const normalizeLocalImports = async (file) => {
 };
 await normalizeLocalImports('lib/generation/realisticRules.js');
 await normalizeLocalImports('lib/dropEngine.js');
+await normalizeLocalImports('lib/claimAuthority.js');
 
 const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
 const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
@@ -71,7 +74,8 @@ assert.equal(auth1.security.ownership.includes('not-granted'), true);
 
 const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', distanceMeters: 50 });
 assert.equal(auth2.authorized, false);
-assert.equal(auth2.reason, 'already_claimed');
+assert.equal(auth2.reason, 'claim_reserved');
+assert.equal(auth2.status, 'reserved');
 
 const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: new Date(now.getTime() + 60 * 60_000).toISOString() });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
