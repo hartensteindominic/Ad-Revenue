@@ -23,10 +23,14 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      - run: npm run test:identity
+      - run: npm run test:protocol
       - run: npm run test:rewards
       - run: npm run test:universal
       - run: npm run test:media
       - run: npm run test:mobile
+      - run: npm run test:world-revenue
+      - run: npm run test:visual-wallet
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
@@ -41,7 +45,4 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
-      # Critical vulnerabilities remain a hard release blocker. High-severity
-      # findings are recorded in docs/SECURITY_REVIEW.md and require a separate
-      # dependency-upgrade release because the current fixes are breaking.
       - run: npm audit --omit=dev --audit-level=critical
