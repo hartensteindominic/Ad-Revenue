@@ -1,27 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { connectWallet, discoverMetaMaskProvider, getInjectedProvider, getMetaMaskDeepLink } from '../../lib/wallet-connect';
+import { connectWallet, discoverMetaMaskProvider, getInjectedProvider, getMetaMaskDeepLink, shortenAddress } from '../../lib/wallet-connect';
 
 const STORAGE_KEY = 'voxel-vault-wallet';
+const isWalletTrigger = (button) => {
+  const text = (button?.textContent || '').toLowerCase();
+  return text.includes('connect wallet') || text.includes('connect & start') || text.includes('wallet →');
+};
 
 export default function WalletBridge() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [hasProvider, setHasProvider] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     discoverMetaMaskProvider(450).then((provider) => {
-      if (!cancelled && provider) setShowPrompt(false);
+      if (!cancelled) setHasProvider(Boolean(provider));
     });
+
     const onClick = (event) => {
       const button = event.target?.closest?.('button, a');
-      if (!button) return;
-      const text = (button.textContent || '').toLowerCase();
-      if (!text.includes('connect wallet') && !text.includes('connect & start') && !text.includes('wallet →')) return;
-      if (getInjectedProvider()) return;
+      if (!isWalletTrigger(button)) return;
       event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      setMessage('');
       setShowPrompt(true);
     };
     document.addEventListener('click', onClick, true);
@@ -33,9 +39,14 @@ export default function WalletBridge() {
     setMessage('');
     const result = await connectWallet({ requireSepolia: true });
     if (result.ok) {
+      const short = shortenAddress(result.address);
       window.localStorage.setItem(STORAGE_KEY, result.address);
       window.dispatchEvent(new CustomEvent('voxel-vault:wallet', { detail: result }));
+      document.querySelectorAll('button, a').forEach((node) => {
+        if (isWalletTrigger(node)) node.textContent = short;
+      });
       setMessage('Connected.');
+      setHasProvider(true);
       setTimeout(() => setShowPrompt(false), 350);
     } else {
       setMessage(result.message || 'Could not connect.');
@@ -55,7 +66,7 @@ export default function WalletBridge() {
         <h2>Connect to play.</h2>
         <p>Save your collection, claim rewards, and keep your progress with you.</p>
         <button className="vvWalletAction" onClick={handleConnect} disabled={busy}>{busy ? 'Connecting…' : 'Connect wallet'}</button>
-        {!getInjectedProvider() && <a className="vvWalletLink" href={deepLink}>Open in MetaMask Mobile ↗</a>}
+        {!hasProvider && <a className="vvWalletLink" href={deepLink}>Open in MetaMask Mobile ↗</a>}
         {message && <div className="vvWalletMessage" role="status">{message}</div>}
         <div className="vvWalletFine">Free to explore. Wallet actions always require your confirmation.</div>
       </div>
