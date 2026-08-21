@@ -59,7 +59,7 @@ assert.equal(auth1.security.ownership.includes('not-granted'), true);
 const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: wallet, distanceMeters: 50, now });
 assert.equal(auth2.authorized, false);
 assert.equal(auth2.reason, 'already_claimed');
-assert.throws(() => authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', now }), /valid wallet/);
+await assert.rejects(() => authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', now }), /valid wallet/);
 
 const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
