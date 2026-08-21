@@ -1,0 +1,1 @@
+Guarded 3D runtime implementation is ready for CI review and preserves the existing design.
