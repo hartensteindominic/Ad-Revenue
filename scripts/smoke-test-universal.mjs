@@ -18,6 +18,20 @@ await copy('lib/dropEngine.js', join(libDir, 'dropEngine.js'));
 await copy('lib/tradingEngine.js', join(libDir, 'tradingEngine.js'));
 await copy('lib/claimAuthority.js', join(libDir, 'claimAuthority.js'));
 
+// The isolated temp harness uses native ESM resolution, so normalize local imports
+// in copied modules without changing the production source files.
+const normalizeLocalImports = async (file) => {
+  const target = join(temp, file);
+  const text = await readFile(target, 'utf8');
+  const normalized = text.replace(/(from\s+['"])(\.\.?\/[^'"]+?)(['"])/g, (match, prefix, specifier, suffix) => {
+    if (/\.[a-z]+$/i.test(specifier)) return match;
+    return `${prefix}${specifier}.js${suffix}`;
+  });
+  await writeFile(target, normalized);
+};
+await normalizeLocalImports('lib/generation/realisticRules.js');
+await normalizeLocalImports('lib/dropEngine.js');
+
 const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
 const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
 const drops = await import(pathToFileURL(join(libDir, 'dropEngine.js')).href);
@@ -48,7 +62,6 @@ assert.equal(drops.isDropDiscoverable(drop, now), true);
 assert.equal(drops.isWithinDropZone(drop, 99), true);
 assert.equal(drops.isWithinDropZone(drop, 101), false);
 
-// Server authority path (memory storage when Supabase unset)
 authority.seedMemoryDrop({ ...drop, claimedCount: 0, collectible: camera });
 const auth1 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', distanceMeters: 50 });
 assert.equal(auth1.authorized, true);
