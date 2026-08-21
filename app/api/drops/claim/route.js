@@ -44,6 +44,7 @@ function ensureDemoDrop(dropId) {
   });
   seedMemoryDrop({
     ...drop,
+    // Demo-only coordinates stay in ephemeral memory. They are never persisted by claimAuthority.
     lat: raw.lat,
     lng: raw.lng,
     collectible: createUniversalCollectible(raw.collectible),
@@ -57,7 +58,8 @@ export async function POST(request) {
     const dropId = body.dropId;
     const walletAddress = body.walletAddress;
     const distanceMeters = body.distanceMeters;
-    const requireInZone = Boolean(body.requireInZone);
+    const requireInZone = body.requireInZone !== false;
+    const proximityProof = body.proximityProof || null;
 
     if (!dropId) return NextResponse.json({ error: 'dropId is required' }, { status: 400 });
     if (!walletAddress) return NextResponse.json({ error: 'walletAddress is required' }, { status: 400 });
@@ -67,32 +69,39 @@ export async function POST(request) {
     const result = await authorizeClaim({
       dropId,
       walletAddress,
+      // Distance is retained only for UX/telemetry. It never authorizes a claim.
       distanceMeters: Number.isFinite(Number(distanceMeters)) ? Number(distanceMeters) : null,
       requireInZone,
+      proximityProof,
     });
 
     if (!result.authorized) {
       return NextResponse.json(
         {
           ...result,
-          error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied',
+          error:
+            result.reason === 'already_claimed'
+              ? 'This wallet already claimed this drop'
+              : result.reason === 'claim_reserved'
+                ? 'This drop is already reserved for this wallet'
+                : 'Claim denied',
         },
         { status: result.reason === 'already_claimed' ? 409 : 403 }
       );
     }
 
-    // Authorized ticket only — UI must not show "You own this" until chain confirms.
     return NextResponse.json({
       ...result,
       ownershipGranted: false,
+      cameraRequired: false,
       message:
-        'Server authorized a claim ticket. Sign a wallet transaction next. Ownership is only real after chain confirmation.',
+        'Claim reserved. Camera is not required. Ownership and any reward are only real after authoritative chain confirmation.',
     });
   } catch (error) {
     const message = error?.message || 'Claim failed';
     const status =
       message.includes('not found') ? 404
-        : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside')
+        : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside') || message.includes('Proximity proof')
           ? 403
           : 400;
     return NextResponse.json({ error: message, ownershipGranted: false }, { status });
