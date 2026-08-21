@@ -11,10 +11,9 @@ const generationDir = join(libDir, 'generation');
 await mkdir(generationDir, { recursive: true });
 await writeFile(join(temp, 'package.json'), '{"type":"module"}\n');
 
-// Keep the pure engine smoke fixtures isolated in /tmp, but import the claim
-// authority from the repository so its ESM dependency graph resolves through
-// the repository's real node_modules. This avoids creating a fake dependency
-// tree or coupling the test to a filesystem symlink implementation.
+// Keep copied smoke fixtures isolated in /tmp, while normalizing the complete
+// copied local module graph for Node ESM resolution. Claim authority stays a
+// real repository import so its production dependency graph is exercised.
 const copy = async (source, target) => writeFile(target, await readFile(new URL(source, root), 'utf8'));
 await copy('lib/universalCollectible.js', join(libDir, 'universalCollectible.js'));
 await copy('lib/generation/realisticRules.js', join(generationDir, 'realisticRules.js'));
@@ -30,8 +29,17 @@ const normalizeLocalImports = async (file) => {
   });
   await writeFile(target, normalized);
 };
-await normalizeLocalImports('lib/generation/realisticRules.js');
-await normalizeLocalImports('lib/dropEngine.js');
+
+// Normalize every copied module, not only the two modules that previously
+// failed, so newly exposed extensionless imports cannot break the sandbox.
+for (const file of [
+  'lib/universalCollectible.js',
+  'lib/generation/realisticRules.js',
+  'lib/dropEngine.js',
+  'lib/tradingEngine.js',
+]) {
+  await normalizeLocalImports(file);
+}
 
 const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
 const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
