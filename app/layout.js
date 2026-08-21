@@ -4,7 +4,7 @@ import { WalletIdentityProvider } from './components/WalletIdentity';
 import './vault-fallback.css';
 import './futuristic-vault.css';
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://voxel-vault.vercel.app').replace(/\/$/, '');
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.voxelvault.io').replace(/\/$/, '');
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
