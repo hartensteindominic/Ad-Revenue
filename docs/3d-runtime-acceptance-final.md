@@ -1,0 +1,1 @@
+Final acceptance: every collectible either loads a valid interactive model or gets a lightweight fallback. No broken model may crash the page, and mobile Safari must not be subjected to forced WebGL context loss during cleanup.
