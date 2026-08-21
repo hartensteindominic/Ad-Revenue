@@ -5,6 +5,11 @@ async function main() {
   if (!deployer) throw new Error('Missing DEPLOYER_PRIVATE_KEY');
 
   const network = await hre.ethers.provider.getNetwork();
+  const expectedChainId = 84532n;
+  if (network.chainId !== expectedChainId) {
+    throw new Error(`Wrong network: expected Base Sepolia (${expectedChainId}), got ${network.chainId}`);
+  }
+
   console.log('Network:', hre.network.name, 'chainId', network.chainId.toString());
   console.log('Deploying from:', deployer.address);
 
@@ -26,19 +31,18 @@ async function main() {
     await minterTx.wait();
     console.log('Marketplace set as minter');
 
-    // Public mint is opt-in, even on testnet. Keep it off for production-like deployments.
     if (process.env.ENABLE_PUBLIC_MINT === 'true') {
       const tx = await nft.setPublicMintEnabled(true);
       await tx.wait();
       console.log('Public mint explicitly enabled');
     }
   } else {
-    console.log('Owner is not deployer — call setMinter(market, true) from the owner multisig');
+    console.log('Owner is not deployer; setMinter must be performed by the owner multisig.');
   }
 
   const addresses = {
     chainId: network.chainId.toString(),
-    network: hre.network.name,
+    network: 'base-sepolia',
     deployer: deployer.address,
     owner,
     feeRecipient,
@@ -47,13 +51,11 @@ async function main() {
     deployedAt: new Date().toISOString(),
   };
 
-  const fs = require('fs');
-  fs.writeFileSync('deployed-addresses.json', JSON.stringify(addresses, null, 2));
+  require('fs').writeFileSync('deployed-addresses-base-sepolia.json', JSON.stringify(addresses, null, 2));
 
-  console.log('\nDeployment complete');
+  console.log('\nBase Sepolia deployment complete');
   console.log('NEXT_PUBLIC_VOXEL_NFT_ADDRESS=' + nftAddress);
   console.log('NEXT_PUBLIC_VOXEL_MARKET_ADDRESS=' + marketAddress);
-  console.log('Addresses saved to deployed-addresses.json');
 }
 
 main().catch((error) => {
