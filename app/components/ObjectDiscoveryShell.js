@@ -9,7 +9,7 @@ const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
 const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
 const Lazy3DPreview = dynamic(() => import('./Lazy3DPreview'), { ssr: false });
 
-const FILTERS = ['All', 'Near me', 'Rare', 'New', 'Sponsored', 'Creators'];
+const FILTERS = ['All', 'Near me', 'Rare', 'Sponsored', 'Creators', '3D'];
 const FALLBACK_FEATURED = getCatalogWindow(0, 6);
 
 function distanceMeters(a, b) {
@@ -41,7 +41,7 @@ function ObjectVisual({ item }) {
 
   return (
     <Lazy3DPreview minHeight={190}>
-      {item?.renderMode === 'voxel'
+      {item?.renderMode === 'voxel' && item?.shape
         ? <VoxelViewer shape={item.shape} {...common} />
         : <ArtPreview family={item?.family || 'sculpture'} {...common} />}
     </Lazy3DPreview>
@@ -88,7 +88,7 @@ export default function ObjectDiscoveryShell() {
     return FALLBACK_FEATURED.filter(item => {
       const text = `${item.name} ${item.creator} ${item.type} ${item.rarity} ${item.material || ''}`.toLowerCase();
       const matchesQuery = !q || text.includes(q);
-      const matchesFilter = filter === 'All' || (filter === 'Rare' && ['Rare', 'Epic', 'Mythic'].includes(item.rarity)) || (filter === 'Creators' && item.creator !== 'Voxel Vault') || (filter === 'New' && Number(item.id) <= 3);
+      const matchesFilter = filter === 'All' || filter === '3D' || (filter === 'Rare' && ['Rare', 'Epic', 'Mythic'].includes(item.rarity)) || (filter === 'Creators' && item.creator !== 'Voxel Vault');
       return matchesQuery && matchesFilter;
     });
   }, [filter, query]);
@@ -101,7 +101,8 @@ export default function ObjectDiscoveryShell() {
         const collectible = drop.collectible || {};
         const text = `${drop.name || ''} ${collectible.name || ''} ${collectible.family || ''} ${collectible.rarity || ''}`.toLowerCase();
         const matchesQuery = !q || text.includes(q);
-        const matchesFilter = filter === 'All' || filter === 'Near me' || (filter === 'Rare' && ['rare', 'epic', 'mythic', 'Rare', 'Epic', 'Mythic'].includes(collectible.rarity)) || filter === 'Sponsored';
+        const isSponsored = Boolean(drop.sponsored || collectible.sponsored || drop.campaignId || collectible.campaignId);
+        const matchesFilter = filter === 'All' || filter === 'Near me' || (filter === 'Rare' && ['rare', 'epic', 'mythic', 'Rare', 'Epic', 'Mythic'].includes(collectible.rarity)) || (filter === 'Sponsored' && isSponsored) || filter === '3D';
         return matchesQuery && matchesFilter && (position ? drop.distance != null && drop.distance <= 5000 : filter !== 'Near me');
       })
       .sort((a, b) => (a.distance ?? Number.MAX_SAFE_INTEGER) - (b.distance ?? Number.MAX_SAFE_INTEGER))
@@ -151,7 +152,7 @@ export default function ObjectDiscoveryShell() {
           {nearby.length ? (
             <div className="finderRail">
               {nearby.map(drop => {
-                const item = { ...drop.collectible, id: drop.id, name: drop.collectible?.name || drop.name, renderMode: 'voxel' };
+                const item = { ...drop.collectible, id: drop.id, name: drop.collectible?.name || drop.name };
                 return (
                   <article className="objectCard nearbyCard" key={drop.id}>
                     <div className="objectMedia"><ObjectVisual item={item} /><span className="signalBadge">SIGNAL</span></div>
