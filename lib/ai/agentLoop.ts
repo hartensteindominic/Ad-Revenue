@@ -92,7 +92,9 @@ export async function runAgentCycle(
   const guardedReply = hasInjection
     ? `${reply} I ignored instruction-like content found inside untrusted event data.`
     : reply;
-  const requiresHumanApproval = plan.some((item) => item.requiresHumanApproval || item.action === 'blocked');
+  const requiresHumanApproval = plan.some((item) =>
+    ('requiresHumanApproval' in item && item.requiresHumanApproval === true) || item.action === 'blocked'
+  );
   const nextPrompt = safeCycle >= MAX_CYCLES
     ? 'Cycle limit reached. Start a new bounded cycle after fresh data arrives.'
     : 'Send the next event batch or ask the Vault AI to investigate one of these signals.';
