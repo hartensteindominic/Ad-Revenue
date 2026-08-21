@@ -4,7 +4,7 @@ import { authorizeClaim, seedMemoryDrop } from '../../../../lib/claimAuthority';
 import { createDrop } from '../../../../lib/dropEngine';
 import { createUniversalCollectible } from '../../../../lib/universalCollectible';
 import { buildClaimMetadataUri } from '../../../../lib/claimMint';
-import { getClaimVoucherConfig, issueClaimVoucher } from '../../../../lib/claimVoucher';
+import { getClaimVoucherConfig, issueClaimVoucher, validateClaimVoucherConfig } from '../../../../lib/claimVoucher';
 
 const MAX_BODY_BYTES = 8 * 1024;
 const MAX_DROP_ID_LENGTH = 128;
@@ -26,7 +26,12 @@ function ensureDemoDrop(dropId) {
 
 async function buildVoucher({ result, dropId, walletAddress }) {
   const config = getClaimVoucherConfig();
-  if (!config.privateKey || !config.contract || !config.royaltyReceiver || !result.claimTicket) {
+  const hasSignerConfig = Boolean(config.privateKey && config.contract && config.royaltyReceiver && result.claimTicket);
+
+  if (!hasSignerConfig) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Claim signing is not configured. Production claims are fail-closed until the NFT contract, signer and royalty receiver are configured.');
+    }
     return { claimMode: 'ticket-only', claimVoucher: null, claimSignature: null, metadataUri: null };
   }
 
@@ -53,6 +58,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Claim persistence is not configured. Production claims are fail-closed until durable storage is available.', ownershipGranted: false }, { status: 503 });
     }
 
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        validateClaimVoucherConfig();
+      } catch (configError) {
+        return NextResponse.json({ error: configError.message, ownershipGranted: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+      }
+    }
+
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: 'Claim payload is too large.', ownershipGranted: false }, { status: 413 });
 
@@ -63,7 +76,7 @@ export async function POST(request) {
     const requireInZone = Boolean(body.requireInZone);
 
     if (!dropId || dropId.length > MAX_DROP_ID_LENGTH) return NextResponse.json({ error: 'A valid dropId is required', ownershipGranted: false }, { status: 400 });
-    if (!walletAddress) return NextResponse.json({ error: 'walletAddress is required', ownershipGranted: false }, { status: 400 });
+    if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) return NextResponse.json({ error: 'A valid walletAddress is required', ownershipGranted: false }, { status: 400 });
 
     ensureDemoDrop(dropId);
 
@@ -111,7 +124,7 @@ export async function POST(request) {
     const message = error?.message || 'Claim failed';
     const status = message.includes('not found') ? 404
       : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside') ? 403
-        : message.includes('valid wallet') ? 400
+        : message.includes('signing is not configured') || message.includes('Claim signer') || message.includes('NFT contract') ? 503
           : 400;
     return NextResponse.json({ error: message, ownershipGranted: false }, { status, headers: { 'Cache-Control': 'no-store' } });
   }
