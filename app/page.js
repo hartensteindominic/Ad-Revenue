@@ -10,8 +10,8 @@ export default function Home() {
     <>
       <VaultFlowNav />
       <UniversalEnginePanel />
-      <VaultAICopilot />
       <VaultUniverse />
+      <VaultAICopilot />
     </>
   );
 }
