@@ -1,7 +1,7 @@
 'use client';
 
-import ObjectDiscoveryHome from './components/ObjectDiscoveryHome';
+import VaultHomeV2 from './components/VaultHomeV2';
 
 export default function Home() {
-  return <ObjectDiscoveryHome />;
+  return <VaultHomeV2 />;
 }
