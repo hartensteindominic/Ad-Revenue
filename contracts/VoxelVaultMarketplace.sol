@@ -11,6 +11,7 @@ import {VoxelVaultNFT} from "./VoxelVaultNFT.sol";
 
 contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Receiver {
     uint96 public constant MAX_FEE_BPS = 1000;
+    uint256 public constant MIN_AUCTION_DURATION = 1 hours;
     uint96 public feeBps = 250;
     VoxelVaultNFT public immutable nft;
     address payable public feeRecipient;
@@ -55,13 +56,8 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         return IERC721Receiver.onERC721Received.selector;
     }
 
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
-    }
+    function pause() external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
 
     function setFeeBps(uint96 newFeeBps) external onlyOwner {
         require(newFeeBps <= MAX_FEE_BPS, "Fee too high");
@@ -76,10 +72,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
     }
 
     function mintAndList(string calldata uri, uint96 royaltyBps, uint256 price)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 tokenId)
+        external nonReentrant whenNotPaused returns (uint256 tokenId)
     {
         require(price > 0, "Price required");
         tokenId = nft.mintTo(address(this), msg.sender, uri, royaltyBps);
@@ -92,10 +85,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         require(listings[tokenId].seller == address(0), "Already listed");
         require(!_activeAuction(tokenId), "Token in auction");
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
-        require(
-            nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
-            "Marketplace not approved"
-        );
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         nft.transferFrom(msg.sender, address(this), tokenId);
         listings[tokenId] = Listing(msg.sender, price);
         emit Listed(tokenId, msg.sender, price);
@@ -124,7 +114,10 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         require(msg.value > 0, "Offer required");
         require(expiresAt > block.timestamp, "Expiry required");
         Offer memory old = offers[tokenId];
-        if (old.buyer != address(0)) pendingWithdrawals[old.buyer] += old.amount;
+        if (old.buyer != address(0)) {
+            pendingWithdrawals[old.buyer] += old.amount;
+            emit OfferRefunded(tokenId, old.buyer);
+        }
         offers[tokenId] = Offer(msg.sender, msg.value, expiresAt);
         emit OfferMade(tokenId, msg.sender, msg.value, expiresAt);
     }
@@ -153,10 +146,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
         require(!_activeAuction(tokenId), "Token in auction");
         require(listings[tokenId].seller == address(0), "Token listed; delist first");
-        require(
-            nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
-            "Marketplace not approved"
-        );
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         delete offers[tokenId];
         nft.transferFrom(msg.sender, address(this), tokenId);
         (uint256 royalty, uint256 fee) = _distribute(tokenId, offer.amount, msg.sender);
@@ -167,29 +157,16 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
     }
 
     function startAuction(uint256 tokenId, uint256 reservePrice, uint256 durationSeconds)
-        external
-        nonReentrant
-        whenNotPaused
+        external nonReentrant whenNotPaused
     {
-        require(reservePrice > 0 && durationSeconds >= 5 minutes, "Invalid auction");
+        require(reservePrice > 0 && durationSeconds >= MIN_AUCTION_DURATION, "Invalid auction");
         require(listings[tokenId].seller == address(0), "Token listed; delist first");
         require(!_activeAuction(tokenId), "Auction exists");
         require(nft.ownerOf(tokenId) == msg.sender, "Not owner");
-        require(
-            nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
-            "Marketplace not approved"
-        );
-        // Clear any settled leftover slot (defensive; settle should delete)
+        require(nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "Marketplace not approved");
         delete auctions[tokenId];
         nft.transferFrom(msg.sender, address(this), tokenId);
-        auctions[tokenId] = Auction(
-            msg.sender,
-            reservePrice,
-            block.timestamp + durationSeconds,
-            address(0),
-            0,
-            false
-        );
+        auctions[tokenId] = Auction(msg.sender, reservePrice, block.timestamp + durationSeconds, address(0), 0, false);
         emit AuctionStarted(tokenId, msg.sender, reservePrice, block.timestamp + durationSeconds);
     }
 
@@ -198,9 +175,7 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         require(auction.seller != address(0) && !auction.settled, "No auction");
         require(block.timestamp < auction.endAt, "Auction ended");
         require(msg.value >= auction.reservePrice && msg.value > auction.highestBid, "Bid too low");
-        if (auction.highestBidder != address(0)) {
-            pendingWithdrawals[auction.highestBidder] += auction.highestBid;
-        }
+        if (auction.highestBidder != address(0)) pendingWithdrawals[auction.highestBidder] += auction.highestBid;
         auction.highestBidder = msg.sender;
         auction.highestBid = msg.value;
         emit BidPlaced(tokenId, msg.sender, msg.value);
@@ -210,16 +185,12 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
         Auction memory auction = auctions[tokenId];
         require(auction.seller != address(0) && !auction.settled, "No auction");
         require(block.timestamp >= auction.endAt, "Auction active");
-
-        // Clear auction storage first (CEI) so token can be auctioned again later.
         delete auctions[tokenId];
-
         if (auction.highestBidder == address(0)) {
             nft.safeTransferFrom(address(this), auction.seller, tokenId);
             emit AuctionSettled(tokenId, address(0), 0);
             return;
         }
-
         (uint256 royalty, uint256 fee) = _distribute(tokenId, auction.highestBid, auction.seller);
         nft.safeTransferFrom(address(this), auction.highestBidder, tokenId);
         emit AuctionSettled(tokenId, auction.highestBidder, auction.highestBid);
@@ -241,27 +212,22 @@ contract VoxelVaultMarketplace is ReentrancyGuard, Ownable, Pausable, IERC721Rec
     }
 
     function _exists(uint256 tokenId) internal view returns (bool) {
-        try nft.ownerOf(tokenId) returns (address owner_) {
-            return owner_ != address(0);
-        } catch {
-            return false;
-        }
+        try nft.ownerOf(tokenId) returns (address owner_) { return owner_ != address(0); }
+        catch { return false; }
     }
 
     function _distribute(uint256 tokenId, uint256 salePrice, address seller)
-        internal
-        returns (uint256 royalty, uint256 fee)
+        internal returns (uint256 royalty, uint256 fee)
     {
         fee = salePrice * feeBps / 10000;
         (address receiver, uint256 royaltyAmount) = IERC2981(address(nft)).royaltyInfo(tokenId, salePrice);
         royalty = royaltyAmount;
+        require(receiver != address(0) || royalty == 0, "Invalid royalty receiver");
         if (royalty > salePrice - fee) royalty = salePrice - fee;
-        if (receiver != address(0) && royalty > 0) pendingWithdrawals[receiver] += royalty;
+        if (royalty > 0) pendingWithdrawals[receiver] += royalty;
         if (fee > 0) pendingWithdrawals[feeRecipient] += fee;
         pendingWithdrawals[seller] += salePrice - royalty - fee;
     }
 
-    receive() external payable {
-        revert("Use marketplace functions");
-    }
+    receive() external payable { revert("Use marketplace functions"); }
 }
