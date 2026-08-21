@@ -2,54 +2,19 @@ name: Mobile WebGL Guard
 
 on:
   push:
+    branches: ['**']
+  pull_request:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
-    if: ${{ !contains(github.event.head_commit.message, 'prevent passive mobile WebGL contexts') }}
+  guard:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 1
-
-      - name: Add mobile WebGL guards
-        shell: python
-        run: |
-          from pathlib import Path
-
-          voxel = Path('app/components/VoxelViewer.js')
-          text = voxel.read_text()
-          state = """  const [isMobileViewport, setIsMobileViewport] = useState(null);\n\n  useEffect(() => {\n    const media = window.matchMedia('(max-width: 768px)');\n    const update = () => setIsMobileViewport(media.matches);\n    update();\n    media.addEventListener?.('change', update);\n    return () => media.removeEventListener?.('change', update);\n  }, []);\n\n"""
-          marker = "  const effectiveRarity = rarity || DEFAULT_RARITY[shape] || 'Rare';\n"
-          if 'isMobileViewport' not in text:
-              text = text.replace(marker, marker + "\n" + state, 1)
-          guard = """\n  if (isMobileViewport === null) {\n    return <div style={{ width: '100%', height: '100%', minHeight: compact ? 220 : 420, background: '#05060c' }} aria-label=\"Loading 3D viewer\" />;\n  }\n\n  // Passive previews (hero/gallery) never allocate a WebGL context on phones.\n  // Full 3D inspection remains available after the user explicitly opens an item.\n  if (isMobileViewport && !interactive) {\n    return (\n      <div style={{ width: '100%', height: '100%', minHeight: compact ? 220 : 420, display: 'grid', placeItems: 'center', background: '#05060c', color: '#9aa0b2', padding: 24, textAlign: 'center' }}>\n        <div><div style={{ color: '#f7f8ff', fontWeight: 800, marginBottom: 6 }}>3D ready</div><div style={{ fontSize: 12 }}>Open this object to inspect it in full 3D.</div></div>\n      </div>\n    );\n  }\n"""
-          effect_marker = "  useEffect(() => {\n    if (!host.current) return undefined;\n"
-          if 'Passive previews (hero/gallery)' not in text:
-              text = text.replace(effect_marker, guard + "\n" + effect_marker, 1)
-          voxel.write_text(text)
-
-          art = Path('app/components/ArtPreview.js')
-          text = art.read_text()
-          state = """  const [isMobileViewport, setIsMobileViewport] = useState(null);\n\n  useEffect(() => {\n    const media = window.matchMedia('(max-width: 768px)');\n    const update = () => setIsMobileViewport(media.matches);\n    update();\n    media.addEventListener?.('change', update);\n    return () => media.removeEventListener?.('change', update);\n  }, []);\n\n"""
-          text = text.replace("import { useEffect, useRef } from 'react';", "import { useEffect, useRef, useState } from 'react';", 1)
-          marker = "  const host = useRef(null);\n"
-          if 'isMobileViewport' not in text:
-              text = text.replace(marker, marker + "\n" + state, 1)
-          guard = """\n  if (isMobileViewport === null) {\n    return <div style={{ width: '100%', height: '100%', minHeight: compact ? 220 : 420, background: '#05060c' }} aria-label=\"Loading 3D preview\" />;\n  }\n\n  if (isMobileViewport && !interactive) {\n    return (\n      <div style={{ width: '100%', height: '100%', minHeight: compact ? 220 : 420, display: 'grid', placeItems: 'center', background: '#05060c', color: '#9aa0b2', padding: 24, textAlign: 'center' }}>\n        <div><div style={{ color: '#f7f8ff', fontWeight: 800, marginBottom: 6 }}>3D ready</div><div style={{ fontSize: 12 }}>Open this object to inspect it in full 3D.</div></div>\n      </div>\n    );\n  }\n"""
-          effect_marker = "  useEffect(() => {\n    if (!host.current) return undefined;\n"
-          if 'Open this object to inspect it in full 3D.' not in text:
-              text = text.replace(effect_marker, guard + "\n" + effect_marker, 1)
-          art.write_text(text)
-
-      - name: Commit guard
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/components/VoxelViewer.js app/components/ArtPreview.js
-          git diff --cached --quiet || git commit -m "fix: prevent passive mobile WebGL contexts"
-          git push
+          node-version: 22
+      - run: node scripts/check-mobile-webgl.mjs
