@@ -4,30 +4,30 @@ import { WalletIdentityProvider } from './components/WalletIdentity';
 import './vault-fallback.css';
 import './futuristic-vault.css';
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://voxel-vault.vercel.app').replace(/\/$/, '');
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.voxelvault.io').replace(/\/$/, '');
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Voxel Vault | The 3D NFT Marketplace',
+    default: 'Voxel Vault | Objects Worth Finding',
     template: '%s | Voxel Vault',
   },
-  description: 'Discover, inspect, collect and create interactive 3D digital objects with real-world inspiration, distinctive materials and real ownership.',
-  keywords: ['3D NFT marketplace','3D digital art','voxel art','3D collectibles','interactive NFTs','digital collectibles','3D models','Web3 art','GLB NFT','GLTF NFT','3D creators','digital artifacts'],
+  description: 'Walk, discover, collect and earn original 3D objects with verified digital ownership.',
+  keywords: ['Voxel Vault','3D collectibles','objects worth finding','voxel art','3D digital objects','interactive NFTs','digital collectibles','3D creators','GLB NFT','GLTF NFT','Web3 art'],
   alternates: { canonical: SITE_URL },
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'Voxel Vault | The 3D NFT Marketplace',
-    description: 'Explore original 3D digital objects inspired by reality and reimagined for collectors.',
+    title: 'Voxel Vault | Objects Worth Finding',
+    description: 'Discover original 3D objects, explore what is around you, and collect with verified ownership.',
     type: 'website',
     url: SITE_URL,
     siteName: 'Voxel Vault',
-    images: [{ url: `${SITE_URL}/api/og`, width: 1200, height: 630, alt: 'Voxel Vault 3D digital objects' }],
+    images: [{ url: `${SITE_URL}/api/og`, width: 1200, height: 630, alt: 'Voxel Vault objects worth finding' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Voxel Vault | The 3D NFT Marketplace',
-    description: 'Interactive 3D digital objects for collectors and creators.',
+    title: 'Voxel Vault | Objects Worth Finding',
+    description: 'Walk, discover, collect and earn original 3D objects.',
     images: [`${SITE_URL}/api/og`],
   },
 };
