@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import VoxelViewer from '../../components/VoxelViewer';
-import ArtPreview from '../../components/ArtPreview';
+import Safe3DViewer from '../../components/Safe3DViewer';
 import CollectorTools from '../../components/CollectorTools';
 import { getCatalogItem } from '../../../lib/catalog';
 
@@ -45,13 +44,27 @@ export default async function AssetPage({ params }) {
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: '#05060b', color: '#f7f8ff', fontFamily: 'Inter,ui-sans-serif,system-ui,sans-serif', padding: '28px' }}>
+    <main style={{ minHeight: '100vh', background: '#05060b', color: '#f7f8ff', fontFamily: 'Inter,ui-sans-serif,system-ui,sans-serif', padding: '20px clamp(14px,3vw,28px)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <a href="/" style={{ color: '#9b84ff', textDecoration: 'none', fontSize: 12, letterSpacing: '.12em' }}>← VOXEL VAULT</a>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(300px,.8fr)', gap: 28, alignItems: 'center', marginTop: 28 }}>
-          <div style={{ height: 650, border: '1px solid rgba(255,255,255,.1)', borderRadius: 24, overflow: 'hidden', background: '#070811' }}>
-            {item.renderMode === 'voxel' ? <VoxelViewer shape={item.shape} material={item.material} rarity={item.rarity} seed={item.seed} interactive showcase={false} label={false} /> : <ArtPreview family={item.family} material={item.material} seed={item.seed} interactive showcase={false} />}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.15fr) minmax(300px,.85fr)', gap: 28, alignItems: 'center', marginTop: 20 }}>
+          <div style={{ height: 'min(650px, 72vh)', minHeight: 420, minWidth: 0, border: '1px solid rgba(255,255,255,.1)', borderRadius: 24, overflow: 'hidden', background: '#070811', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Safe3DViewer
+                shape={item.shape}
+                family={item.family}
+                material={item.material}
+                rarity={item.rarity}
+                seed={item.seed}
+                interactive
+                showcase={false}
+                label={false}
+                compact={false}
+                previewProps={{ family: item.family, material: item.material, seed: item.seed, interactive: true, showcase: false }}
+              />
+            </div>
+            <div style={{ position: 'absolute', left: 16, bottom: 14, pointerEvents: 'none', color: 'rgba(255,255,255,.42)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase' }}>Drag to inspect · pinch to zoom</div>
           </div>
           <section>
             <div style={{ color: '#9b84ff', fontSize: 10, letterSpacing: '.2em', fontWeight: 800 }}>3D DIGITAL OBJECT · {item.rarity.toUpperCase()}</div>
@@ -66,6 +79,7 @@ export default async function AssetPage({ params }) {
           </section>
         </div>
       </div>
+      <style>{`@media (max-width: 860px) { main > div > div { grid-template-columns: 1fr !important; } main > div > div > div:first-child { height: min(68vh, 560px) !important; min-height: 360px !important; } }`}</style>
     </main>
   );
 }
