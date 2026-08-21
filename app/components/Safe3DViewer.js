@@ -28,7 +28,6 @@ export default function Safe3DViewer({ assetUrl, previewProps = {}, ...props }) 
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
       setWebgl(Boolean(gl));
-      return () => { try { gl?.getExtension?.('WEBGL_lose_context')?.loseContext?.(); } catch {} };
     } catch { setWebgl(false); }
   }, []);
 
