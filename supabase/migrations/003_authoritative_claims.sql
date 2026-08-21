@@ -28,9 +28,12 @@ declare
   v_drop public.voxel_drops%rowtype;
   v_claim public.voxel_claims%rowtype;
 begin
+  if p_expires_at <= now() or p_expires_at > now() + interval '15 minutes' then raise exception 'Invalid reservation expiry'; end if;
   select * into v_drop from public.voxel_drops where id = p_drop_id for update;
   if not found then raise exception 'Drop not found'; end if;
-  if v_drop.status not in ('active','scheduled') then raise exception 'Drop is not currently active'; end if;
+  if v_drop.status <> 'active' then raise exception 'Drop is not currently active'; end if;
+  if v_drop.start_at is not null and v_drop.start_at > now() then raise exception 'Drop is not currently active'; end if;
+  if v_drop.end_at is not null and v_drop.end_at <= now() then raise exception 'Drop is not currently active'; end if;
   if v_drop.claimed_count >= v_drop.quantity then raise exception 'Drop is exhausted'; end if;
 
   select * into v_claim from public.voxel_claims
@@ -83,6 +86,7 @@ declare
   v_drop public.voxel_drops%rowtype;
   v_new_count integer;
 begin
+  if p_token_id is null or length(trim(p_token_id)) = 0 or length(p_token_id) > 128 then raise exception 'Invalid token ID'; end if;
   select * into v_claim from public.voxel_claims where id = p_claim_id for update;
   if not found then raise exception 'Claim reservation not found'; end if;
   if v_claim.status = 'confirmed' then
@@ -109,3 +113,7 @@ begin
   return query select v_claim.id, v_claim.drop_id, v_claim.wallet_address, p_token_id, v_new_count;
 end;
 $$;
+
+-- These SECURITY DEFINER functions are server-only RPCs. Never expose them to client roles.
+revoke all on function public.reserve_voxel_claim(text,text,text,timestamptz,double precision) from public, anon, authenticated;
+revoke all on function public.confirm_voxel_claim(uuid,text) from public, anon, authenticated;
