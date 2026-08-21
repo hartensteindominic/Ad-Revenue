@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const viewer = fs.readFileSync('app/components/VoxelViewer.js', 'utf8');
 const wallet = fs.readFileSync('app/components/WalletBridge.js', 'utf8');
 const connector = fs.readFileSync('lib/wallet-connect.js', 'utf8');
+const connectPage = fs.readFileSync('app/connect/page.js', 'utf8');
 const layout = fs.readFileSync('app/layout.js', 'utf8');
 
 const requiredViewer = [
@@ -25,6 +26,10 @@ const requiredWallet = [
 ];
 for (const token of requiredWallet) {
   if (!wallet.includes(token)) throw new Error(`Wallet UX regression: missing ${token}`);
+}
+
+for (const token of ['Connect to play.', 'Connect wallet', 'Exploring is free.']) {
+  if (!connectPage.includes(token)) throw new Error(`Connect page regression: missing ${token}`);
 }
 
 if (!connector.includes("eth_requestAccounts")) throw new Error('Shared wallet connector no longer owns account requests.');
