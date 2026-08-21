@@ -1,6 +1,7 @@
 export const MAX_EVENTS = 500;
 export const MAX_CONVERSATION = 12;
 export const MAX_TEXT = 1200;
+const MAX_METADATA_KEYS = 12;
 
 const FORBIDDEN_ACTIONS = new Set([
   'transfer_funds',
@@ -32,6 +33,26 @@ export function isPromptInjection(value: unknown): boolean {
   return PROMPT_INJECTION_MARKERS.some((marker) => text.includes(marker));
 }
 
+function sanitizeMetadata(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const output: Record<string, string | number | boolean> = {};
+
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>).slice(0, MAX_METADATA_KEYS)) {
+    const safeKey = clampText(key, 80);
+    if (!safeKey || isPromptInjection(safeKey)) continue;
+
+    if (typeof raw === 'string') {
+      if (!isPromptInjection(raw)) output[safeKey] = clampText(raw, 240);
+    } else if (typeof raw === 'number' && Number.isFinite(raw)) {
+      output[safeKey] = Math.max(-1_000_000, Math.min(raw, 1_000_000));
+    } else if (typeof raw === 'boolean') {
+      output[safeKey] = raw;
+    }
+  }
+
+  return Object.keys(output).length ? output : undefined;
+}
+
 export function sanitizeConversation(input: unknown) {
   if (!Array.isArray(input)) return [];
   return input
@@ -55,7 +76,7 @@ export function sanitizeEvents(input: unknown) {
     valueEth: typeof event?.valueEth === 'number' && Number.isFinite(event.valueEth)
       ? Math.max(0, Math.min(event.valueEth, 1_000_000))
       : undefined,
-    metadata: event?.metadata && typeof event.metadata === 'object' ? event.metadata : undefined,
+    metadata: sanitizeMetadata(event?.metadata),
   }));
 }
 
