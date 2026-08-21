@@ -17,6 +17,11 @@ module.exports = {
       accounts: deployerKey,
       chainId: 11155111,
     },
+    baseSepolia: {
+      url: process.env.BASE_SEPOLIA_RPC_URL || '',
+      accounts: deployerKey,
+      chainId: 84532,
+    },
     mainnet: {
       url: process.env.MAINNET_RPC_URL || '',
       accounts: deployerKey,
