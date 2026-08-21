@@ -1,0 +1,1 @@
+Release note: guarded 3D rendering is ready for CI review. Visual shell is unchanged; the layer is designed to prevent model failures from breaking the gallery.
