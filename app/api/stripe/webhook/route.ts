@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { stripe } from '../../../../lib/stripe-server';
+import { getStripe } from '../../../../lib/stripe-server';
 import { getSupabaseAdmin } from '../../../../lib/supabase-admin';
 
 export async function POST(request: Request) {
@@ -9,8 +9,11 @@ export async function POST(request: Request) {
   if (!signature || !secret) return NextResponse.json({ error: 'Webhook not configured' }, { status: 400 });
   const payload = await request.text();
   let event: Stripe.Event;
-  try { event = stripe.webhooks.constructEvent(payload, signature, secret); }
-  catch { return NextResponse.json({ error: 'Invalid signature' }, { status: 400 }); }
+  try {
+    event = getStripe().webhooks.constructEvent(payload, signature, secret);
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
   try {
     const supabaseAdmin = getSupabaseAdmin();
     if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
