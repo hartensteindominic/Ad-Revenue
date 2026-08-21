@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import VaultIdentityCard from '../components/VaultIdentityCard';
 import { loadVaultIdentity, applyVaultAction, saveVaultIdentity, getVaultSummary } from '../../lib/vault-identity';
 
+const WALLET_STORAGE_KEY = 'voxel-vault-wallet';
+
 export default function IdentityPage() {
   const [address, setAddress] = useState('');
   const [identity, setIdentity] = useState(() => loadVaultIdentity(''));
@@ -11,13 +13,17 @@ export default function IdentityPage() {
 
   useEffect(() => {
     const sync = () => {
-      const next = window.localStorage.getItem('voxel-vault:wallet:last') || '';
+      const next = window.localStorage.getItem(WALLET_STORAGE_KEY) || '';
       setAddress(next);
       setIdentity(loadVaultIdentity(next));
     };
     sync();
+    window.addEventListener('storage', sync);
     window.addEventListener('voxel-vault:wallet', sync);
-    return () => window.removeEventListener('voxel-vault:wallet', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('voxel-vault:wallet', sync);
+    };
   }, []);
 
   const award = (action) => {
