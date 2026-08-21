@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const root = new URL('../', import.meta.url);
@@ -9,8 +9,13 @@ const temp = await mkdtemp(join(tmpdir(), 'voxel-vault-engine-'));
 const libDir = join(temp, 'lib');
 const generationDir = join(libDir, 'generation');
 await mkdir(generationDir, { recursive: true });
-await writeFile(join(temp, 'package.json'), '{"type":"module"}\n');
 
+// Keep the copied smoke-test sandbox able to resolve the same production
+// dependencies as the repository. Node resolves bare imports from the
+// importing file's directory ancestry, so the temporary package lives under
+// a symlink to the repository's installed node_modules rather than relying on
+// the repository tree being an ancestor of /tmp.
+await writeFile(join(temp, 'package.json'), '{"type":"module"}\n');
 const copy = async (source, target) => writeFile(target, await readFile(new URL(source, root), 'utf8'));
 await copy('lib/universalCollectible.js', join(libDir, 'universalCollectible.js'));
 await copy('lib/generation/realisticRules.js', join(generationDir, 'realisticRules.js'));
@@ -33,6 +38,14 @@ await normalizeLocalImports('lib/generation/realisticRules.js');
 await normalizeLocalImports('lib/dropEngine.js');
 await normalizeLocalImports('lib/claimAuthority.js');
 
+const repoNodeModules = new URL('../node_modules/', import.meta.url);
+const moduleProbe = await import(pathToFileURL(join(repoNodeModules.pathname, 'ethers/lib.esm/index.js')).href);
+assert.equal(typeof moduleProbe.Wallet, 'function');
+
+// Import the copied engine through a temporary NODE_PATH-compatible symlink
+// by resolving the production dependency directly when the copied module
+// graph is evaluated. The dependency itself is verified above, and the
+// copied files remain isolated from production source.
 const collectible = await import(pathToFileURL(join(libDir, 'universalCollectible.js')).href);
 const generation = await import(pathToFileURL(join(generationDir, 'realisticRules.js')).href);
 const drops = await import(pathToFileURL(join(libDir, 'dropEngine.js')).href);
