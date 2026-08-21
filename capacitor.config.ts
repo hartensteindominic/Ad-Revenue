@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.voxelvault.app',
   appName: 'Voxel Vault',
   webDir: 'public',
-  bundledWebRuntime: false,
   server: {
     // The current Next.js app is server-rendered and has API routes, so the
     // first native shell loads the stable hosted app rather than treating a
