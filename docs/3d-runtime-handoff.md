@@ -1,0 +1,1 @@
+3D hardening is additive. Keep the existing Voxel Vault visual shell. Replace direct viewer usage with Safe3DViewer where integration is safe, and preserve procedural ArtPreview as the recovery path.
