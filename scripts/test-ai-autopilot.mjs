@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { analyzeVaultEvents, buildAutopilotPlan } from '../lib/ai/autopilot.ts';
+import { analyzeVaultEvents, buildAutopilotPlan } from '../lib/ai/autopilot.js';
 
 const events = [
   { type: 'claim', wallet: '0x1', dropId: 'drop-hot' },
@@ -16,8 +16,6 @@ assert.ok(insights.some((item) => item.id === 'error-rate'));
 
 const plan = buildAutopilotPlan(insights);
 assert.equal(plan.every((item) => item.autonomous === true), true);
-assert.equal(plan.every((item) => item.action !== 'transfer_funds'), true);
-assert.equal(plan.every((item) => item.action !== 'grant_ownership'), true);
-assert.equal(plan.every((item) => item.action !== 'deploy'), true);
+assert.equal(plan.every((item) => !['transfer_funds', 'grant_ownership', 'deploy'].includes(item.action)), true);
 
 console.log('Voxel Vault bounded AI autopilot tests passed.');
