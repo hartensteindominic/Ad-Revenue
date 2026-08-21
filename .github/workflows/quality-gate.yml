@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      - run: npm run test:identity
       - run: npm run test:rewards
       - run: npm run test:universal
       - run: npm run test:media
