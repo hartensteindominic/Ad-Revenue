@@ -3,6 +3,7 @@ import { createAssetPlan, buildProviderPayload } from '@/lib/ai/assetPlanner';
 import { buildAssetDirectorRequest } from '@/lib/ai/assetDirector';
 import { enforceAssetQuality } from '@/lib/ai/qualityGate';
 import { buildSafeAIContext } from '@/lib/ai/promptGuard';
+import { runLiveAssetProvider } from '@/lib/ai/liveProvider';
 
 export const runtime = 'nodejs';
 
@@ -17,6 +18,7 @@ export async function POST(request) {
       creativeDirection: body.creativeDirection || body.prompt || '',
     });
     const plan = enforceAssetQuality(createAssetPlan(context));
+    const providerPayload = buildProviderPayload(plan);
     const directorRequest = buildAssetDirectorRequest({
       seed: context.seed,
       family: plan.family,
@@ -26,13 +28,20 @@ export async function POST(request) {
       sponsorship: body.sponsorship,
     }, plan.creativeDirection);
 
+    const live = body.live === true ? await runLiveAssetProvider(providerPayload) : { configured: Boolean(process.env.VOXEL_AI_ASSET_PROVIDER_URL), result: null, reason: 'live-not-requested' };
+
     return NextResponse.json({
       ok: true,
       plan,
-      providerPayload: buildProviderPayload(plan),
+      providerPayload,
       directorRequest,
-      providerConfigured: Boolean(process.env.VOXEL_AI_ASSET_PROVIDER_URL),
-      status: process.env.VOXEL_AI_ASSET_PROVIDER_URL ? 'plan-ready-for-provider' : 'plan-ready-local',
+      ai: {
+        mode: live.result ? 'live' : 'local-planner',
+        providerConfigured: live.configured,
+        result: live.result,
+        reason: live.reason || null,
+      },
+      status: live.result ? 'live-ai-complete' : 'plan-ready-local',
     });
   } catch (error) {
     console.error('asset plan failed', error);
