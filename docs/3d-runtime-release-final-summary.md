@@ -1,0 +1,1 @@
+Guarded 3D runtime is ready for CI review. No homepage redesign; failures fall back safely.

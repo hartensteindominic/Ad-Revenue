@@ -1,5 +1,6 @@
 import CryptoAdSlot from './components/CryptoAdSlot';
 import WalletBridge from './components/WalletBridge';
+import { WalletIdentityProvider } from './components/WalletIdentity';
 import './vault-fallback.css';
 import './futuristic-vault.css';
 
@@ -32,5 +33,15 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return <html lang="en"><body>{children}<CryptoAdSlot slot="global"/><WalletBridge/></body></html>;
+  return (
+    <html lang="en">
+      <body>
+        <WalletIdentityProvider>
+          {children}
+          <CryptoAdSlot slot="global" />
+          <WalletBridge />
+        </WalletIdentityProvider>
+      </body>
+    </html>
+  );
 }

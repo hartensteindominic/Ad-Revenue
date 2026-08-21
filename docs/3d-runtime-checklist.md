@@ -1,0 +1,1 @@
+Checklist: valid GLB, valid GLTF, missing asset, invalid URL, WebGL disabled, iPhone Safari, touch rotation, fullscreen, navigation cleanup, multiple cards, and fallback rendering.

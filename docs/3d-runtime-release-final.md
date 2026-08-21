@@ -1,0 +1,1 @@
+3D release final: interactive rendering is attempted when supported, and deterministic fallback is used when not. Failures remain isolated from the rest of the gallery.

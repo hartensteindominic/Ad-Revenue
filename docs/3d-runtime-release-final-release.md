@@ -1,0 +1,1 @@
+The guarded 3D layer is ready for CI. No production merge is implied until checks and device verification pass.

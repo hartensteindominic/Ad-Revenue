@@ -1,0 +1,1 @@
+Final verification note: runtime hardening changes are isolated and additive. The homepage visual shell remains unchanged.
