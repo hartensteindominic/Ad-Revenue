@@ -1,0 +1,1 @@
+Final gate: run CI, then verify interactive 3D and fallback behavior on real browsers. Keep the homepage shell unchanged.
