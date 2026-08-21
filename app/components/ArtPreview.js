@@ -69,7 +69,7 @@ function WebGLPreview({ family, material, seed, compact, interactive, showcase, 
     const fail = () => { if (failedRef.current || disposed) return; failedRef.current = true; cancelAnimationFrame(raf); onFailure?.(); };
     try {
       const probe = document.createElement('canvas');
-      const gl = probe.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) || probe.getContext('webgl', { failIfMajorPerformanceCaveat: true });
+      const gl = probe.getContext('webgl2', { antialias: true }) || probe.getContext('webgl', { antialias: true });
       if (!gl) { fail(); return undefined; }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       scene = new THREE.Scene(); scene.background = new THREE.Color('#05060c');
