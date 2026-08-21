@@ -1,0 +1,1 @@
+3D runtime guard closeout: no fake state, no blank gallery, safe fallback, mobile-safe cleanup, and CI/device gates required.
