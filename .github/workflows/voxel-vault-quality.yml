@@ -23,6 +23,8 @@ jobs:
         run: npm run test:proximity
       - name: Proximity adversarial test
         run: npm run test:proximity:adversarial
+      - name: Bounded AI loop test
+        run: npm run test:ai:loop
       - name: Contract compile
         run: npm run chain:compile
       - name: Contract tests

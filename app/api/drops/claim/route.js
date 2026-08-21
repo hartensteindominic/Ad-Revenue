@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeClaim, seedMemoryDrop } from '../../../../lib/claimAuthority';
 import { createDrop } from '../../../../lib/dropEngine';
 import { createUniversalCollectible } from '../../../../lib/universalCollectible';
+import { getClientIp, rateLimit, rateLimitHeaders } from '../../../../lib/rateLimit';
 
 const MAX_BODY_BYTES = 8 * 1024;
 const MAX_DROP_ID_LENGTH = 128;
@@ -23,13 +24,19 @@ function ensureDemoDrop(dropId) {
 }
 
 export async function POST(request) {
+  const limit = rateLimit(`claim:${getClientIp(request)}`, 10);
+  const headers = rateLimitHeaders(limit);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Too many claim attempts. Please retry shortly.', ownershipGranted: false }, { status: 429, headers });
+  }
+
   try {
     if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'Claim persistence is not configured. Production claims are fail-closed until Supabase service-role storage is available.', ownershipGranted: false }, { status: 503 });
+      return NextResponse.json({ error: 'Claim persistence is not configured. Production claims are fail-closed until Supabase service-role storage is available.', ownershipGranted: false }, { status: 503, headers });
     }
 
     const contentLength = Number(request.headers.get('content-length') || 0);
-    if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: 'Claim payload is too large.', ownershipGranted: false }, { status: 413 });
+    if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: 'Claim payload is too large.', ownershipGranted: false }, { status: 413, headers });
 
     const body = await request.json();
     const dropId = typeof body.dropId === 'string' ? body.dropId.trim() : '';
@@ -37,8 +44,8 @@ export async function POST(request) {
     const distanceMeters = body.distanceMeters;
     const requireInZone = Boolean(body.requireInZone);
 
-    if (!dropId || dropId.length > MAX_DROP_ID_LENGTH) return NextResponse.json({ error: 'A valid dropId is required', ownershipGranted: false }, { status: 400 });
-    if (!walletAddress) return NextResponse.json({ error: 'walletAddress is required', ownershipGranted: false }, { status: 400 });
+    if (!dropId || dropId.length > MAX_DROP_ID_LENGTH) return NextResponse.json({ error: 'A valid dropId is required', ownershipGranted: false }, { status: 400, headers });
+    if (!walletAddress) return NextResponse.json({ error: 'walletAddress is required', ownershipGranted: false }, { status: 400, headers });
 
     ensureDemoDrop(dropId);
 
@@ -50,20 +57,20 @@ export async function POST(request) {
     });
 
     if (!result.authorized) {
-      return NextResponse.json({ ...result, error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied' }, { status: result.reason === 'already_claimed' ? 409 : 403 });
+      return NextResponse.json({ ...result, error: result.reason === 'already_claimed' ? 'This wallet already claimed this drop' : 'Claim denied' }, { status: result.reason === 'already_claimed' ? 409 : 403, headers });
     }
 
     return NextResponse.json({
       ...result,
       ownershipGranted: false,
       message: 'Server authorized a claim ticket. Sign a wallet transaction next. Ownership is only real after chain confirmation.',
-    }, { headers: { 'Cache-Control': 'no-store' } });
+    }, { headers });
   } catch (error) {
     const message = error?.message || 'Claim failed';
     const status = message.includes('not found') ? 404
       : message.includes('not currently active') || message.includes('exhausted') || message.includes('Outside') ? 403
         : message.includes('valid wallet') ? 400
           : 400;
-    return NextResponse.json({ error: message, ownershipGranted: false }, { status, headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ error: message, ownershipGranted: false }, { status, headers });
   }
 }

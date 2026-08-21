@@ -59,14 +59,21 @@ assert.equal(auth1.security.ownership.includes('not-granted'), true);
 const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: wallet, distanceMeters: 50, now });
 assert.equal(auth2.authorized, false);
 assert.equal(auth2.reason, 'already_claimed');
-assert.throws(() => authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', now }), /valid wallet/);
+await assert.rejects(() => authority.authorizeClaim({ dropId: 'drop-1', walletAddress: '0xABC', now }), /valid wallet/);
 
-const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
-assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
-const accepted = trading.transitionTrade(offer, 'accepted', now);
+const tradeNow = new Date();
+const offer = trading.createTradeOffer({
+  offerer: '0xAAA',
+  recipient: '0xBBB',
+  offered: [camera],
+  requested: [robot],
+  expiresAt: new Date(tradeNow.getTime() + 60 * 60 * 1000).toISOString(),
+});
+assert.equal(trading.canAcceptTrade(offer, '0xbbb', tradeNow), true);
+const accepted = trading.transitionTrade(offer, 'accepted', tradeNow);
 assert.equal(accepted.state, 'accepted');
-const expired = trading.transitionTrade({ ...offer, state: 'pending' }, 'expired', new Date('2026-08-20T14:00:00.000Z'));
+const expired = trading.transitionTrade({ ...offer, state: 'pending' }, 'expired', new Date(tradeNow.getTime() + 2 * 60 * 60 * 1000));
 assert.equal(expired.state, 'expired');
-assert.equal(trading.canAcceptTrade(offer, '0xbbb', new Date('2026-08-20T14:00:00.000Z')), false);
+assert.equal(trading.canAcceptTrade(offer, '0xbbb', new Date(tradeNow.getTime() + 2 * 60 * 60 * 1000)), false);
 
 console.log('Voxel Vault universal engine + claim authority smoke tests passed.');
