@@ -23,20 +23,19 @@ on:
 
 jobs:
   ios-build:
-    runs-on: macos-26
+    runs-on: macos-15
     timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node 24
+      - name: Use Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
 
       - name: Install web dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Generate iOS project
         run: |
@@ -44,7 +43,7 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
-      - name: Build iOS Simulator target with Xcode 26
+      - name: Build iOS Simulator target
         run: |
           xcodebuild -version
           xcodebuild \
