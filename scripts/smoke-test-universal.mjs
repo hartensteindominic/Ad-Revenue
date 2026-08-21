@@ -18,8 +18,6 @@ await copy('lib/dropEngine.js', join(libDir, 'dropEngine.js'));
 await copy('lib/tradingEngine.js', join(libDir, 'tradingEngine.js'));
 await copy('lib/claimAuthority.js', join(libDir, 'claimAuthority.js'));
 
-// The isolated temp harness uses native ESM resolution, so normalize local imports
-// in copied modules without changing the production source files.
 const normalizeLocalImports = async (file) => {
   const target = join(temp, file);
   const text = await readFile(target, 'utf8');
@@ -56,8 +54,10 @@ assert.equal(generation.validateGenerationRequest({ family: 'not-a-family' }).va
 assert.throws(() => drops.createDrop({ startAt: 'not-a-date' }), /startAt must be a valid date/);
 assert.throws(() => drops.createDrop({ startAt: '2026-08-20T13:00:00.000Z', endAt: '2026-08-20T12:00:00.000Z' }), /endAt must be later/);
 
-const now = new Date('2026-08-20T12:00:00.000Z');
-const drop = drops.createDrop({ id: 'drop-1', name: 'Test Drop', status: 'active', startAt: '2026-08-20T11:00:00.000Z', endAt: '2026-08-20T13:00:00.000Z', radiusMeters: 100, quantity: 2 });
+const now = new Date();
+const startAt = new Date(now.getTime() - 60_000).toISOString();
+const endAt = new Date(now.getTime() + 60 * 60_000).toISOString();
+const drop = drops.createDrop({ id: 'drop-1', name: 'Test Drop', status: 'active', startAt, endAt, radiusMeters: 100, quantity: 2 });
 assert.equal(drops.isDropDiscoverable(drop, now), true);
 assert.equal(drops.isWithinDropZone(drop, 99), true);
 assert.equal(drops.isWithinDropZone(drop, 101), false);
@@ -73,12 +73,12 @@ const auth2 = await authority.authorizeClaim({ dropId: 'drop-1', walletAddress: 
 assert.equal(auth2.authorized, false);
 assert.equal(auth2.reason, 'already_claimed');
 
-const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: '2026-08-20T13:00:00.000Z' });
+const offer = trading.createTradeOffer({ offerer: '0xAAA', recipient: '0xBBB', offered: [camera], requested: [robot], expiresAt: new Date(now.getTime() + 60 * 60_000).toISOString() });
 assert.equal(trading.canAcceptTrade(offer, '0xbbb', now), true);
 const accepted = trading.transitionTrade(offer, 'accepted', now);
 assert.equal(accepted.state, 'accepted');
-const expired = trading.transitionTrade({ ...offer, state: 'pending' }, 'expired', new Date('2026-08-20T14:00:00.000Z'));
+const expired = trading.transitionTrade({ ...offer, state: 'pending' }, 'expired', new Date(now.getTime() + 2 * 60 * 60_000));
 assert.equal(expired.state, 'expired');
-assert.equal(trading.canAcceptTrade(offer, '0xbbb', new Date('2026-08-20T14:00:00.000Z')), false);
+assert.equal(trading.canAcceptTrade(offer, '0xbbb', new Date(now.getTime() + 2 * 60 * 60_000)), false);
 
 console.log('Voxel Vault universal engine + claim authority smoke tests passed.');
