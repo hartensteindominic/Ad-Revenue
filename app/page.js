@@ -1,7 +1,7 @@
 'use client';
 
-import ObjectDiscoveryShell from './components/ObjectDiscoveryShell';
+import ObjectDiscoveryHome from './components/ObjectDiscoveryHome';
 
 export default function Home() {
-  return <ObjectDiscoveryShell />;
+  return <ObjectDiscoveryHome />;
 }
