@@ -24,13 +24,15 @@ describe('Voxel Vault Ethereum marketplace', function () {
     expect(listing.price).to.equal(ethers.parseEther('1'));
   });
 
-  it('completes a purchase and credits seller/royalty/fee balances', async function () {
+  it('completes a purchase and credits the creator, royalty, and platform fee correctly', async function () {
     const { owner, creator, buyer, nft, market } = await deploy();
     await market.connect(creator).mintAndList('ipfs://asset-2', 500, ethers.parseEther('1'));
     await market.connect(buyer).buy(1, { value: ethers.parseEther('1') });
     expect(await nft.ownerOf(1)).to.equal(buyer.address);
-    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.925'));
-    expect(await market.pendingWithdrawals(owner.address)).to.equal(ethers.parseEther('0.075'));
+    // The creator is also the ERC-2981 royalty receiver, so the creator receives
+    // both the seller proceeds (92.5%) and royalty (5%) = 97.5% total.
+    expect(await market.pendingWithdrawals(creator.address)).to.equal(ethers.parseEther('0.975'));
+    expect(await market.pendingWithdrawals(owner.address)).to.equal(ethers.parseEther('0.025'));
   });
 
   it('supports funded offers and refunds replaced offers', async function () {
