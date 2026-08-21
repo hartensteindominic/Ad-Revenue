@@ -1,25 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createAssetPlan, buildProviderPayload } from '@/lib/ai/assetPlanner';
 import { buildAssetDirectorRequest } from '@/lib/ai/assetDirector';
+import { enforceAssetQuality } from '@/lib/ai/qualityGate';
+import { buildSafeAIContext } from '@/lib/ai/promptGuard';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const seed = String(body.seed || body.id || '').trim();
-    if (!seed) return NextResponse.json({ error: 'seed is required' }, { status: 400 });
-
-    const plan = createAssetPlan({
-      seed,
-      family: body.family || 'other',
-      rarity: body.rarity || 'common',
-      subtype: body.subtype || null,
+    const context = buildSafeAIContext({
+      seed: String(body.seed || body.id || '').trim(),
+      family: body.family,
+      rarity: body.rarity,
+      subtype: body.subtype,
       creativeDirection: body.creativeDirection || body.prompt || '',
     });
-
+    const plan = enforceAssetQuality(createAssetPlan(context));
     const directorRequest = buildAssetDirectorRequest({
-      seed,
+      seed: context.seed,
       family: plan.family,
       rarity: plan.rarity,
       subtype: plan.subtype,
