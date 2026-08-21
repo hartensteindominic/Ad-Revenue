@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import { createMissionQueue, queueMission, markVerified, makeEligibility, createClaimIntent, recordClaim, recordReinvestment } from '../lib/rewardLoop.js';
+
+const mission = { id: 'hunt-1', energyCost: 10, score: 3 };
+let queue = createMissionQueue();
+queue = queueMission(queue, mission, 20);
+assert.equal(queue[0].stage, 'mission-queued');
+assert.throws(() => queueMission(queue, mission, 20), /already queued/);
+queue = markVerified(queue, 'hunt-1', { id: 'proof-1', verified: true });
+const eligibility = makeEligibility(queue[0], { minimumScore: 2 });
+assert.equal(eligibility.eligible, true);
+const intent = createClaimIntent({ ...queue[0], stage: 'eligible' }, '0x123');
+assert.equal(intent.stage, 'claimable');
+const claimed = recordClaim(intent, '0xtx');
+assert.equal(claimed.stage, 'claimed');
+const reinvested = recordReinvestment(claimed, 25);
+assert.equal(reinvested.stage, 'reinvested');
+assert.equal(reinvested.reinvestment, 25);
+assert.throws(() => createClaimIntent(queue[0], '0x123'), /not eligible/);
+console.log('Reward loop tests passed');

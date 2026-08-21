@@ -1,7 +1,7 @@
 {
   "name": "voxel-vault",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +10,9 @@
     "test:rewards": "node scripts/test-rewards-engine.mjs",
     "test:media": "node scripts/test-media-gallery.mjs",
     "test:mobile": "node scripts/check-mobile-webgl.mjs",
-    "test:release": "npm run test:rewards && npm run test:universal && npm run test:media && npm run test:mobile && npm run build",
+    "test:idle": "node scripts/test-idle-expedition.mjs",
+    "test:reward-loop": "node scripts/test-reward-loop.mjs",
+    "test:release": "npm run test:rewards && npm run test:universal && npm run test:media && npm run test:mobile && npm run test:idle && npm run test:reward-loop && npm run build",
     "chain:compile": "hardhat compile",
     "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
     "chain:deploy:mainnet": "hardhat run scripts/deploy-mainnet.js --network mainnet"
