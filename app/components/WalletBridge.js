@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { connectWallet, discoverMetaMaskProvider, getInjectedProvider, getMetaMaskDeepLink, shortenAddress } from '../../lib/wallet-connect';
+import { connectWallet, discoverMetaMaskProvider, getMetaMaskDeepLink, shortenAddress } from '../../lib/wallet-connect';
 
 const STORAGE_KEY = 'voxel-vault-wallet';
 const isWalletTrigger = (button) => {
-  const text = (button?.textContent || '').toLowerCase();
+  if (!button || button.closest?.('.vvWalletCard')) return false;
+  const text = (button.textContent || '').toLowerCase();
   return text.includes('connect wallet') || text.includes('connect & start') || text.includes('wallet →');
 };
 
