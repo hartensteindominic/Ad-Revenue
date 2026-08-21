@@ -9,6 +9,8 @@
     "test:universal": "node scripts/smoke-test-universal.mjs",
     "test:proximity": "node scripts/test-proximity.mjs",
     "test:proximity:adversarial": "node scripts/test-proximity-adversarial.mjs",
+    "test:ai": "node scripts/test-ai-autopilot.mjs",
+    "test:ai:loop": "node scripts/test-ai-loop.mjs",
     "chain:compile": "hardhat compile",
     "chain:deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
     "chain:deploy:base-sepolia": "hardhat run scripts/deploy-base-sepolia.js --network baseSepolia",
