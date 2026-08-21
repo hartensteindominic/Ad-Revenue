@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 const lanes = [
   { href: '/discover', label: 'DISCOVER', title: 'Find the signal', body: 'Explore the Atlas, nearby drops, and the world layer without requiring a camera.', icon: '⌖' },
-  { href: '/hunt', label: 'COLLECT', title: 'Walk the hunt', body: 'Move through stops, reserve a drop, then finish collection only after authoritative confirmation.', icon: '✦' },
+  { href: '/objects-worth-finding', label: 'COLLECT', title: 'Objects worth finding', body: 'Walk toward real-world signals, reserve a collectible, and finish ownership only after authoritative confirmation.', icon: '✦' },
   { href: '/marketplace', label: 'EARN', title: 'Trade the Vault', body: 'Move from owned collectibles into listings, offers, auctions, and verified ownership.', icon: '◇' },
   { href: '/trade', label: 'CONNECT', title: 'Tap to trade', body: 'Keep peer exchange separate from claim authority and on-chain ownership.', icon: '⇄' },
 ];
@@ -14,15 +14,15 @@ export default function PlayPage() {
     <main className="playRoot">
       <nav className="playNav">
         <Link className="brand" href="/">V<span>V</span>OXELVAULT</Link>
-        <div className="links"><Link href="/discover">Discover</Link><Link href="/hunt">Hunt</Link><Link href="/marketplace">Marketplace</Link><Link href="/trade">Trade</Link></div>
-        <Link className="wallet" href="/hunt">Start hunting →</Link>
+        <div className="links"><Link href="/discover">Discover</Link><Link href="/objects-worth-finding">Objects Worth Finding</Link><Link href="/marketplace">Marketplace</Link><Link href="/trade">Trade</Link></div>
+        <Link className="wallet" href="/objects-worth-finding">Start exploring →</Link>
       </nav>
 
       <section className="hero">
         <div className="eyebrow"><i /> WALK · DISCOVER · COLLECT · EARN</div>
         <h1>The Vault is <em>alive.</em></h1>
         <p>One clean game layer over the existing Voxel Vault: 3D objects, real-world discovery, durable reservations, verified chain ownership, and a marketplace underneath it all.</p>
-        <div className="heroActions"><Link className="primary" href="/hunt">Enter a hunt</Link><Link className="secondary" href="/discover">Open the Atlas</Link></div>
+        <div className="heroActions"><Link className="primary" href="/objects-worth-finding">Find an object</Link><Link className="secondary" href="/discover">Open the Atlas</Link></div>
       </section>
 
       <section className="lanes">
@@ -30,7 +30,7 @@ export default function PlayPage() {
       </section>
 
       <section className="pipeline">
-        <div><div className="eyebrow">AUTHORITATIVE COLLECTION</div><h2>Signal → reservation → ownership.</h2><p>The browser can show distance as UX, but it cannot grant ownership. Production collection now expects a signed proximity proof, a durable reservation, a submitted transaction, a server-verified receipt, and atomic confirmation.</p></div>
+        <div><div className="eyebrow">AUTHORITATIVE COLLECTION</div><h2>Signal → reservation → ownership.</h2><p>The browser can show distance as UX, but it cannot grant ownership. Production collection expects a signed proximity proof, a durable reservation, a submitted transaction, a server-verified receipt, and atomic confirmation.</p></div>
         <div className="steps"><span><b>01</b>SIGNED PROXIMITY</span><span><b>02</b>DURABLE RESERVATION</span><span><b>03</b>SUBMITTED TX</span><span><b>04</b>VERIFIED RECEIPT</span><span><b>05</b>ATOMIC CONFIRM</span></div>
       </section>
 
@@ -41,7 +41,7 @@ export default function PlayPage() {
 
       <footer><span>VOXEL VAULT · 3D COLLECTIBLES · REAL OWNERSHIP</span><Link href="/">Return to the Vault →</Link></footer>
 
-      <style jsx>{`
+      <style jsx>{` 
         .playRoot{min-height:100vh;background:#05060b;color:#f7f8ff;font-family:Inter,ui-sans-serif,system-ui,sans-serif;overflow:hidden}.playRoot *{box-sizing:border-box}
         .playNav{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(5,6,11,.86);backdrop-filter:blur(18px);position:sticky;top:0;z-index:10}.brand{font-size:17px;font-weight:950;letter-spacing:.15em;color:#fff;text-decoration:none}.brand span{color:#9b7cff}.links{display:flex;gap:24px}.links a{color:#9299ab;text-decoration:none;font-size:13px}.links a:hover{color:#fff}.wallet{border:1px solid rgba(255,255,255,.16);padding:10px 15px;border-radius:999px;color:#fff;text-decoration:none;font-size:12px;font-weight:850}
         .hero{max-width:1100px;margin:0 auto;padding:92px 5vw 58px}.eyebrow{font-size:10px;letter-spacing:.18em;color:#8f96a9;font-weight:900}.eyebrow i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#55e6ff;box-shadow:0 0 14px #55e6ff;margin-right:8px}.hero h1{font-size:clamp(54px,9vw,110px);line-height:.88;margin:14px 0 20px;font-weight:950;letter-spacing:-.05em}.hero h1 em,.world h2 em{font-family:Georgia,serif;font-weight:400;color:#ad99ff}.hero p{max-width:700px;color:#a8aec0;line-height:1.7;font-size:16px}.heroActions{display:flex;gap:10px;margin-top:28px}.primary,.secondary{padding:13px 18px;border-radius:999px;text-decoration:none;font-weight:850;font-size:13px}.primary{background:#fff;color:#05060b}.secondary{border:1px solid rgba(255,255,255,.16);color:#fff}
