@@ -1,0 +1,38 @@
+name: Voxel Vault iOS smoke
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'next.config.mjs'
+      - '.github/workflows/ios-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install JavaScript dependencies
+        run: npm install --no-audit --no-fund
+      - name: Generate Capacitor iOS project
+        run: npx cap add ios
+      - name: Sync native project
+        run: npx cap sync ios
+      - name: Build iOS simulator target
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build

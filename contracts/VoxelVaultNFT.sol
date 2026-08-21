@@ -5,20 +5,36 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ERC721Royalty} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
-contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
+contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, EIP712, Ownable {
     uint256 private _nextTokenId = 1;
     uint96 public constant MAX_ROYALTY_BPS = 1500;
     mapping(address => bool) public minters;
 
-    /// @notice When false, only minters/owner may mint (recommended for mainnet).
-    bool public publicMintEnabled = true;
+    bool public publicMintEnabled = false;
+    address public claimSigner;
+    mapping(bytes32 => bool) public usedClaimTickets;
+
+    bytes32 public constant CLAIM_VOUCHER_TYPEHASH = keccak256(
+        "ClaimVoucher(address recipient,address royaltyReceiver,bytes32 dropId,bytes32 claimTicketHash,bytes32 uriHash,uint96 royaltyBps,uint256 nonce,uint256 deadline)"
+    );
 
     event VoxelMinted(uint256 indexed tokenId, address indexed creator, string tokenURI, uint96 royaltyBps);
     event MinterUpdated(address indexed account, bool allowed);
     event PublicMintEnabledUpdated(bool enabled);
+    event ClaimSignerUpdated(address indexed signer);
+    event ClaimVoucherConsumed(bytes32 indexed claimTicketHash, bytes32 indexed dropId, address indexed recipient, uint256 tokenId, uint256 nonce);
 
-    constructor(address initialOwner) ERC721("Voxel Vault", "VOXEL") Ownable(initialOwner) {}
+    constructor(address initialOwner)
+        ERC721("Voxel Vault", "VOXEL")
+        EIP712("Voxel Vault Claims", "1")
+        Ownable(initialOwner)
+    {
+        require(initialOwner != address(0), "Owner required");
+        claimSigner = initialOwner;
+    }
 
     modifier onlyMinter() {
         require(minters[msg.sender] || msg.sender == owner(), "Not authorized to mint");
@@ -36,7 +52,12 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         emit PublicMintEnabledUpdated(enabled);
     }
 
-    /// @notice Public mint path. Disable via setPublicMintEnabled(false) before mainnet if desired.
+    function setClaimSigner(address signer) external onlyOwner {
+        require(signer != address(0), "Invalid claim signer");
+        claimSigner = signer;
+        emit ClaimSignerUpdated(signer);
+    }
+
     function mint(string calldata uri, uint96 royaltyBps) external returns (uint256 tokenId) {
         require(publicMintEnabled, "Public mint disabled");
         return _mintTo(msg.sender, msg.sender, uri, royaltyBps);
@@ -48,6 +69,46 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         returns (uint256 tokenId)
     {
         return _mintTo(recipient, royaltyReceiver, uri, royaltyBps);
+    }
+
+    /// @notice Redeem a server-issued EIP-712 claim voucher. Anyone may relay the transaction.
+    function claim(
+        address recipient,
+        address royaltyReceiver,
+        bytes32 dropId,
+        bytes32 claimTicketHash,
+        string calldata uri,
+        uint96 royaltyBps,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata signature
+    ) external returns (uint256 tokenId) {
+        require(block.timestamp <= deadline, "Claim voucher expired");
+        require(recipient != address(0), "Recipient required");
+        require(royaltyReceiver != address(0), "Royalty receiver required");
+        require(bytes(uri).length > 0, "Metadata URI required");
+        require(!usedClaimTickets[claimTicketHash], "Claim ticket already used");
+
+        bytes32 uriHash = keccak256(bytes(uri));
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CLAIM_VOUCHER_TYPEHASH,
+                recipient,
+                royaltyReceiver,
+                dropId,
+                claimTicketHash,
+                uriHash,
+                royaltyBps,
+                nonce,
+                deadline
+            )
+        );
+        bytes32 digest = _hashTypedDataV4(structHash);
+        require(SignatureChecker.isValidSignatureNow(claimSigner, digest, signature), "Invalid claim signature");
+
+        usedClaimTickets[claimTicketHash] = true;
+        tokenId = _mintTo(recipient, royaltyReceiver, uri, royaltyBps);
+        emit ClaimVoucherConsumed(claimTicketHash, dropId, recipient, tokenId, nonce);
     }
 
     function _mintTo(address recipient, address royaltyReceiver, string calldata uri, uint96 royaltyBps)

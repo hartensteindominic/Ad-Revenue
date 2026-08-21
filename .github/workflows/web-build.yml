@@ -13,10 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      # Repository does not currently commit a package-lock.json.
-      # Use npm install so CI can still validate a production build.
-      - run: npm install
+      # The repository intentionally has no committed package-lock.json yet.
+      # Do not enable setup-node npm caching until a lockfile is committed.
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://voxel-vault.vercel.app
