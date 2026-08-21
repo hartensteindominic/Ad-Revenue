@@ -1,0 +1,1 @@
+UI V2 makes the home screen mobile-first, visual, short-copy and action-first. Find, Scan, Room and AI are the primary navigation. Object cards emphasize 3D, USD price and NFT/Physical/QR identity.
