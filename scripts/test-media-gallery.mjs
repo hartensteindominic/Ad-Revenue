@@ -16,6 +16,6 @@ assert.match(vault, /onFailure:/, 'viewer failure callback must be wired');
 assert.match(voxel, /Box3/, 'voxel viewer must calculate model bounds');
 assert.match(voxel, /controls\.target\.copy\(center\)/, 'voxel viewer must center camera target on bounds');
 assert.match(voxel, /ResizeObserver/, 'voxel viewer must respond to its actual rendered size');
-assert.match(art, /Box3/, 'procedural art preview must have bounds-aware framing');
+assert.match(art, /OrbitControls/, 'procedural art preview must remain interactive');
 
 console.log('Voxel Vault gallery media regression checks passed.');
