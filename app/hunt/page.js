@@ -1,8 +1,8 @@
 import ScavengerHuntExperience from '../components/ScavengerHuntExperience';
 
 export const metadata = {
-  title: 'Collection Experience · Voxel Vault',
-  description: 'Collect Voxel Vault objects through the authoritative proximity and ownership flow.',
+  title: 'Scavenger Hunts · Voxel Vault',
+  description: 'Multi-stop scavenger jobs for 3D NFTs — find, claim, complete, mint on Ethereum.',
 };
 
 export default function HuntPage() {
