@@ -1,3 +1,5 @@
+import './privacy.css';
+
 export const metadata = {
   title: 'Privacy Policy',
   description: 'Voxel Vault privacy information and data choices.',
@@ -19,7 +21,6 @@ export default function PrivacyPage() {
         <section><h2>Updates</h2><p>This policy may be updated as the product and its service providers evolve. The effective policy will be published here.</p></section>
         <footer><a href="/support">Support</a><span>·</span><a href="/">Return to Vault</a></footer>
       </div>
-      <style jsx>{`body{margin:0}.legalPage{min-height:100vh;background:#05060b;color:#f7f8ff;font-family:Inter,system-ui,sans-serif;padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom))}.legalShell{max-width:820px;margin:0 auto}.legalBack{display:inline-block;color:#b9a5ff;text-decoration:none;font-weight:800;margin-bottom:56px}.legalEyebrow{color:#9299b0;letter-spacing:.22em;font-size:11px;font-weight:900}.legalShell h1{font-size:clamp(46px,8vw,84px);line-height:.95;letter-spacing:-.055em;margin:10px 0 20px}.legalLead{font-size:20px;line-height:1.6;color:#b5bacb}.legalShell section{margin-top:42px;padding-top:28px;border-top:1px solid rgba(255,255,255,.09)}h2{font-size:24px;margin:0 0 12px}.legalShell p,.legalShell li{color:#aeb4c7;line-height:1.7}.legalShell ul{padding-left:22px}.legalShell footer{display:flex;gap:10px;margin-top:60px}.legalShell footer a{color:#c9bcff}.legalShell footer span{color:#5e6475}`}</style>
     </main>
   );
 }
