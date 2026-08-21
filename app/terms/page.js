@@ -1,21 +1,23 @@
 export const metadata = { title: 'Terms | Voxel Vault' };
 
+const sectionStyle = { marginTop: 28 };
+const textStyle = { color: '#a4abbb', lineHeight: 1.7, fontSize: 13, margin: 0 };
+
 export default function TermsPage() {
   return (
-    <main className="legalPage">
-      <div className="legalInner">
-        <a href="/">← Voxel Vault</a>
-        <h1>Terms</h1>
-        <p>Last updated August 21, 2026.</p>
-        <section><h2>Using Voxel Vault</h2><p>Voxel Vault is an experimental platform for discovering, viewing, collecting, creating, trading, and owning digital objects. Features may change as the platform evolves.</p></section>
-        <section><h2>Digital ownership</h2><p>A successful blockchain transaction may establish ownership according to the applicable smart contract. A preview, listing, reservation, or interface state is not proof of ownership by itself.</p></section>
-        <section><h2>Location features</h2><p>Location is optional. Voxel Vault may use device location to show nearby experiences. Precise location should not be treated as a public ownership record, and collection eligibility is determined by the authoritative claim system.</p></section>
-        <section><h2>Payments and blockchain</h2><p>Blockchain transactions can be irreversible. Network fees, asset prices, availability, and transaction status can change. Never send funds based solely on an interface display.</p></section>
-        <section><h2>Creators and sponsored objects</h2><p>Creators are responsible for content they publish. Sponsored campaigns must follow applicable laws and platform rules. Voxel Vault may remove content or campaigns that violate those requirements.</p></section>
-        <section><h2>Experimental software</h2><p>The platform is provided as evolving software. Availability, generated content, 3D previews, AI features, and third-party services are not guaranteed.</p></section>
-        <section><h2>Contact and updates</h2><p>These terms may be updated as Voxel Vault develops. Continued use after an update means you accept the revised terms.</p></section>
+    <main style={{ minHeight: '100vh', background: '#070912', color: '#eef0f7', padding: '24px 18px', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <a href="/" style={{ color: '#9b7cff', textDecoration: 'none', fontSize: 13 }}>← Voxel Vault</a>
+        <h1 style={{ fontSize: 42, margin: '28px 0 4px', letterSpacing: '-.04em' }}>Terms</h1>
+        <p style={{ color: '#737c8f', fontSize: 12 }}>Last updated August 21, 2026.</p>
+        <section style={sectionStyle}><h2>Using Voxel Vault</h2><p style={textStyle}>Voxel Vault is an evolving platform for discovering, viewing, collecting, creating, trading, and owning digital objects. Features may change as the platform grows.</p></section>
+        <section style={sectionStyle}><h2>Digital ownership</h2><p style={textStyle}>A successful blockchain transaction may establish ownership according to the applicable smart contract. A preview, listing, reservation, or interface state is not proof of ownership by itself.</p></section>
+        <section style={sectionStyle}><h2>Location</h2><p style={textStyle}>Location is optional. Nearby features may use device location. Precise location should not be treated as a public ownership record.</p></section>
+        <section style={sectionStyle}><h2>Payments and blockchain</h2><p style={textStyle}>Blockchain transactions can be irreversible. Network fees, asset prices, availability, and transaction status can change. Verify transaction details before confirming.</p></section>
+        <section style={sectionStyle}><h2>Creators and campaigns</h2><p style={textStyle}>Creators are responsible for content they publish. Sponsored campaigns must follow applicable laws and platform rules.</p></section>
+        <section style={sectionStyle}><h2>Experimental software</h2><p style={textStyle}>Availability, generated content, 3D previews, AI features, and third-party services are not guaranteed.</p></section>
+        <section style={sectionStyle}><h2>Updates</h2><p style={textStyle}>These terms may change as Voxel Vault develops. The current version will be published here.</p></section>
       </div>
-      <style jsx>{`.legalPage{min-height:100vh;background:#070912;color:#eef0f7;padding:24px 18px}.legalInner{max-width:720px;margin:auto}.legalInner>a{color:#9b7cff;text-decoration:none;font-size:13px}.legalInner h1{font-size:42px;margin:28px 0 4px}.legalInner>p{color:#737c8f;font-size:12px}.legalInner section{margin-top:28px}.legalInner h2{font-size:17px;margin-bottom:7px}.legalInner section p{color:#a4abbb;line-height:1.7;font-size:13px;margin:0}`}</style>
     </main>
   );
 }
