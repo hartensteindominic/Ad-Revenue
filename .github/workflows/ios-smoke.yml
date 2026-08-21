@@ -20,9 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - name: Install JavaScript dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Generate Capacitor iOS project
         run: npx cap add ios
       - name: Sync native project
