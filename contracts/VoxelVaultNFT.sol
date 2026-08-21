@@ -8,11 +8,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
     uint256 private _nextTokenId = 1;
+    uint256 private _totalSupply;
     uint96 public constant MAX_ROYALTY_BPS = 1500;
     mapping(address => bool) public minters;
 
-    /// @notice When false, only minters/owner may mint (recommended for mainnet).
-    bool public publicMintEnabled = true;
+    bool public publicMintEnabled = false;
 
     event VoxelMinted(uint256 indexed tokenId, address indexed creator, string tokenURI, uint96 royaltyBps);
     event MinterUpdated(address indexed account, bool allowed);
@@ -36,7 +36,6 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         emit PublicMintEnabledUpdated(enabled);
     }
 
-    /// @notice Public mint path. Disable via setPublicMintEnabled(false) before mainnet if desired.
     function mint(string calldata uri, uint96 royaltyBps) external returns (uint256 tokenId) {
         require(publicMintEnabled, "Public mint disabled");
         return _mintTo(msg.sender, msg.sender, uri, royaltyBps);
@@ -60,15 +59,21 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         require(royaltyBps <= MAX_ROYALTY_BPS, "Royalty too high");
 
         tokenId = _nextTokenId++;
+        _totalSupply += 1;
         _safeMint(recipient, tokenId);
         _setTokenURI(tokenId, uri);
         _setTokenRoyalty(tokenId, royaltyReceiver, royaltyBps);
-        emit VoxelMinted(tokenId, royaltyReceiver, uri, royaltyBps);
+        emit VoxelMinted(tokenId, recipient, uri, royaltyBps);
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply;
     }
 
     function burn(uint256 tokenId) external {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
         _burn(tokenId);
+        _totalSupply -= 1;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -87,9 +92,5 @@ contract VoxelVaultNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         returns (string memory)
     {
         return super.tokenURI(tokenId);
-    }
-
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage, ERC721Royalty) {
-        super._burn(tokenId);
     }
 }

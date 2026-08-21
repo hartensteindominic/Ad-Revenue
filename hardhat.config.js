@@ -8,6 +8,7 @@ module.exports = {
     version: '0.8.24',
     settings: {
       optimizer: { enabled: true, runs: 200 },
+      evmVersion: 'cancun',
     },
   },
   networks: {
@@ -15,6 +16,11 @@ module.exports = {
       url: process.env.SEPOLIA_RPC_URL || '',
       accounts: deployerKey,
       chainId: 11155111,
+    },
+    baseSepolia: {
+      url: process.env.BASE_SEPOLIA_RPC_URL || '',
+      accounts: deployerKey,
+      chainId: 84532,
     },
     mainnet: {
       url: process.env.MAINNET_RPC_URL || '',
