@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getCatalogWindow, CATALOG_SIZE } from '../../lib/catalog';
 import { buyAsset, hasContracts } from '../../lib/blockchain';
+import Lazy3DPreview from './Lazy3DPreview';
 
 const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
 const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
@@ -22,8 +23,8 @@ function MediaFrame({ item, interactive = false, hero = false }) {
     rarity: item?.rarity || 'Rare',
     material: item?.material || 'metallic',
     compact: !interactive && !hero,
-    showcase: !interactive,
-    interactive,
+    showcase: hero || interactive,
+    interactive: hero || interactive,
     label: false,
     onFailure: () => setFailed(true),
   };
@@ -40,7 +41,9 @@ function MediaFrame({ item, interactive = false, hero = false }) {
 
   return (
     <div className={`mediaCanvas ${hero ? 'heroMedia' : ''}`} key={retry}>
-      {isVoxel ? <VoxelViewer shape={item.shape} {...common} /> : <ArtPreview family={item.family || 'sculpture'} {...common} />}
+      <Lazy3DPreview minHeight={hero ? 320 : 180}>
+        {isVoxel ? <VoxelViewer shape={item.shape} {...common} /> : <ArtPreview family={item.family || 'sculpture'} {...common} />}
+      </Lazy3DPreview>
     </div>
   );
 }
@@ -164,7 +167,7 @@ export default function VaultUniverse() {
       </section>
 
       <section className="discover" id="drops">
-        <div className="sectionHead"><div><div className="eyebrow">THE COLLECTION</div><h2>Reality, <em>reimagined.</em></h2></div><p>{CATALOG_SIZE.toLocaleString()} deterministic forms. Every visible object now gets a real centered 3D render, with a safe fallback if WebGL fails.</p></div>
+        <div className="sectionHead"><div><div className="eyebrow">THE COLLECTION</div><h2>Reality, <em>reimagined.</em></h2></div><p>{CATALOG_SIZE.toLocaleString()} deterministic forms. Every visible object gets a centered 3D render, while the gallery only creates WebGL viewers as they approach the screen.</p></div>
         <div className="toolbar"><div className="categoryBar">{CATEGORIES.map(name => <button key={name} className={category === name ? 'selected' : ''} onClick={() => setCategory(name)}>{name}</button>)}</div><label className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search objects, creators, materials…" /></label></div>
 
         <div className="gallery">
