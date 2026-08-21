@@ -102,7 +102,30 @@ export default function VaultUniverse() {
 
   function LiveArtwork({ item, interactive = false }) {
     const props = { seed: item.seed, rarity: item.rarity, material: item.material, compact: !interactive, showcase: !interactive, interactive, label: false };
-    return item.renderMode === 'voxel' ? <VoxelViewer shape={item.shape} {...props} /> : <ArtPreview family={item.family} {...props} />;
+    // Every collectible gets a real interactive 3D representation. renderMode remains metadata for future adapters, not a reason to downgrade the collector experience to a flat preview.
+    return <VoxelViewer shape={item.shape} {...props} />;
+  }
+
+  function LazyLiveArtwork({ item }) {
+    const hostRef = useRef(null);
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+      const node = hostRef.current;
+      if (!node) return undefined;
+      const observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setReady(true);
+          observer.disconnect();
+        }
+      }, { rootMargin: '700px' });
+      observer.observe(node);
+      return () => observer.disconnect();
+    }, []);
+
+    return <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {ready ? <LiveArtwork item={item} /> : <PreviewArt item={item} />}
+    </div>;
   }
 
   const heroIsLive = active3D === 'hero' && !selected;
@@ -132,12 +155,12 @@ export default function VaultUniverse() {
     </section>
 
     <section className="discover" id="drops">
-      <div className="sectionHead"><div><div className="eyebrow">THE COLLECTION</div><h2>Reality, <em>reimagined.</em></h2></div><p>{CATALOG_SIZE.toLocaleString()} deterministic forms. The first featured cards render real 3D, while every object opens into a full interactive 3D inspection.</p></div>
+      <div className="sectionHead"><div><div className="eyebrow">THE COLLECTION</div><h2>Reality, <em>reimagined.</em></h2></div><p>{CATALOG_SIZE.toLocaleString()} deterministic forms. Every collectible becomes a real 3D object as you scroll. Tap any piece for a full interactive inspection, then rotate, zoom and explore it.</p></div>
       <div className="toolbar"><div className="categoryBar">{CATEGORIES.map(name => <button key={name} className={category === name ? 'selected' : ''} onClick={() => setCategory(name)}>{name}</button>)}</div><label className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search objects, creators, materials…"/></label></div>
       <div className="gallery">
         {visible.map((item, index) => <article className="artCard" key={`${item.id}-${item.seed}`}>
           <button className="artVisual" onClick={() => openInspect(item)} aria-label={`Open ${item.name} in 3D`}>
-            {index < 2 ? <div className="cardLive3D"><LiveArtwork item={item}/></div> : <PreviewArt item={item}/>}<span className="edition">{String(item.id).padStart(2, '0')}</span><span className="rarity">{item.rarity}</span><span className="inspectPill">↗ 3D</span>
+            <div className="cardLive3D"><LazyLiveArtwork item={item}/></div><span className="edition">{String(item.id).padStart(2, '0')}</span><span className="rarity">{item.rarity}</span><span className="inspectPill">↗ 3D</span>
           </button>
           <div className="artInfo"><div><h3>{item.name}</h3><span>{item.creator}</span></div><strong>{item.price} ETH</strong></div>
           <div className="artMeta"><span>{item.type}</span><span>{item.style || item.material || 'Digital Object'}</span><button className="inspectLink" onClick={() => openInspect(item)}>Rotate in 3D ↗</button></div>

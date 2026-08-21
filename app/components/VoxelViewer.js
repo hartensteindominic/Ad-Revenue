@@ -299,12 +299,20 @@ export default function VoxelViewer({
       loader.load(assetUrl, (gltf) => {
         if (disposed) return;
         gltfScene = gltf.scene;
+        let meshCount = 0;
         gltfScene.traverse((object) => {
           if (object.isMesh) {
+            meshCount += 1;
             object.castShadow = !compact;
             object.receiveShadow = !compact;
           }
         });
+        // A malformed/empty GLB must never leave a blank card. Keep the deterministic voxel fallback visible.
+        if (!meshCount) {
+          console.warn('[Voxel Vault] GLB contained no renderable meshes; using deterministic 3D fallback.', assetUrl);
+          gltfScene = null;
+          return;
+        }
         group.visible = false;
         scene.add(gltfScene);
         frameObject(gltfScene);
@@ -312,7 +320,10 @@ export default function VoxelViewer({
           gltfMixer = new THREE.AnimationMixer(gltfScene);
           gltf.animations.forEach((clip) => gltfMixer.clipAction(clip).play());
         }
-      }, undefined, () => {});
+      }, undefined, (error) => {
+        // Fail soft: the generated voxel object remains visible and interactive.
+        console.warn('[Voxel Vault] GLB/GLTF failed to load; using deterministic 3D fallback.', assetUrl, error);
+      });
     }
 
     const pointerAt = (event) => {
