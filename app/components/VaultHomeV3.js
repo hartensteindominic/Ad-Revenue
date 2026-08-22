@@ -7,11 +7,8 @@ import { getCatalogWindow } from '../../lib/catalog';
 import './VaultHomeV3.css';
 
 const Lazy3DPreview = dynamic(() => import('./Lazy3DPreview'), { ssr: false });
-const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
-const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
-
-const items = getCatalogWindow(0, 8);
-const categories = ['All objects', 'Artifacts', 'Vehicles', 'Creatures', 'Architecture'];
+const items = getCatalogWindow();
+const categories = ['All objects', 'Audio', 'Electronics', 'Gaming', 'Footwear', 'Drinkware', 'Camera', 'Watches'];
 
 function Icon({ name, size = 18 }) {
   const paths = {
@@ -27,43 +24,36 @@ function Icon({ name, size = 18 }) {
 }
 
 function Brand() {
-  return (
-    <Link href="/" className="vv3-brand" aria-label="Voxel Vault home">
-      <span className="vv3-brandMark"><i /><i /><i /></span>
-      <span>VOXEL <b>VAULT</b></span>
-    </Link>
-  );
+  return <Link href="/" className="vv3-brand" aria-label="Voxel Vault home"><span className="vv3-brandMark"><i /><i /><i /></span><span>VOXEL <b>VAULT</b></span></Link>;
 }
 
 function ObjectModel({ item, hero = false }) {
   if (!item) return null;
-  return (
-    <Lazy3DPreview minHeight={hero ? 520 : 250} rootMargin={hero ? '80px' : '320px'}>
-      {item.renderMode === 'voxel' && item.shape ? (
-        <VoxelViewer shape={item.shape} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} />
-      ) : (
-        <ArtPreview family={item.family || 'sculpture'} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} interactive={hero} showcase={hero} />
-      )}
-    </Lazy3DPreview>
-  );
+  return <Lazy3DPreview minHeight={hero ? 520 : 250} rootMargin={hero ? '80px' : '320px'}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: hero ? 520 : 250, overflow: 'hidden', borderRadius: 18, background: '#05060c' }}>
+      <iframe
+        src={item.modelEmbedUrl}
+        title={`${item.name} interactive 3D model`}
+        loading={hero ? 'eager' : 'lazy'}
+        allow="autoplay; fullscreen; xr-spatial-tracking"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+        style={{ display: 'block', width: '100%', height: '100%', minHeight: hero ? 520 : 250, border: 0 }}
+      />
+      <div style={{ position: 'absolute', left: 10, bottom: 10, zIndex: 2, padding: '6px 9px', borderRadius: 999, background: 'rgba(5,6,12,.82)', border: '1px solid rgba(255,255,255,.12)', color: '#c7c0ff', fontSize: 8, letterSpacing: '.12em' }}>REAL-WORLD 3D · SOURCE VERIFIED</div>
+    </div>
+  </Lazy3DPreview>;
 }
 
 function ObjectCard({ item, index }) {
-  return (
-    <Link className="vv3-objectCard" href={`/marketplace?asset=${encodeURIComponent(item.id)}`} aria-label={`View ${item.name}`}>
-      <div className="vv3-objectVisual">
-        <ObjectModel item={item} />
-        <span className="vv3-cardIndex">{String(index + 1).padStart(2, '0')}</span>
-        <span className="vv3-liveBadge"><i /> DIGITAL TWIN</span>
-        <span className="vv3-cardArrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
-      </div>
-      <div className="vv3-objectDetails">
-        <div><small>{item.type || 'DIGITAL OBJECT'}</small><h3>{item.name}</h3></div>
-        <strong>${item.priceUsd}</strong>
-      </div>
-      <div className="vv3-objectMeta"><span>PHYSICAL + DIGITAL</span><span>{item.rarity || 'ORIGINAL'}</span></div>
+  return <article className="vv3-objectCard">
+    <div className="vv3-objectVisual"><ObjectModel item={item} /><span className="vv3-cardIndex">{String(index + 1).padStart(2, '0')}</span><span className="vv3-liveBadge"><i /> 3D OBJECT</span><span className="vv3-cardArrow" aria-hidden="true"><Icon name="arrow" size={16} /></span></div>
+    <Link href={`/marketplace?asset=${encodeURIComponent(item.id)}`} aria-label={`View ${item.name}`}>
+      <div className="vv3-objectDetails"><div><small>{item.creator} · {item.type}</small><h3>{item.name}</h3></div><strong>${item.priceUsd}</strong></div>
+      <div className="vv3-objectMeta"><span>REAL OBJECT · ONLINE</span><span>{item.rarity}</span></div>
     </Link>
-  );
+    <a className="vv3-sourceLink" href={item.sourceUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>Shop / view source <Icon name="arrow" size={13} /></a>
+  </article>;
 }
 
 export default function VaultHomeV3() {
@@ -71,109 +61,28 @@ export default function VaultHomeV3() {
   const [category, setCategory] = useState('All objects');
   const heroItem = items[0];
   const filtered = useMemo(() => items.filter((item) => {
-    const haystack = `${item.name} ${item.type} ${item.creator} ${item.material} ${item.family}`.toLowerCase();
-    const type = String(item.type || '').toLowerCase();
-    const categoryMatch = category === 'All objects' || type === category.replace(/s$/, '').toLowerCase();
+    const haystack = `${item.name} ${item.type} ${item.creator} ${item.material} ${item.category}`.toLowerCase();
+    const categoryMatch = category === 'All objects' || item.category === category.toLowerCase();
     return (!query.trim() || haystack.includes(query.trim().toLowerCase())) && categoryMatch;
   }), [query, category]);
 
-  return (
-    <main className="vv3-home">
-      <div className="vv3-noise" aria-hidden="true" />
-      <header className="vv3-header">
-        <div className="vv3-topbar">
-          <Brand />
-          <nav className="vv3-desktopNav" aria-label="Primary navigation">
-            <Link href="/discover">Discover</Link>
-            <Link href="/marketplace">Marketplace</Link>
-            <Link href="/room">My vault</Link>
-            <Link href="/ai">Intelligence</Link>
-          </nav>
-          <div className="vv3-topActions">
-            <Link className="vv3-roundButton" href="#collection" aria-label="Search the collection"><Icon name="search" /></Link>
-            <Link className="vv3-headerCta" href="/room">Enter vault <Icon name="arrow" size={15} /></Link>
-          </div>
-        </div>
-      </header>
+  return <main className="vv3-home">
+    <div className="vv3-noise" aria-hidden="true" />
+    <header className="vv3-header"><div className="vv3-topbar"><Brand /><nav className="vv3-desktopNav" aria-label="Primary navigation"><Link href="/discover">Discover</Link><Link href="/marketplace">Marketplace</Link><Link href="/room">My vault</Link><Link href="/ai">Intelligence</Link></nav><div className="vv3-topActions"><Link className="vv3-roundButton" href="#collection" aria-label="Search the collection"><Icon name="search" /></Link><Link className="vv3-headerCta" href="/room">Enter vault <Icon name="arrow" size={15} /></Link></div></div></header>
 
-      <section className="vv3-hero">
-        <div className="vv3-heroGlow" aria-hidden="true" />
-        <div className="vv3-heroCopy">
-          <div className="vv3-eyebrow"><i /> THE PHYSICAL–DIGITAL COLLECTION</div>
-          <h1>Objects you own.<br /><em>Worlds you unlock.</em></h1>
-          <p>Turn real purchases into intelligent 3D collectibles—verified, explorable, and built to stay yours.</p>
-          <div className="vv3-heroActions">
-            <Link className="vv3-primaryCta" href="/discover">Explore objects <Icon name="arrow" size={17} /></Link>
-            <Link className="vv3-textCta" href="#how-it-works"><span><Icon name="spark" size={14} /></span> See how it works</Link>
-          </div>
-          <div className="vv3-proofRow" aria-label="Product benefits">
-            <span><Icon name="shield" size={16} /><b>Receipt verified</b></span>
-            <span><Icon name="cube" size={16} /><b>Interactive 3D</b></span>
-            <span><Icon name="room" size={16} /><b>Yours to keep</b></span>
-          </div>
-        </div>
+    <section className="vv3-hero"><div className="vv3-heroGlow" aria-hidden="true" /><div className="vv3-heroCopy"><div className="vv3-eyebrow"><i /> THE PHYSICAL–DIGITAL COLLECTION</div><h1>Objects you own.<br /><em>Worlds you unlock.</em></h1><p>Discover real-world objects online, inspect their 3D counterparts, and turn verified purchases into intelligent digital collectibles.</p><div className="vv3-heroActions"><Link className="vv3-primaryCta" href="#collection">Explore objects <Icon name="arrow" size={17} /></Link><Link className="vv3-textCta" href="#how-it-works"><span><Icon name="spark" size={14} /></span> See how it works</Link></div><div className="vv3-proofRow" aria-label="Product benefits"><span><Icon name="shield" size={16} /><b>Source verified</b></span><span><Icon name="cube" size={16} /><b>Interactive 3D</b></span><span><Icon name="room" size={16} /><b>Built for your Vault</b></span></div></div>
+      <div className="vv3-heroVisual" aria-label="Interactive featured real-world object"><div className="vv3-visualTop"><span><i /> REAL OBJECT</span><small>DRAG TO INSPECT</small></div><div className="vv3-modelFrame"><div className="vv3-grid" /><div className="vv3-orbit" /><ObjectModel item={heroItem} hero /></div><div className="vv3-featureMeta"><div><small>FEATURED / 001</small><strong>{heroItem?.name || 'Vault Object'}</strong><span>{heroItem?.creator || 'Verified source'} · {heroItem?.material || 'Real object'}</span></div><a href={heroItem?.sourceUrl} target="_blank" rel="noreferrer" aria-label="Shop or view featured object"><Icon name="arrow" size={20} /></a></div><div className="vv3-verified"><span><Icon name="shield" size={15} /></span><div><small>ONLINE SOURCE</small><b>VERIFIED</b></div></div></div>
+    </section>
 
-        <div className="vv3-heroVisual" aria-label="Interactive featured digital twin">
-          <div className="vv3-visualTop"><span><i /> LIVE OBJECT</span><small>DRAG TO INSPECT</small></div>
-          <div className="vv3-modelFrame"><div className="vv3-grid" /><div className="vv3-orbit" /><ObjectModel item={heroItem} hero /></div>
-          <div className="vv3-featureMeta">
-            <div><small>GENESIS OBJECT / 001</small><strong>{heroItem?.name || 'Vault Artifact'}</strong><span>{heroItem?.material || 'Rare material'} · {heroItem?.rarity || 'Original'}</span></div>
-            <Link href={`/marketplace?asset=${heroItem?.id || 1}`} aria-label="View featured object"><Icon name="arrow" size={20} /></Link>
-          </div>
-          <div className="vv3-verified"><span><Icon name="shield" size={15} /></span><div><small>AUTHENTICITY</small><b>VERIFIED</b></div></div>
-        </div>
-      </section>
+    <section className="vv3-signalBar" aria-label="Platform capabilities"><span>REAL-WORLD OBJECTS</span><i /><span>3D DIGITAL TWINS</span><i /><span>ONLINE SOURCES</span><i /><span>OBJECT INTELLIGENCE</span></section>
+    <section className="vv3-story" id="how-it-works"><div className="vv3-sectionLabel"><span>01</span> THE IDEA</div><div className="vv3-storyTitle"><small>MORE THAN A MARKETPLACE</small><h2>Your things deserve<br /><em>a digital life.</em></h2></div><p>Voxel Vault connects real objects to living digital identities. Start from an object that exists in the world, inspect it in 3D, then bring it into your collection.</p></section>
+    <section className="vv3-journey" aria-label="How Voxel Vault works"><Link href="/discover"><div className="vv3-stepTop"><span>01</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="search" size={25} /></div><small>DISCOVER</small><h3>Find the object</h3><p>Browse real-world objects with verifiable online sources.</p></Link><Link href="/passport"><div className="vv3-stepTop"><span>02</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="cube" size={25} /></div><small>TRANSFORM</small><h3>Inspect the twin</h3><p>Explore a source-backed 3D representation of the object.</p></Link><Link href="/room"><div className="vv3-stepTop"><span>03</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="room" size={25} /></div><small>EXPERIENCE</small><h3>Build your world</h3><p>Collect, organize, share, and explore what you own.</p></Link></section>
 
-      <section className="vv3-signalBar" aria-label="Platform capabilities">
-        <span>MERCHANT VERIFIED</span><i />
-        <span>3D DIGITAL TWINS</span><i />
-        <span>ONCHAIN PROVENANCE</span><i />
-        <span>OBJECT INTELLIGENCE</span>
-      </section>
+    <section className="vv3-collection" id="collection"><div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>02</span> LIVE COLLECTION</div><h2>Real objects worth<br /><em>discovering.</em></h2></div><p>Every card below maps to a real-world object with an online source and a published 3D model reference.</p></div><div className="vv3-collectionTools"><div className="vv3-categories" role="group" aria-label="Filter objects by category">{categories.map((name) => <button type="button" key={name} className={category === name ? 'active' : ''} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div><label className="vv3-searchBox"><Icon name="search" size={16} /><input type="search" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search real objects" aria-label="Search real objects" /></label></div><p className="vv3-srOnly" aria-live="polite">Showing {filtered.length} of {items.length} verified real-world objects.</p><div className="vv3-objectGrid">{filtered.map((item, index) => <ObjectCard key={item.id} item={item} index={index} />)}</div>{!filtered.length && <div className="vv3-emptyState" role="status"><Icon name="search" size={24} /><strong>No matching objects</strong><span>Try a different search or category.</span></div>}<Link className="vv3-viewAll" href="/marketplace">View full collection <Icon name="arrow" size={16} /></Link></section>
 
-      <section className="vv3-story" id="how-it-works">
-        <div className="vv3-sectionLabel"><span>01</span> THE IDEA</div>
-        <div className="vv3-storyTitle"><small>MORE THAN A MARKETPLACE</small><h2>Your things deserve<br /><em>a digital life.</em></h2></div>
-        <p>Voxel Vault connects every meaningful object to a living digital identity. Verify the purchase, create the twin, then make it part of your world.</p>
-      </section>
-
-      <section className="vv3-journey" aria-label="How Voxel Vault works">
-        <Link href="/receipt"><div className="vv3-stepTop"><span>01</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="receipt" size={25} /></div><small>CAPTURE</small><h3>Verify the purchase</h3><p>Turn a merchant-confirmed receipt into a secure object passport.</p></Link>
-        <Link href="/passport"><div className="vv3-stepTop"><span>02</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="spark" size={25} /></div><small>TRANSFORM</small><h3>Create the twin</h3><p>Give the object an intelligent identity and an interactive 3D form.</p></Link>
-        <Link href="/room"><div className="vv3-stepTop"><span>03</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="room" size={25} /></div><small>EXPERIENCE</small><h3>Build your world</h3><p>Collect, organize, share, and explore everything you own.</p></Link>
-      </section>
-
-      <section className="vv3-collection" id="collection">
-        <div className="vv3-collectionHead">
-          <div><div className="vv3-sectionLabel"><span>02</span> LIVE COLLECTION</div><h2>Objects worth<br /><em>discovering.</em></h2></div>
-          <p>A growing universe of physical objects and their interactive digital counterparts.</p>
-        </div>
-        <div className="vv3-collectionTools">
-          <div className="vv3-categories" role="group" aria-label="Filter objects by category">{categories.map((name) => <button type="button" key={name} className={category === name ? 'active' : ''} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
-          <label className="vv3-searchBox"><Icon name="search" size={16} /><input type="search" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search objects" aria-label="Search objects" /></label>
-        </div>
-        <p className="vv3-srOnly" aria-live="polite">Showing {filtered.length} {filtered.length === 1 ? 'object' : 'objects'}.</p>
-        <div className="vv3-objectGrid">{filtered.map((item, index) => <ObjectCard key={item.id} item={item} index={index} />)}</div>
-        {!filtered.length && <div className="vv3-emptyState" role="status"><Icon name="search" size={24} /><strong>No matching objects</strong><span>Try a different search or category.</span></div>}
-        <Link className="vv3-viewAll" href="/marketplace">View full collection <Icon name="arrow" size={16} /></Link>
-      </section>
-
-      <section className="vv3-intelligence">
-        <div className="vv3-aiVisual"><div className="vv3-aiHalo haloOne" /><div className="vv3-aiHalo haloTwo" /><div className="vv3-aiCore"><Icon name="spark" size={34} /></div><span><i /> CRESTODIAN ONLINE</span></div>
-        <div className="vv3-aiCopy"><div className="vv3-sectionLabel"><span>03</span> OBJECT INTELLIGENCE</div><h2>A vault that<br /><em>understands.</em></h2><p>Ask what an object is, where it came from, what makes it rare, and how it connects to everything else you own.</p><ul><li><i /> Collection intelligence</li><li><i /> Provenance research</li><li><i /> Spatial organization</li></ul><Link className="vv3-lightCta" href="/ai">Meet Crestodian <Icon name="arrow" size={16} /></Link></div>
-      </section>
-
-      <section className="vv3-finalCta">
-        <div><small>YOUR WORLD, VERIFIED</small><h2>Start with one object.</h2><p>Scan a purchase and watch it become something more.</p></div>
-        <Link className="vv3-primaryCta" href="/receipt">Create your first twin <Icon name="arrow" size={17} /></Link>
-      </section>
-
-      <footer className="vv3-footer">
-        <div className="vv3-footerTop"><Brand /><p>Real objects. Intelligent twins.<br />One living collection.</p><nav><Link href="/discover">Discover</Link><Link href="/marketplace">Marketplace</Link><Link href="/receipt">Scan receipt</Link><Link href="/room">My vault</Link><Link href="/ai">Intelligence</Link></nav></div>
-        <div className="vv3-footerBottom"><span>© 2026 VOXEL VAULT</span><div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><span className="vv3-status"><i /> VOXEL VAULT / 2026</span></div>
-      </footer>
-
-      <nav className="vv3-mobileNav" aria-label="Mobile navigation"><Link className="active" href="/discover"><Icon name="search" />Discover</Link><Link href="/receipt"><Icon name="receipt" />Scan</Link><Link href="/room"><Icon name="room" />Vault</Link><Link href="/ai"><Icon name="spark" />AI</Link></nav>
-    </main>
-  );
+    <section className="vv3-intelligence"><div className="vv3-aiVisual"><div className="vv3-aiHalo haloOne" /><div className="vv3-aiHalo haloTwo" /><div className="vv3-aiCore"><Icon name="spark" size={34} /></div><span><i /> CRESTODIAN ONLINE</span></div><div className="vv3-aiCopy"><div className="vv3-sectionLabel"><span>03</span> OBJECT INTELLIGENCE</div><h2>A vault that<br /><em>understands.</em></h2><p>Ask what an object is, where it came from, and how it connects to everything else you own.</p><ul><li><i /> Collection intelligence</li><li><i /> Provenance research</li><li><i /> Object discovery</li></ul><Link className="vv3-lightCta" href="/ai">Meet Crestodian <Icon name="arrow" size={16} /></Link></div></section>
+    <section className="vv3-finalCta"><div><small>YOUR WORLD, VERIFIED</small><h2>Start with one object.</h2><p>Find a real object, inspect it, then bring it into your Vault.</p></div><Link className="vv3-primaryCta" href="/discover">Discover real objects <Icon name="arrow" size={17} /></Link></section>
+    <footer className="vv3-footer"><div className="vv3-footerTop"><Brand /><p>Real objects. Intelligent twins.<br />One living collection.</p><nav><Link href="/discover">Discover</Link><Link href="/marketplace">Marketplace</Link><Link href="/receipt">Scan receipt</Link><Link href="/room">My vault</Link><Link href="/ai">Intelligence</Link></nav></div><div className="vv3-footerBottom"><span>© 2026 VOXEL VAULT</span><div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><span className="vv3-status"><i /> VOXEL VAULT / 2026</span></div></footer>
+    <nav className="vv3-mobileNav" aria-label="Mobile navigation"><Link className="active" href="/discover"><Icon name="search" />Discover</Link><Link href="/receipt"><Icon name="receipt" />Scan</Link><Link href="/room"><Icon name="room" />Vault</Link><Link href="/ai"><Icon name="spark" />AI</Link></nav>
+  </main>;
 }
