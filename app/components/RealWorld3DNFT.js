@@ -19,15 +19,21 @@ export default function RealWorld3DNFT({ item, hero = false }) {
       <div className="vv3-grid" aria-hidden="true" />
       <div className="vv3-twinHeader">
         <span className="vv3-twinPill"><span aria-hidden="true">◆</span> 3D NFT INCLUDED</span>
-        <span className="vv3-twinSource">REAL-WORLD DIGITAL TWIN</span>
+        <span className="vv3-twinSource">REAL PRODUCT DIGITAL TWIN</span>
       </div>
+      {preview && (
+        <div className="vv3-realProductReference" aria-hidden="true">
+          <img src={preview} alt="" loading="lazy" decoding="async" />
+          <span>REAL PRODUCT REFERENCE</span>
+        </div>
+      )}
       <div className="vv3-verified" aria-hidden="true">
         <span style={preview ? { backgroundImage: `url(${preview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>◆</span>
-        <div><small>LIVE 3D</small><b>DRAG · ORBIT · ZOOM</b></div>
+        <div><small>LIVE 3D NFT</small><b>DRAG · ORBIT · ZOOM</b></div>
       </div>
       <div className="vv3-nftBadge" aria-hidden="true">
-        <span>ORIGINAL VAULT ARTWORK</span>
-        <small>PERMANENT 3D PRESENTATION</small>
+        <span>REAL PRODUCT + 3D NFT</span>
+        <small>MATCHED DIGITAL COLLECTIBLE</small>
       </div>
       <Product3DTwin item={item} hero={hero} />
       <figcaption className="vv3-twinFooter" id={titleId}>
