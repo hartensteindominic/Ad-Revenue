@@ -47,10 +47,16 @@ export async function POST(request: Request) {
         sourceUrl: item.sourceUrl,
       }, { status: 503 });
     }
+    if (fulfillment.costUsd === null) {
+      return NextResponse.json({
+        error: 'Supplier cost is not configured for this SKU. Checkout is intentionally locked until the dropship cost is known.',
+        code: 'FULFILLMENT_COST_NOT_CONFIGURED',
+      }, { status: 503 });
+    }
 
-    const physicalCents = customerPriceCents(item.priceUsd);
-    const basePriceCents = customerPriceCents(item.priceUsd) === null ? null : Math.round(Number(item.priceUsd) * 100);
-    if (physicalCents === null || physicalCents < 50 || basePriceCents === null) return NextResponse.json({ error: 'Product price is not configured for checkout' }, { status: 500 });
+    const physicalCents = customerPriceCents(fulfillment.costUsd);
+    const basePriceCents = Math.round(Number(fulfillment.costUsd) * 100);
+    if (physicalCents === null || physicalCents < 50 || !Number.isFinite(basePriceCents) || basePriceCents < 50) return NextResponse.json({ error: 'Supplier price is not configured for checkout' }, { status: 500 });
 
     const markupPercent = getMarkupPercent();
     const grossMerchandiseMarginCents = physicalCents - basePriceCents;
@@ -65,6 +71,7 @@ export async function POST(request: Request) {
       source_cost_cents: String(basePriceCents),
       gross_merchandise_margin_cents: String(grossMerchandiseMarginCents),
       markup_percent: String(markupPercent),
+      markup_basis: 'configured_supplier_cost',
       nft_amount_cents: String(NFT_FEE_CENTS),
       product_source_url: item.sourceUrl,
       fulfillment_provider: fulfillment.provider,
@@ -76,8 +83,10 @@ export async function POST(request: Request) {
       billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: ['US'] },
       phone_number_collection: { enabled: true },
-      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: physicalCents, product_data: { name: item.name, description: `Verified real-world product from ${item.sourceName}. Voxel Vault retail price includes a ${markupPercent}% store markup.` } } },
-        { quantity: 1, price_data: { currency: 'usd', unit_amount: NFT_FEE_CENTS, product_data: { name: `${item.name} · Voxel Vault Digital Twin`, description: 'One digital collectible for your Vault, Room, and world placement.' } } }],
+      line_items: [
+        { quantity: 1, price_data: { currency: 'usd', unit_amount: physicalCents, product_data: { name: item.name, description: `Real-world product fulfilled through the configured supplier. Voxel Vault retail price includes a ${markupPercent}% store markup.` } } },
+        { quantity: 1, price_data: { currency: 'usd', unit_amount: NFT_FEE_CENTS, product_data: { name: `${item.name} · Voxel Vault Digital Twin`, description: 'Original interactive digital collectible for your Vault, Room, and world placement.' } } },
+      ],
       metadata,
       payment_intent_data: { metadata },
       success_url: `${appUrl}/mint?catalog=${id}&session_id={CHECKOUT_SESSION_ID}&physical=1`,
