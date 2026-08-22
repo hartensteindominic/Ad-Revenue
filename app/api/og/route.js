@@ -12,6 +12,7 @@ export async function GET(request) {
   const subtitle = item
     ? `${item.rarity} · ${item.realityBasis} · ${item.material}`
     : 'A 3D-first digital object marketplace';
+  const price = item?.priceUsd ? `$${item.priceUsd}` : '3D NFT';
 
   return new ImageResponse(
     (
@@ -24,10 +25,10 @@ export async function GET(request) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 18, color: '#73798b' }}>3D DIGITAL OBJECT · REAL OWNERSHIP</div>
+            <div style={{ fontSize: 18, color: '#73798b' }}>ORIGINAL 3D DIGITAL TWIN · REAL-WORLD REFERENCE</div>
             <div style={{ fontSize: 24, color: '#fff' }}>Inspect the object in real 3D before collecting.</div>
           </div>
-          {item && <div style={{ display: 'flex', fontSize: 30, fontWeight: 800 }}>{item.price} ETH</div>}
+          <div style={{ display: 'flex', fontSize: 30, fontWeight: 800 }}>{price}</div>
         </div>
       </div>
     ),
