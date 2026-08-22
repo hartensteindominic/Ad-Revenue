@@ -1,45 +1,59 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { useState } from 'react';
 import RealProductModel from './RealProductModel';
 
-const M=(color,metalness=.2,roughness=.3,clearcoat=0)=>new THREE.MeshPhysicalMaterial({color,metalness,roughness,clearcoat,clearcoatRoughness:.18});
-const add=(g,geometry,material,p=[0,0,0],r=[0,0,0],s=[1,1,1])=>{const m=new THREE.Mesh(geometry,material);m.position.set(...p);m.rotation.set(...r);m.scale.set(...s);m.castShadow=true;m.receiveShadow=true;g.add(m);return m};
-const bevel=(g,size,mat,p=[0,0,0],r=[0,0,0],radius=.08)=>add(g,new RoundedBoxGeometry(size[0],size[1],size[2],6,radius),mat,p,r);
-
-function buildProduct(item={}){
- const g=new THREE.Group(),n=`${item.name||''} ${item.type||''}`.toLowerCase();
- const metallic=M(0x9ca7b7,.86,.2,.35),black=M(0x11151d,.72,.2,.35),white=M(0xf3f1ea,.04,.25,.3),glass=M(0x4c87ad,.28,.07,.65),chrome=M(0xcbd3dc,.92,.12,.55),blue=M(0x5268ff,.45,.2,.35),gold=M(0xd2a53a,.88,.17,.45),steel=M(0x8f98a5,.9,.16,.38),green=M(0x3f9b73,.3,.25,.3),warm=M(0xc98b4a,.22,.28,.25),soft=M(0xe8e3d7,.02,.5,.05);
- if(n.includes('blender')){bevel(g,[1.25,2.35,1.25],white,[0,.05,0],[],.28);add(g,new THREE.CylinderGeometry(.56,.56,.12,64),steel,[0,1.22,0]);add(g,new THREE.CylinderGeometry(.47,.47,.06,64),black,[0,1.3,0]);add(g,new THREE.TorusGeometry(.48,.045,16,64),chrome,[0,1.34,0]);add(g,new THREE.CylinderGeometry(.42,.42,.035,64),glass,[0,1.37,0]);add(g,new THREE.CylinderGeometry(.11,.11,.06,32),blue,[0,-1.14,.63],[Math.PI/2,0,0]);}
- else if(n.includes('desk lamp')||n.includes('clock lamp')){add(g,new THREE.CylinderGeometry(.72,.86,.14,64),steel,[0,-1.25,0]);add(g,new THREE.CylinderGeometry(.12,.12,1.95,32),steel,[0,-.2,0]);add(g,new THREE.TorusGeometry(.55,.09,20,64),white,[0,.86,0],[0,Math.PI/2,0]);add(g,new THREE.CylinderGeometry(.5,.5,.12,48),white,[0,.86,0],[0,Math.PI/2,0]);add(g,new THREE.CylinderGeometry(.34,.34,.035,48),glass,[0,.86,.08],[0,Math.PI/2,0]);add(g,new THREE.BoxGeometry(.35,.04,.04),blue,[0,.86,.11]);}
- else if(n.includes('spiral')){add(g,new THREE.CylinderGeometry(.65,.78,.12,64),gold,[0,-1.3,0]);const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-1.2,0),new THREE.Vector3(.35,-.35,0),new THREE.Vector3(-.25,.35,0),new THREE.Vector3(.15,1.05,0)]);add(g,new THREE.TubeGeometry(curve,64,.1,18,false),gold);add(g,new THREE.SphereGeometry(.3,32,20),warm,[.15,1.08,0]);}
- else if(n.includes('pet water')||n.includes('water dispenser')||n.includes('water fountain')||n.includes('pet bowl')){bevel(g,[1.65,.55,1.28],white,[0,-.72,0],[],.24);add(g,new THREE.CylinderGeometry(.58,.68,.42,64),steel,[0,-.12,0]);add(g,new THREE.CylinderGeometry(.5,.5,.08,64),glass,[0,.13,0]);add(g,new THREE.TorusGeometry(.5,.035,14,64),blue,[0,.18,0]);add(g,new THREE.CylinderGeometry(.06,.06,.65,24),steel,[0,.48,0]);add(g,new THREE.SphereGeometry(.11,24,16),blue,[0,.82,0]);}
- else if(n.includes('dog water')||n.includes('travel bottle')){add(g,new THREE.CylinderGeometry(.42,.48,2.05,64),green,[0,0,0]);add(g,new THREE.TorusGeometry(.42,.035,16,64),chrome,[0,1.03,0]);add(g,new THREE.CylinderGeometry(.44,.44,.15,64),black,[0,1.12,0]);bevel(g,[.7,.32,.82],green,[.55,-.05,0],[],.12);}
- else if(n.includes('vanity')){bevel(g,[3.2,.18,1.55],white,[0,.55,0],[],.08);for(const x of[-1.25,1.25])bevel(g,[.18,1.65,1.25],white,[x,-.3,0],[],.05);bevel(g,[1.9,1.45,.08],glass,[0,1.42,-.18],[],.02);for(const x of[-.65,0,.65])add(g,new THREE.SphereGeometry(.045,16,12),gold,[x,1.42,.02]);bevel(g,[.75,.28,.65],soft,[0,-1.15,0],[],.12);}
- else if(n.includes('quencher')||n.includes('stanley')||n.includes('tumbler')){const body=add(g,new THREE.CylinderGeometry(.78,.72,2.55,72),green,[0,.05,0]);add(g,new THREE.TorusGeometry(.75,.035,16,72),steel,[0,1.31,0]);add(g,new THREE.CylinderGeometry(.77,.77,.12,72),black,[0,1.37,0]);add(g,new THREE.CylinderGeometry(.62,.62,.08,72),green,[0,1.46,0]);const handle=new THREE.TorusGeometry(.55,.11,20,64,Math.PI*1.25);add(g,handle,green,[.77,.15,0],[Math.PI/2,0,Math.PI/2]);body.scale.x=1.02;}
- else {const body=item.material==='gold'?gold:item.material==='ceramic'?white:item.material==='metallic'?metallic:black;bevel(g,[1.5,2.15,.8],body,[0,0,0],[],.18);add(g,new THREE.TorusGeometry(.55,.05,16,64),chrome,[0,.75,.42],[Math.PI/2,0,0]);add(g,new THREE.CylinderGeometry(.18,.18,.05,32),blue,[.38,.55,.43],[Math.PI/2,0,0]);}
- return g;
+function TwinFallback({ item, hidden }) {
+  return (
+    <div
+      className="vv3-twinFallback"
+      role="img"
+      aria-label={`${item?.name || 'Real-world object'} 3D NFT digital twin`}
+      aria-hidden={hidden ? 'true' : undefined}
+      style={{
+        opacity: hidden ? 0 : 1,
+        pointerEvents: hidden ? 'none' : 'auto',
+      }}
+    >
+      <div
+        className="vv3-twinFallbackOrb"
+        style={
+          item?.previewUri
+            ? {
+                backgroundImage: `url(${item.previewUri})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                borderRadius: '18px',
+                width: '150px',
+                height: '170px',
+                boxShadow:
+                  '0 18px 45px rgba(0,0,0,.42), 0 0 35px rgba(106,88,232,.18)',
+                transform: 'perspective(700px) rotateY(-10deg)',
+                backgroundColor: '#10131c',
+              }
+            : undefined
+        }
+      />
+      <span>REAL PRODUCT 3D NFT</span>
+      <small>
+        {item?.name || 'Interactive digital collectible'} · drag / orbit / zoom
+      </small>
+    </div>
+  );
 }
 
-function addRealProductImage(scene,item){
- const url=item?.previewUri;if(!url)return null;const group=new THREE.Group();const loader=new THREE.TextureLoader();loader.setCrossOrigin('anonymous');const front=loader.load(url,tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;});
- const frameMat=new THREE.MeshPhysicalMaterial({color:0x121621,metalness:.72,roughness:.2,clearcoat:.35});const imageMat=new THREE.MeshBasicMaterial({map:front,transparent:true});
- bevel(group,[2.18,2.52,.14],frameMat,[0,0,.02],[],.16);const image=new THREE.Mesh(new THREE.PlaneGeometry(1.92,2.22),imageMat);image.position.z=.105;group.add(image);const back=new THREE.Mesh(new THREE.PlaneGeometry(1.92,2.22),new THREE.MeshBasicMaterial({color:0x090b12}));back.position.z=-.105;back.rotation.y=Math.PI;group.add(back);
- const glow=new THREE.Mesh(new THREE.PlaneGeometry(1.96,2.26),new THREE.MeshBasicMaterial({color:0x5c4cff,transparent:true,opacity:.045,side:THREE.DoubleSide}));glow.position.z=.11;group.add(glow);group.position.set(2.05,.05,.25);group.rotation.y=-.32;group.userData.isRealProductReference=true;scene.add(group);return group;
-}
-function TwinFallback({item,hidden}){return <div className="vv3-twinFallback" role="img" aria-label={`${item?.name||'Real-world object'} 3D NFT digital twin`} aria-hidden={hidden?'true':undefined} style={{opacity:hidden?0:1,pointerEvents:hidden?'none':'auto'}}><div className="vv3-twinFallbackOrb" style={item?.previewUri?{backgroundImage:`url(${item.previewUri})`,backgroundSize:'cover',backgroundPosition:'center',borderRadius:'18px',width:'150px',height:'170px',boxShadow:'0 18px 45px rgba(0,0,0,.42), 0 0 35px rgba(106,88,232,.18)',transform:'perspective(700px) rotateY(-10deg)',backgroundColor:'#10131c'}:undefined}/><span>REAL PRODUCT 3D NFT</span><small>{item?.name||'Interactive digital collectible'} · drag / orbit / zoom</small></div>}
-function StudioStage(){const g=new THREE.Group();const floor=new THREE.Mesh(new THREE.CircleGeometry(4.8,96),new THREE.MeshStandardMaterial({color:0x0b0e16,roughness:.5,metalness:.15}));floor.rotation.x=-Math.PI/2;floor.position.y=-1.42;floor.receiveShadow=true;g.add(floor);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.65,.012,8,96),new THREE.MeshBasicMaterial({color:0x6658e8,transparent:true,opacity:.45}));ring.rotation.x=Math.PI/2;ring.position.y=-1.405;g.add(ring);return g;}
+export default function Product3DTwin({ item, hero = false }) {
+  const [ready, setReady] = useState(false);
 
-export default function Product3DTwin({item,hero=false}){
- const host=useRef(null),[ready,setReady]=useState(false);
- useEffect(()=>{const root=host.current;if(!root)return;let mounted=true,renderer,scene,camera,controls,raf,ro;const fallback=()=>{if(mounted)setReady(false)};try{const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x070910,.04);camera=new THREE.PerspectiveCamera(32,1,.1,100);renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,hero?2:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.shadowMap.enabled=!reduced;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab';renderer.domElement.setAttribute('aria-hidden','true');renderer.domElement.addEventListener('webglcontextlost',fallback,{passive:true});root.appendChild(renderer.domElement);
- scene.add(new THREE.HemisphereLight(0xf7fbff,0x080b13,2.8));const key=new THREE.DirectionalLight(0xffffff,5.2);key.position.set(4,7,6);key.castShadow=true;key.shadow.mapSize.set(hero?1536:1024,hero?1536:1024);scene.add(key);const rim=new THREE.DirectionalLight(0x7667ff,3.5);rim.position.set(-5,4,-5);scene.add(rim);const fill=new THREE.PointLight(0x35c8ff,1.6,10);fill.position.set(3,1,-2);scene.add(fill);scene.add(StudioStage());
- const object=buildProduct(item);const photo=addRealProductImage(scene,item);const combined=new THREE.Group();combined.add(object);if(photo){scene.remove(photo);combined.add(photo)}scene.add(combined);
- const bounds=new THREE.Box3().setFromObject(combined);const center=bounds.getCenter(new THREE.Vector3());const size=bounds.getSize(new THREE.Vector3());combined.position.sub(center);combined.position.y+=.1;
- const max=Math.max(size.x,size.y,size.z,2.8);const fov=THREE.MathUtils.degToRad(camera.fov);camera.position.set(max*.06,max*.08,max/(2*Math.tan(fov/2))*1.42);camera.lookAt(0,.05,0);controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.enablePan=false;controls.minDistance=Math.max(2.5,max*.72);controls.maxDistance=Math.max(10,max*3.2);controls.autoRotate=!reduced;controls.autoRotateSpeed=.28;controls.target.set(0,.05,0);
- const resize=()=>{if(!mounted)return;const w=Math.max(root.clientWidth,1),h=Math.max(root.clientHeight,hero?390:320);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};resize();ro=new ResizeObserver(resize);ro.observe(root);const animate=()=>{if(!mounted)return;raf=requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)};animate();setReady(true)}catch{fallback()}return()=>{mounted=false;if(raf)cancelAnimationFrame(raf);ro?.disconnect();controls?.dispose();renderer?.domElement?.removeEventListener('webglcontextlost',fallback);scene?.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>{m.map?.dispose?.();m.dispose()});else{o.material?.map?.dispose?.();o.material?.dispose?.()}});renderer?.dispose();if(renderer?.domElement?.parentNode===root)root.removeChild(renderer.domElement)}},[item,hero]);
- return <div ref={host} className="vv3-twinCanvas" aria-label={`${item?.name||'Real-world object'} 3D NFT digital twin`} role="img"><RealProductModel item={item}/><TwinFallback item={item} hidden={ready}/></div>;
+  return (
+    <div
+      className="vv3-twinCanvas"
+      role="img"
+      aria-label={`${item?.name || 'Real-world object'} 3D NFT digital twin`}
+      data-hero={hero ? 'true' : 'false'}
+    >
+      <RealProductModel item={item} onLoaded={setReady} />
+      <TwinFallback item={item} hidden={ready} />
+    </div>
+  );
 }
