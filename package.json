@@ -4,7 +4,7 @@
   "version": "1.4.0",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "test:universal": "node scripts/smoke-test-universal.mjs",
     "test:rewards": "node scripts/test-rewards-engine.mjs",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.54.0",
     "ethers": "^6.15.0",
-    "next": "^15.5.23",
+    "next": "^16.3.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "stripe": "^18.5.0",
@@ -28,10 +28,10 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/contracts": "^5.4.0",
-    "dotenv": "^16.6.1",
-    "typescript": "5.8.2",
-    "@types/react": "19.1.10",
     "@types/node": "20.17.6",
-    "hardhat": "^2.26.3"
+    "@types/react": "19.1.10",
+    "dotenv": "^16.6.1",
+    "hardhat": "^2.26.3",
+    "typescript": "5.8.2"
   }
 }

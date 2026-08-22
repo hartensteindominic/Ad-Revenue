@@ -22,6 +22,8 @@ function releaseNext() {
 export default function Lazy3DPreview({ children, placeholder, rootMargin = '220px', minHeight = 180 }) {
   const hostRef = useRef(null);
   const queuedRef = useRef(null);
+  const readyRef = useRef(false);
+  const visibleRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [queued, setQueued] = useState(false);
 
@@ -29,20 +31,21 @@ export default function Lazy3DPreview({ children, placeholder, rootMargin = '220
     const node = hostRef.current;
     if (!node) return undefined;
     let cancelled = false;
-    let observer;
 
     const activate = () => {
-      if (cancelled || ready || queuedRef.current) return;
+      if (cancelled || !visibleRef.current || readyRef.current || queuedRef.current) return;
       if (activePreviewCount < maxActivePreviews()) {
         activePreviewCount += 1;
+        readyRef.current = true;
         setReady(true);
         return;
       }
 
       const request = () => {
         queuedRef.current = null;
-        if (cancelled) return;
+        if (cancelled || !visibleRef.current || readyRef.current) return;
         activePreviewCount += 1;
+        readyRef.current = true;
         setReady(true);
         setQueued(false);
       };
@@ -51,12 +54,33 @@ export default function Lazy3DPreview({ children, placeholder, rootMargin = '220
       waitingPreviews.push(request);
     };
 
-    if (typeof IntersectionObserver === 'undefined') activate();
-    else {
+    const deactivate = (updateState = true) => {
+      const request = queuedRef.current;
+      if (request) {
+        const index = waitingPreviews.indexOf(request);
+        if (index >= 0) waitingPreviews.splice(index, 1);
+        queuedRef.current = null;
+        if (updateState) setQueued(false);
+      }
+      if (readyRef.current) {
+        readyRef.current = false;
+        activePreviewCount = Math.max(0, activePreviewCount - 1);
+        if (updateState) setReady(false);
+        releaseNext();
+      }
+    };
+
+    let observer;
+    if (typeof IntersectionObserver === 'undefined') {
+      visibleRef.current = true;
+      activate();
+    } else {
       observer = new IntersectionObserver(([entry]) => {
-        if (entry?.isIntersecting) {
+        visibleRef.current = Boolean(entry?.isIntersecting);
+        if (visibleRef.current) {
           activate();
-          observer.disconnect();
+        } else {
+          deactivate();
         }
       }, { rootMargin, threshold: 0.01 });
       observer.observe(node);
@@ -64,23 +88,11 @@ export default function Lazy3DPreview({ children, placeholder, rootMargin = '220
 
     return () => {
       cancelled = true;
+      visibleRef.current = false;
       observer?.disconnect();
-      const request = queuedRef.current;
-      if (request) {
-        const index = waitingPreviews.indexOf(request);
-        if (index >= 0) waitingPreviews.splice(index, 1);
-        queuedRef.current = null;
-      }
+      deactivate(false);
     };
-  }, [rootMargin, ready, queued]);
-
-  useEffect(() => {
-    if (!ready) return undefined;
-    return () => {
-      activePreviewCount = Math.max(0, activePreviewCount - 1);
-      releaseNext();
-    };
-  }, [ready]);
+  }, [rootMargin]);
 
   return (
     <div ref={hostRef} style={{ width: '100%', height: '100%', minHeight }}>
