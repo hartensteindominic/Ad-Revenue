@@ -22,7 +22,12 @@ export default function CanonicalNFTMedia({ item, interactive = false, className
   };
 
   return (
-    <NFT3DStage title={item?.name || 'Digital Twin'} status={media.modelUri ? 'VERIFIED 3D ASSET' : 'LIVE DIGITAL TWIN'}>
+    <NFT3DStage
+      title={item?.name || 'Digital Twin'}
+      status={media.modelUri ? 'VERIFIED 3D ASSET' : 'LIVE DIGITAL TWIN'}
+      family={item?.family}
+      rarity={item?.rarity}
+    >
       <div className={`relative flex min-h-[320px] items-center justify-center ${className}`}>
         {media.modelUri ? (
           <Safe3DViewer
