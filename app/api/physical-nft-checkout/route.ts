@@ -5,7 +5,20 @@ import { getSupabaseAdmin } from '../../../lib/supabase-admin';
 import { getFulfillmentConfig } from '../../../lib/fulfillment';
 
 const NFT_FEE_CENTS = 299;
+const DEFAULT_MARKUP_PERCENT = 25;
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
+
+function getMarkupPercent() {
+  const configured = Number(process.env.VOXEL_MARKUP_PERCENT || DEFAULT_MARKUP_PERCENT);
+  return Number.isFinite(configured) && configured >= 0 && configured <= 500 ? configured : DEFAULT_MARKUP_PERCENT;
+}
+
+function customerPriceCents(basePrice) {
+  const numeric = Number(basePrice);
+  if (!Number.isFinite(numeric) || numeric <= 0) return null;
+  const markup = getMarkupPercent();
+  return Math.ceil(numeric * (1 + markup / 100) * 100);
+}
 
 export async function POST(request: Request) {
   try {
@@ -26,8 +39,6 @@ export async function POST(request: Request) {
     if (!item) return NextResponse.json({ error: 'Product unavailable' }, { status: 404 });
     if (!item.sourceUrl || !item.sourceName) return NextResponse.json({ error: 'This product has no verified online source' }, { status: 409 });
 
-    // Fail closed. A real product page is not proof that Voxel Vault has
-    // permission, inventory, or a fulfillment path for that product.
     const fulfillment = getFulfillmentConfig(item.id);
     if (!fulfillment) {
       return NextResponse.json({
@@ -37,10 +48,13 @@ export async function POST(request: Request) {
       }, { status: 503 });
     }
 
-    const physicalCents = Math.round(Number(item.priceUsd) * 100);
-    if (!Number.isFinite(physicalCents) || physicalCents < 50) return NextResponse.json({ error: 'Product price is not configured for checkout' }, { status: 500 });
+    const physicalCents = customerPriceCents(item.priceUsd);
+    const basePriceCents = customerPriceCents(item.priceUsd) === null ? null : Math.round(Number(item.priceUsd) * 100);
+    if (physicalCents === null || physicalCents < 50 || basePriceCents === null) return NextResponse.json({ error: 'Product price is not configured for checkout' }, { status: 500 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://voxelvault.io';
+    const markupPercent = getMarkupPercent();
+    const grossMerchandiseMarginCents = physicalCents - basePriceCents;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.voxelvault.io';
     const metadata = {
       mint_mode: 'physical_nft',
       catalog_id: String(id),
@@ -48,6 +62,9 @@ export async function POST(request: Request) {
       wallet: normalizedWallet,
       buyer_id: user.id,
       physical_amount_cents: String(physicalCents),
+      source_cost_cents: String(basePriceCents),
+      gross_merchandise_margin_cents: String(grossMerchandiseMarginCents),
+      markup_percent: String(markupPercent),
       nft_amount_cents: String(NFT_FEE_CENTS),
       product_source_url: item.sourceUrl,
       fulfillment_provider: fulfillment.provider,
@@ -59,27 +76,8 @@ export async function POST(request: Request) {
       billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: ['US'] },
       phone_number_collection: { enabled: true },
-      line_items: [{
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          unit_amount: physicalCents,
-          product_data: {
-            name: item.name,
-            description: `Verified real-world product from ${item.sourceName}.`,
-          },
-        },
-      }, {
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          unit_amount: NFT_FEE_CENTS,
-          product_data: {
-            name: `${item.name} · Voxel Vault Digital Twin`,
-            description: 'One digital collectible for your Vault, Room, and world placement.',
-          },
-        },
-      }],
+      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: physicalCents, product_data: { name: item.name, description: `Verified real-world product from ${item.sourceName}. Voxel Vault retail price includes a ${markupPercent}% store markup.` } } },
+        { quantity: 1, price_data: { currency: 'usd', unit_amount: NFT_FEE_CENTS, product_data: { name: `${item.name} · Voxel Vault Digital Twin`, description: 'One digital collectible for your Vault, Room, and world placement.' } } }],
       metadata,
       payment_intent_data: { metadata },
       success_url: `${appUrl}/mint?catalog=${id}&session_id={CHECKOUT_SESSION_ID}&physical=1`,
