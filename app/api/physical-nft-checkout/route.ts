@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe-server';
 import { getCatalogItem } from '../../../lib/catalog';
 import { getSupabaseAdmin } from '../../../lib/supabase-admin';
+import { getFulfillmentConfig } from '../../../lib/fulfillment';
 
 const NFT_FEE_CENTS = 299;
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
@@ -25,12 +26,13 @@ export async function POST(request: Request) {
     if (!item) return NextResponse.json({ error: 'Product unavailable' }, { status: 404 });
     if (!item.sourceUrl || !item.sourceName) return NextResponse.json({ error: 'This product has no verified online source' }, { status: 409 });
 
-    // Fail closed: Voxel Vault must never accept a "ships to you" order unless
-    // a real fulfillment provider is configured server-side.
-    if (!process.env.FULFILLMENT_API_URL || !process.env.FULFILLMENT_API_KEY) {
+    // Fail closed. A real product page is not proof that Voxel Vault has
+    // permission, inventory, or a fulfillment path for that product.
+    const fulfillment = getFulfillmentConfig(item.id);
+    if (!fulfillment) {
       return NextResponse.json({
-        error: 'Automatic physical fulfillment is not connected yet. The verified retailer remains available for the physical purchase, while NFT checkout can be completed separately.',
-        code: 'FULFILLMENT_NOT_CONFIGURED',
+        error: 'This product is source-verified but not connected to a Voxel Vault fulfillment supplier yet.',
+        code: 'FULFILLMENT_NOT_READY',
         sourceUrl: item.sourceUrl,
       }, { status: 503 });
     }
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
       physical_amount_cents: String(physicalCents),
       nft_amount_cents: String(NFT_FEE_CENTS),
       product_source_url: item.sourceUrl,
+      fulfillment_provider: fulfillment.provider,
     };
 
     const session = await stripe.checkout.sessions.create({
