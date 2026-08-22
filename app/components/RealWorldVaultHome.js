@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {REAL_WORLD_CATALOG} from '../../lib/realWorldCatalog';
 import './VaultHomeV3.css';
@@ -19,8 +20,8 @@ function Model({item,hero=false}){
   };
   const reset=()=>{setFailed(false);setActive(false);if(timer.current)clearTimeout(timer.current)};
   return <div style={{width:'100%',height,minHeight:hero?420:240,position:'relative',overflow:'hidden',background:'#0b0e16'}}>
-    <img src={item.previewUri} alt={item.name} loading={hero?'eager':'lazy'} decoding="async" style={{width:'100%',height:'100%',objectFit:'cover',display:active&&!failed?'none':'block'}} onError={(e)=>{e.currentTarget.style.display='none'}}/>
-    {active&&!failed&&item.modelEmbedUrl?<iframe title={`${item.name} interactive 3D model`} src={item.modelEmbedUrl.replace('autostart=1','autostart=0')} style={{width:'100%',height:'100%',border:0,display:'block'}} allow="autoplay; fullscreen; xr-spatial-tracking" allowFullScreen loading="eager" onError={()=>setFailed(true)}/>:null}
+    <Image src={item.previewUri} alt={item.name} fill priority={hero} sizes={hero?'(max-width: 900px) 100vw, 50vw':'(max-width: 900px) 100vw, 33vw'} quality={82} style={{objectFit:'cover',display:active&&!failed?'none':'block'}} onError={()=>setFailed(false)}/>
+    {active&&!failed&&item.modelEmbedUrl?<iframe title={`${item.name} interactive 3D model`} src={item.modelEmbedUrl.replace('autostart=1','autostart=0')} style={{width:'100%',height:'100%',border:0,display:'block'}} allow="autoplay; fullscreen; xr-spatial-tracking" allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin" onLoad={()=>{}}/>:null}
     {item.modelEmbedUrl&&!active&&!failed?<button type="button" onClick={activate} aria-label={`Load 3D reference for ${item.name}`} style={{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',display:'inline-flex',alignItems:'center',gap:8,padding:'11px 15px',border:'1px solid rgba(255,255,255,.22)',borderRadius:999,background:'rgba(5,7,12,.78)',backdropFilter:'blur(12px)',color:'#fff',fontSize:10,fontWeight:800,letterSpacing:'.08em',cursor:'pointer',whiteSpace:'nowrap'}}><Icon name="cube" size={15}/> VIEW 3D</button>:null}
     {failed?<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:9,padding:24,textAlign:'center',background:'linear-gradient(180deg,rgba(8,10,16,.25),rgba(8,10,16,.72))'}}><span style={{fontSize:11,fontWeight:800,letterSpacing:'.08em'}}>3D REFERENCE UNAVAILABLE</span><span style={{fontSize:10,color:'rgba(255,255,255,.6)',maxWidth:260}}>The product image remains available. Your network may block the external 3D viewer.</span><button type="button" onClick={reset} style={{padding:'8px 12px',borderRadius:999,border:'1px solid rgba(255,255,255,.16)',background:'rgba(255,255,255,.06)',color:'#fff',cursor:'pointer',fontSize:9}}>TRY AGAIN</button></div>:null}
     <div style={{position:'absolute',left:12,bottom:12,padding:'7px 9px',borderRadius:999,background:'rgba(5,7,12,.82)',backdropFilter:'blur(10px)',fontSize:9,letterSpacing:'.12em',fontWeight:800}}>{item.modelEmbedUrl?(failed?'3D FALLBACK':'3D REFERENCE'):'3D TWIN PENDING'}</div>
