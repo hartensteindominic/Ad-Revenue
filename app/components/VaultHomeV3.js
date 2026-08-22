@@ -10,7 +10,7 @@ const Lazy3DPreview = dynamic(() => import('./Lazy3DPreview'), { ssr: false });
 const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
 const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
 
-const items = getCatalogWindow(0, 8);
+const items = getCatalogWindow(0);
 const categories = ['All objects', 'Artifacts', 'Vehicles', 'Creatures', 'Architecture'];
 
 function Icon({ name, size = 18 }) {
@@ -38,31 +38,41 @@ function Brand() {
 function ObjectModel({ item, hero = false }) {
   if (!item) return null;
   return (
-    <Lazy3DPreview minHeight={hero ? 520 : 250} rootMargin={hero ? '80px' : '320px'}>
-      {item.renderMode === 'voxel' && item.shape ? (
-        <VoxelViewer shape={item.shape} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} />
-      ) : (
-        <ArtPreview family={item.family || 'sculpture'} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} interactive={hero} showcase={hero} />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <Lazy3DPreview minHeight={hero ? 520 : 250} rootMargin={hero ? '80px' : '320px'}>
+        {item.renderMode === 'voxel' && item.shape ? (
+          <VoxelViewer shape={item.shape} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} />
+        ) : (
+          <ArtPreview family={item.family || 'sculpture'} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} interactive={hero} showcase={hero} />
+        )}
+      </Lazy3DPreview>
+      {item.imageUrl && (
+        <a href={item.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Shop ${item.name} online`} style={{ position: 'absolute', right: 10, bottom: 10, zIndex: 8, width: 76, height: 76, overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(255,255,255,.16)', background: 'rgba(5,6,12,.88)', boxShadow: '0 10px 30px rgba(0,0,0,.35)' }}>
+          <img src={item.imageUrl} alt={item.imageAlt} loading={hero ? 'eager' : 'lazy'} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={(event) => { event.currentTarget.style.opacity = '0'; }} />
+          <span style={{ position: 'absolute', left: 6, bottom: 5, fontSize: 7, letterSpacing: '.08em', color: '#fff', background: 'rgba(5,6,12,.78)', padding: '3px 5px', borderRadius: 999 }}>SHOP ↗</span>
+        </a>
       )}
-    </Lazy3DPreview>
+    </div>
   );
 }
 
 function ObjectCard({ item, index }) {
   return (
-    <Link className="vv3-objectCard" href={`/marketplace?asset=${encodeURIComponent(item.id)}`} aria-label={`View ${item.name}`}>
-      <div className="vv3-objectVisual">
-        <ObjectModel item={item} />
-        <span className="vv3-cardIndex">{String(index + 1).padStart(2, '0')}</span>
-        <span className="vv3-liveBadge"><i /> DIGITAL TWIN</span>
-        <span className="vv3-cardArrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
-      </div>
-      <div className="vv3-objectDetails">
-        <div><small>{item.type || 'DIGITAL OBJECT'}</small><h3>{item.name}</h3></div>
-        <strong>${item.priceUsd}</strong>
-      </div>
-      <div className="vv3-objectMeta"><span>PHYSICAL + DIGITAL</span><span>{item.rarity || 'ORIGINAL'}</span></div>
-    </Link>
+    <article className="vv3-objectCard">
+      <Link href={`/marketplace?asset=${encodeURIComponent(item.id)}`} aria-label={`View ${item.name}`}>
+        <div className="vv3-objectVisual">
+          <ObjectModel item={item} />
+          <span className="vv3-cardIndex">{String(index + 1).padStart(2, '0')}</span>
+          <span className="vv3-liveBadge"><i /> REAL OBJECT</span>
+          <span className="vv3-cardArrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
+        </div>
+        <div className="vv3-objectDetails">
+          <div><small>{item.type || 'REAL OBJECT'} · {item.brand}</small><h3>{item.name}</h3></div>
+          <strong>${item.priceUsd}</strong>
+        </div>
+      </Link>
+      <div className="vv3-objectMeta"><span>{item.sourceName} · {item.modelStatus}</span><a href={item.sourceUrl} target="_blank" rel="noreferrer">SHOP ONLINE ↗</a></div>
+    </article>
   );
 }
 
@@ -71,7 +81,7 @@ export default function VaultHomeV3() {
   const [category, setCategory] = useState('All objects');
   const heroItem = items[0];
   const filtered = useMemo(() => items.filter((item) => {
-    const haystack = `${item.name} ${item.type} ${item.creator} ${item.material} ${item.family}`.toLowerCase();
+    const haystack = `${item.name} ${item.type} ${item.creator} ${item.material} ${item.family} ${item.brand}`.toLowerCase();
     const type = String(item.type || '').toLowerCase();
     const categoryMatch = category === 'All objects' || type === category.replace(/s$/, '').toLowerCase();
     return (!query.trim() || haystack.includes(query.trim().toLowerCase())) && categoryMatch;
@@ -107,7 +117,7 @@ export default function VaultHomeV3() {
             <Link className="vv3-textCta" href="#how-it-works"><span><Icon name="spark" size={14} /></span> See how it works</Link>
           </div>
           <div className="vv3-proofRow" aria-label="Product benefits">
-            <span><Icon name="shield" size={16} /><b>Receipt verified</b></span>
+            <span><Icon name="shield" size={16} /><b>Source verified</b></span>
             <span><Icon name="cube" size={16} /><b>Interactive 3D</b></span>
             <span><Icon name="room" size={16} /><b>Yours to keep</b></span>
           </div>
@@ -117,18 +127,15 @@ export default function VaultHomeV3() {
           <div className="vv3-visualTop"><span><i /> LIVE OBJECT</span><small>DRAG TO INSPECT</small></div>
           <div className="vv3-modelFrame"><div className="vv3-grid" /><div className="vv3-orbit" /><ObjectModel item={heroItem} hero /></div>
           <div className="vv3-featureMeta">
-            <div><small>GENESIS OBJECT / 001</small><strong>{heroItem?.name || 'Vault Artifact'}</strong><span>{heroItem?.material || 'Rare material'} · {heroItem?.rarity || 'Original'}</span></div>
+            <div><small>VERIFIED OBJECT / 001</small><strong>{heroItem?.name || 'Vault Artifact'}</strong><span>{heroItem?.brand || 'Real-world'} · {heroItem?.modelStatus || '3D twin'}</span></div>
             <Link href={`/marketplace?asset=${heroItem?.id || 1}`} aria-label="View featured object"><Icon name="arrow" size={20} /></Link>
           </div>
-          <div className="vv3-verified"><span><Icon name="shield" size={15} /></span><div><small>AUTHENTICITY</small><b>VERIFIED</b></div></div>
+          <div className="vv3-verified"><span><Icon name="shield" size={15} /></span><div><small>ONLINE SOURCE</small><b>VERIFIED</b></div></div>
         </div>
       </section>
 
       <section className="vv3-signalBar" aria-label="Platform capabilities">
-        <span>MERCHANT VERIFIED</span><i />
-        <span>3D DIGITAL TWINS</span><i />
-        <span>ONCHAIN PROVENANCE</span><i />
-        <span>OBJECT INTELLIGENCE</span>
+        <span>MERCHANT VERIFIED</span><i /><span>3D DIGITAL TWINS</span><i /><span>ONCHAIN PROVENANCE</span><i /><span>OBJECT INTELLIGENCE</span>
       </section>
 
       <section className="vv3-story" id="how-it-works">
@@ -146,7 +153,7 @@ export default function VaultHomeV3() {
       <section className="vv3-collection" id="collection">
         <div className="vv3-collectionHead">
           <div><div className="vv3-sectionLabel"><span>02</span> LIVE COLLECTION</div><h2>Objects worth<br /><em>discovering.</em></h2></div>
-          <p>A growing universe of physical objects and their interactive digital counterparts.</p>
+          <p>A verified catalog of real-world products and their interactive digital counterparts.</p>
         </div>
         <div className="vv3-collectionTools">
           <div className="vv3-categories" role="group" aria-label="Filter objects by category">{categories.map((name) => <button type="button" key={name} className={category === name ? 'active' : ''} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
@@ -163,16 +170,12 @@ export default function VaultHomeV3() {
         <div className="vv3-aiCopy"><div className="vv3-sectionLabel"><span>03</span> OBJECT INTELLIGENCE</div><h2>A vault that<br /><em>understands.</em></h2><p>Ask what an object is, where it came from, what makes it rare, and how it connects to everything else you own.</p><ul><li><i /> Collection intelligence</li><li><i /> Provenance research</li><li><i /> Spatial organization</li></ul><Link className="vv3-lightCta" href="/ai">Meet Crestodian <Icon name="arrow" size={16} /></Link></div>
       </section>
 
-      <section className="vv3-finalCta">
-        <div><small>YOUR WORLD, VERIFIED</small><h2>Start with one object.</h2><p>Scan a purchase and watch it become something more.</p></div>
-        <Link className="vv3-primaryCta" href="/receipt">Create your first twin <Icon name="arrow" size={17} /></Link>
-      </section>
+      <section className="vv3-finalCta"><div><small>YOUR WORLD, VERIFIED</small><h2>Start with one object.</h2><p>Scan a purchase and watch it become something more.</p></div><Link className="vv3-primaryCta" href="/receipt">Create your first twin <Icon name="arrow" size={17} /></Link></section>
 
       <footer className="vv3-footer">
         <div className="vv3-footerTop"><Brand /><p>Real objects. Intelligent twins.<br />One living collection.</p><nav><Link href="/discover">Discover</Link><Link href="/marketplace">Marketplace</Link><Link href="/receipt">Scan receipt</Link><Link href="/room">My vault</Link><Link href="/ai">Intelligence</Link></nav></div>
         <div className="vv3-footerBottom"><span>© 2026 VOXEL VAULT</span><div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><span className="vv3-status"><i /> VOXEL VAULT / 2026</span></div>
       </footer>
-
       <nav className="vv3-mobileNav" aria-label="Mobile navigation"><Link className="active" href="/discover"><Icon name="search" />Discover</Link><Link href="/receipt"><Icon name="receipt" />Scan</Link><Link href="/room"><Icon name="room" />Vault</Link><Link href="/ai"><Icon name="spark" />AI</Link></nav>
     </main>
   );
