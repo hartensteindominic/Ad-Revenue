@@ -3,10 +3,12 @@ import Stripe from 'stripe';
 import { stripe } from '../../../../lib/stripe-server';
 import { getSupabaseAdmin } from '../../../../lib/supabase-admin';
 import { getCatalogItem } from '../../../../lib/catalog';
+import { submitPhysicalFulfillment } from '../../../../lib/fulfillment';
 
 const WALLET_RE = /^0x[a-f0-9]{40}$/;
 type ShippingDetails = {
   name?: string | null;
+  phone?: string | null;
   address?: {
     line1?: string | null;
     line2?: string | null;
@@ -17,45 +19,6 @@ type ShippingDetails = {
   } | null;
 };
 type CheckoutSessionWithShipping = Stripe.Checkout.Session & { shipping_details?: ShippingDetails | null };
-
-async function submitPhysicalFulfillment(orderId: string, session: CheckoutSessionWithShipping, catalogId: number, catalogKey: string) {
-  const endpoint = process.env.FULFILLMENT_API_URL;
-  const apiKey = process.env.FULFILLMENT_API_KEY;
-  if (!endpoint || !apiKey) return { status: 'awaiting_fulfillment' as const };
-  const shipping = session.shipping_details;
-  if (!shipping?.address?.line1 || !shipping.address.city || !shipping.address.postal_code || !shipping.address.country) {
-    throw new Error('Stripe checkout did not provide a complete shipping address');
-  }
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      orderId,
-      externalOrderId: session.id,
-      catalogId,
-      catalogKey,
-      quantity: 1,
-      shipping: {
-        name: shipping.name || '',
-        line1: shipping.address.line1,
-        line2: shipping.address.line2 || null,
-        city: shipping.address.city,
-        state: shipping.address.state || '',
-        postalCode: shipping.address.postal_code,
-        country: shipping.address.country,
-      },
-    }),
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error(`Fulfillment provider returned ${response.status}`);
-  const result = await response.json().catch(() => ({}));
-  return {
-    status: 'submitted' as const,
-    fulfillmentOrderId: typeof result.orderId === 'string' ? result.orderId : null,
-    trackingNumber: typeof result.trackingNumber === 'string' ? result.trackingNumber : null,
-    trackingUrl: typeof result.trackingUrl === 'string' ? result.trackingUrl : null,
-  };
-}
 
 export async function POST(request: Request) {
   const signature = request.headers.get('stripe-signature');
@@ -78,36 +41,63 @@ export async function POST(request: Request) {
         const catalogId = Number(session.metadata?.catalog_id);
         const catalogKey = session.metadata?.catalog_key;
         const item = Number.isInteger(catalogId) ? getCatalogItem(catalogId - 1) : null;
-        const shipping = session.shipping_details?.address;
+        const shipping = session.shipping_details;
+        const address = shipping?.address;
         if (!WALLET_RE.test(wallet || '') || !item || !catalogKey || !buyerId) throw new Error('Invalid physical + NFT checkout metadata');
-        if (!session.shipping_details?.name || !shipping?.line1 || !shipping.city || !shipping.state || !shipping.postal_code || !shipping.country) throw new Error('Incomplete shipping address');
+        if (!shipping?.name || !address?.line1 || !address.city || !address.state || !address.postal_code || !address.country) throw new Error('Incomplete shipping address');
 
-        const { data: order, error } = await supabaseAdmin.from('physical_orders').upsert({
-          buyer_id: buyerId,
-          catalog_id: catalogId,
-          catalog_key: catalogKey,
-          stripe_checkout_session_id: session.id,
-          stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-          shipping_name: session.shipping_details.name,
-          shipping_line1: shipping.line1,
-          shipping_line2: shipping.line2 || null,
-          shipping_city: shipping.city,
-          shipping_state: shipping.state || '',
-          shipping_postal_code: shipping.postal_code,
-          shipping_country: shipping.country,
-          currency: session.currency || 'usd',
-          physical_amount_cents: Number(session.metadata?.physical_amount_cents || 0),
-          nft_amount_cents: Number(session.metadata?.nft_amount_cents || 0),
-          fulfillment_status: 'awaiting_fulfillment',
-        }, { onConflict: 'stripe_checkout_session_id' }).select('id').single();
-        if (error || !order) throw error ?? new Error('Physical order creation failed');
+        const { data: existing, error: lookupError } = await supabaseAdmin
+          .from('physical_orders')
+          .select('id,fulfillment_status,fulfillment_order_id,tracking_number,tracking_url')
+          .eq('stripe_checkout_session_id', session.id)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
 
-        const fulfillment = await submitPhysicalFulfillment(order.id, session, catalogId, catalogKey);
-        const update: Record<string, unknown> = { fulfillment_status: fulfillment.status, updated_at: new Date().toISOString() };
-        if ('fulfillmentOrderId' in fulfillment) update.fulfillment_order_id = fulfillment.fulfillmentOrderId;
-        if ('trackingNumber' in fulfillment) update.tracking_number = fulfillment.trackingNumber;
-        if ('trackingUrl' in fulfillment) update.tracking_url = fulfillment.trackingUrl;
-        await supabaseAdmin.from('physical_orders').update(update).eq('id', order.id);
+        let order = existing;
+        if (!order) {
+          const { data: created, error } = await supabaseAdmin.from('physical_orders').insert({
+            buyer_id: buyerId,
+            catalog_id: catalogId,
+            catalog_key: catalogKey,
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+            shipping_name: shipping.name,
+            shipping_line1: address.line1,
+            shipping_line2: address.line2 || null,
+            shipping_city: address.city,
+            shipping_state: address.state || '',
+            shipping_postal_code: address.postal_code,
+            shipping_country: address.country,
+            currency: session.currency || 'usd',
+            physical_amount_cents: Number(session.metadata?.physical_amount_cents || 0),
+            nft_amount_cents: Number(session.metadata?.nft_amount_cents || 0),
+            fulfillment_status: 'awaiting_fulfillment',
+          }).select('id,fulfillment_status,fulfillment_order_id,tracking_number,tracking_url').single();
+          if (error || !created) throw error ?? new Error('Physical order creation failed');
+          order = created;
+        }
+
+        if (!['submitted', 'shipped', 'delivered'].includes(order.fulfillment_status)) {
+          try {
+            const fulfillment = await submitPhysicalFulfillment({
+              orderId: order.id,
+              externalOrderId: session.id,
+              catalogKey,
+              shipping,
+              email: session.customer_details?.email || session.customer_email || undefined,
+            });
+            const update: Record<string, unknown> = { fulfillment_status: fulfillment.status, updated_at: new Date().toISOString() };
+            if ('fulfillmentOrderId' in fulfillment && fulfillment.fulfillmentOrderId) update.fulfillment_order_id = fulfillment.fulfillmentOrderId;
+            if ('trackingNumber' in fulfillment && fulfillment.trackingNumber) update.tracking_number = fulfillment.trackingNumber;
+            if ('trackingUrl' in fulfillment && fulfillment.trackingUrl) update.tracking_url = fulfillment.trackingUrl;
+            await supabaseAdmin.from('physical_orders').update(update).eq('id', order.id);
+          } catch (fulfillmentError) {
+            console.error('VoxelVault physical fulfillment submission failed', fulfillmentError);
+            // Stripe retries the signed webhook. The provider adapter uses the
+            // durable Voxel Vault order ID as its idempotency key where supported.
+            return NextResponse.json({ error: 'Fulfillment submission failed; retrying' }, { status: 500 });
+          }
+        }
         return NextResponse.json({ received: true });
       }
 
@@ -126,8 +116,8 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
-    console.error('VoxelVault webhook fulfillment failed', error);
-    return NextResponse.json({ error: 'Fulfillment failed' }, { status: 500 });
+    console.error('VoxelVault webhook failed', error);
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
   return NextResponse.json({ received: true });
 }
