@@ -21,14 +21,45 @@ function buildPrompt(item = {}) {
   ].filter(Boolean).join(' ');
 }
 
+function isPlaceholderImage(url = '') {
+  return /images\\.unsplash\\.com|unsplash\\.com/i.test(url);
+}
+
+async function resolveProductImage(imageUrl, sourceUrl) {
+  if (imageUrl && !isPlaceholderImage(imageUrl)) return imageUrl;
+  if (!sourceUrl || !/^https?:\\/\\//i.test(sourceUrl)) return imageUrl || '';
+  try {
+    const response = await fetch(sourceUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VoxelVaultProductResolver/1.0)' },
+      cache: 'no-store',
+    });
+    if (!response.ok) return imageUrl || '';
+    const html = await response.text();
+    const patterns = [
+      /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+      /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
+    ];
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match?.[1]) {
+        try { return new URL(match[1], sourceUrl).toString(); } catch {}
+      }
+    }
+  } catch {}
+  return imageUrl || '';
+}
+
 export async function POST(request) {
   const apiKey = process.env.MESHY_API_KEY;
   if (!apiKey) return NextResponse.json({ configured: false, error: 'Image-to-3D generation is not configured. Add MESHY_API_KEY to Vercel Production.' }, { status: 503 });
   try {
     const body = await request.json();
-    const imageUrl = typeof body?.imageUrl === 'string' ? body.imageUrl.trim() : '';
     const item = body?.item && typeof body.item === 'object' ? body.item : {};
-    if (!imageUrl || !/^https?:\/\//i.test(imageUrl)) return NextResponse.json({ error: 'A public JPG, JPEG, or PNG product image URL is required.' }, { status: 400 });
+    const requestedImageUrl = typeof body?.imageUrl === 'string' ? body.imageUrl.trim() : '';
+    const imageUrl = await resolveProductImage(requestedImageUrl, typeof item.sourceUrl === 'string' ? item.sourceUrl : '');
+    if (!imageUrl || !/^https?:\\/\\//i.test(imageUrl)) return NextResponse.json({ error: 'A public product image URL could not be resolved from the supplier listing.' }, { status: 400 });
     const response = await fetch(MESHY_ENDPOINT, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -37,7 +68,7 @@ export async function POST(request) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return NextResponse.json({ error: data?.message || data?.error || data?.task_error?.message || 'Image-to-3D provider rejected the request.' }, { status: response.status });
-    return NextResponse.json({ configured: true, taskId: data?.result || data?.id || null });
+    return NextResponse.json({ configured: true, sourceImageUrl: imageUrl, taskId: data?.result || data?.id || null });
   } catch (error) {
     return NextResponse.json({ error: error?.message || 'Image-to-3D request failed.' }, { status: 500 });
   }
