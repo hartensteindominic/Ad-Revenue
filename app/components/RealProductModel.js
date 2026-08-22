@@ -97,34 +97,116 @@ function createProductTwin(item, imageUrl) {
 
 export default function RealProductModel({ item, onLoaded }) {
   const host = useRef(null);
+  const onLoadedRef = useRef(onLoaded);
+  useEffect(() => { onLoadedRef.current = onLoaded; }, [onLoaded]);
+
   useEffect(() => {
     const root = host.current;
     const directUrl = item?.modelUri || item?.digitalTwin?.modelUrl;
     let imageUrl = item?.previewUri || item?.digitalTwin?.previewUrl;
     if (!root || (!directUrl && !imageUrl && !item?.sourceUrl)) return undefined;
     let alive = true;
-    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100), renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15; renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'; root.appendChild(renderer.domElement);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x11131c, 2.8)); const key = new THREE.DirectionalLight(0xffffff, 4.5); key.position.set(4, 6, 5); scene.add(key); const rim = new THREE.DirectionalLight(0x7566ff, 2.5); rim.position.set(-4, 3, -4); scene.add(rim);
-    let model = null, raf;
-    const normalize = object => { const box3 = new THREE.Box3().setFromObject(object), size = box3.getSize(new THREE.Vector3()), center = box3.getCenter(new THREE.Vector3()); object.position.sub(center); object.scale.setScalar(2.65 / (Math.max(size.x, size.y, size.z) || 1)); object.position.y += 0.05; };
-    const showModel = object => { if (!alive) return false; normalize(object); scene.add(object); model = object; camera.position.set(0, 0.15, 5.2); camera.lookAt(0, 0, 0); onLoaded?.(true); return true; };
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:auto;z-index:5';
+    root.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x11131c, 2.8));
+    const key = new THREE.DirectionalLight(0xffffff, 4.5); key.position.set(4, 6, 5); scene.add(key);
+    const rim = new THREE.DirectionalLight(0x7566ff, 2.5); rim.position.set(-4, 3, -4); scene.add(rim);
+
+    let model = null;
+    let raf;
+    let upgraded = false;
+    const normalize = object => {
+      const box3 = new THREE.Box3().setFromObject(object);
+      const size = box3.getSize(new THREE.Vector3());
+      const center = box3.getCenter(new THREE.Vector3());
+      object.position.sub(center);
+      object.scale.setScalar(2.65 / (Math.max(size.x, size.y, size.z) || 1));
+      object.position.y += 0.05;
+    };
+    const disposeModel = object => {
+      if (!object) return;
+      scene.remove(object);
+      object.traverse(node => {
+        node.geometry?.dispose?.();
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.filter(Boolean).forEach(material => { material.map?.dispose?.(); material.dispose?.(); });
+      });
+    };
+    const showModel = (object, isUpgrade = false) => {
+      if (!alive) return false;
+      normalize(object);
+      if (model) disposeModel(model);
+      scene.add(object);
+      model = object;
+      upgraded = isUpgrade;
+      camera.position.set(0, 0.15, 5.2);
+      camera.lookAt(0, 0, 0);
+      onLoadedRef.current?.(true);
+      return true;
+    };
     const loadGlb = url => new Promise((resolve, reject) => new GLTFLoader().load(url, gltf => resolve(gltf.scene), undefined, reject));
-    const createProceduralTwin = () => { if (alive) showModel(createProductTwin(item, imageUrl)); };
+
+    const resize = () => {
+      if (!alive) return;
+      const width = Math.max(root.clientWidth, 1), height = Math.max(root.clientHeight, 1);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    };
+    resize();
+    const ro = new ResizeObserver(resize); ro.observe(root);
+
+    const createImmediateTwin = () => {
+      const twin = createProductTwin(item, imageUrl);
+      showModel(twin, false);
+    };
+
     (async () => {
       imageUrl = await resolveProductImage(imageUrl, item?.sourceUrl);
-      if (directUrl) { try { showModel(await loadGlb(directUrl)); return; } catch { createProceduralTwin(); return; } }
-      if (!imageUrl) return;
+      if (!alive) return;
+      if (directUrl) {
+        try { showModel(await loadGlb(directUrl), true); return; }
+        catch { createImmediateTwin(); }
+      } else {
+        createImmediateTwin();
+      }
+      if (!imageUrl || !alive) return;
       try {
         const generatedUrl = await generateFromImage(imageUrl, item, item?.id || item?.slug || imageUrl);
-        if (!alive || !generatedUrl) throw new Error('No generated model URL.');
-        const generatedModel = await loadGlb(generatedUrl); if (!alive) return; showModel(generatedModel);
-      } catch { createProceduralTwin(); }
+        if (!alive || !generatedUrl) return;
+        const generatedModel = await loadGlb(generatedUrl);
+        if (alive) showModel(generatedModel, true);
+      } catch {
+        // Keep the visible product-specific procedural twin. No blank state.
+      }
     })();
-    const resize = () => { if (!alive) return; const width = Math.max(root.clientWidth, 1), height = Math.max(root.clientHeight, 1); camera.aspect = width / height; camera.updateProjectionMatrix(); renderer.setSize(width, height, false); };
-    resize(); const ro = new ResizeObserver(resize); ro.observe(root); const tick = () => { if (!alive) return; raf = requestAnimationFrame(tick); if (model) model.rotation.y += 0.0024; renderer.render(scene, camera); }; tick();
-    return () => { alive = false; cancelAnimationFrame(raf); ro.disconnect(); if (renderer.domElement.parentNode === root) root.removeChild(renderer.domElement); scene.traverse(object => { object.geometry?.dispose?.(); if (Array.isArray(object.material)) object.material.forEach(m => { m.map?.dispose?.(); m.dispose?.(); }); else { object.material?.map?.dispose?.(); object.material?.dispose?.(); } }); renderer.dispose(); };
-  }, [item, onLoaded]);
+
+    const tick = () => {
+      if (!alive) return;
+      raf = requestAnimationFrame(tick);
+      if (model) model.rotation.y += upgraded ? 0.0018 : 0.0024;
+      renderer.render(scene, camera);
+    };
+    tick();
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      if (renderer.domElement.parentNode === root) root.removeChild(renderer.domElement);
+      disposeModel(model);
+      renderer.dispose();
+    };
+  }, [item]);
+
   if (!item?.modelUri && !item?.digitalTwin?.modelUrl && !item?.previewUri && !item?.digitalTwin?.previewUrl && !item?.sourceUrl) return null;
-  return <div ref={host} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }} />;
+  return <div ref={host} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 5 }} />;
 }
