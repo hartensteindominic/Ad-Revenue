@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { REAL_WORLD_CATALOG } from '../../lib/realWorldCatalog';
 import RealWorld3DNFT from './RealWorld3DNFT';
 import './VaultHomeV3.css';
+import './VaultCommercePolish.css';
 
 function Icon({ name, size = 18 }) {
   const paths = {
@@ -20,12 +21,12 @@ function Brand(){
 
 function BuyBoth({item}){
   const ready=Boolean(item.fulfillmentReady&&item.purchaseAssetId);
-  return <div style={{display:'grid',gap:9,padding:'0 14px 14px'}}>
+  return <div className="vv3-buyBoth">
     {ready
-      ? <Link href={`/marketplace?purchase=${encodeURIComponent(item.purchaseAssetId)}`} style={{textAlign:'center',padding:'14px 10px',borderRadius:13,background:'#fff',color:'#080a11',textDecoration:'none',fontSize:10,fontWeight:950,letterSpacing:'.07em'}}>BUY PHYSICAL + 3D NFT · ${item.customerPriceUsd}</Link>
-      : <div style={{textAlign:'center',padding:'14px 10px',borderRadius:13,border:'1px solid rgba(167,139,250,.24)',background:'rgba(99,72,180,.07)',color:'rgba(255,255,255,.72)',fontSize:10,fontWeight:850,letterSpacing:'.06em'}}>3D NFT INCLUDED · PHYSICAL CHECKOUT COMING</div>}
-    <div style={{display:'flex',justifyContent:'center',flexWrap:'wrap',gap:12,color:'rgba(255,255,255,.55)',fontSize:9}}><span>📦 physical object</span><span>🧊 3D twin included</span><span>🏠 Vault + Room</span></div>
-    {item.customerPriceUsd&&<div style={{textAlign:'center',color:'rgba(255,255,255,.38)',fontSize:8.5}}>Voxel Vault price · digital collectible included · shipping calculated at checkout</div>}
+      ? <Link href={`/marketplace?purchase=${encodeURIComponent(item.purchaseAssetId)}`} className="vv3-buyButton">BUY PHYSICAL + 3D NFT · ${item.customerPriceUsd}</Link>
+      : <div className="vv3-buyButton vv3-buyButtonDisabled">3D NFT INCLUDED · PHYSICAL CHECKOUT COMING</div>}
+    <div className="vv3-buyPerks"><span>📦 physical object</span><span>🧊 3D twin included</span><span>🏠 Vault + Room</span></div>
+    {item.customerPriceUsd&&<div className="vv3-priceNote">Voxel Vault price · digital collectible included · shipping calculated at checkout</div>}
   </div>;
 }
 
@@ -35,12 +36,26 @@ function Card({item,index}){
       <RealWorld3DNFT item={item}/>
       <span className="vv3-cardIndex">{String(index+1).padStart(2,'0')}</span>
       <span className="vv3-liveBadge"><i/> REAL OBJECT</span>
-      <span style={{position:'absolute',right:12,bottom:12,zIndex:2,padding:'7px 9px',borderRadius:999,background:'rgba(8,10,18,.78)',border:'1px solid rgba(255,255,255,.12)',backdropFilter:'blur(10px)',color:'#d9d2ff',fontSize:8,fontWeight:950,letterSpacing:'.12em'}}>3D NFT INCLUDED</span>
+      <span className="vv3-nftBadge">3D NFT INCLUDED</span>
     </div>
     <div className="vv3-objectDetails"><div><small>{item.type}</small><h3>{item.name}</h3></div><strong>{item.customerPriceUsd?`$${item.customerPriceUsd}`:'Price on request'}</strong></div>
     <div className="vv3-objectMeta"><span>{item.sourceName}</span><span>REAL-WORLD DIGITAL TWIN</span></div>
     <BuyBoth item={item}/>
   </article>;
+}
+
+function TrustSection(){
+  return <div className="vv3-trustSection">
+    <strong>How the offer works.</strong>
+    <span>Real product sources establish the physical object's identity.</span>
+    <span>Voxel Vault adds its configured markup to eligible catalog pricing.</span>
+    <span>The 3D NFT is included with the bundle.</span>
+    <span>Physical checkout opens only when the exact supplier/SKU is authorized.</span>
+  </div>;
+}
+
+function MobileNav(){
+  return <nav className="vv3-mobileNav" aria-label="Mobile navigation"><Link href="/discover">Discover</Link><Link href="/marketplace">Shop</Link><Link href="/room">Vault</Link><Link href="/ai">AI</Link></nav>;
 }
 
 export default function RealWorldCommerceHome(){
@@ -66,10 +81,11 @@ export default function RealWorldCommerceHome(){
     </section>
     <section className="vv3-signalBar"><span>REAL PRODUCTS</span><i/><span>3D DIGITAL TWINS</span><i/><span>NFT INCLUDED</span><i/><span>VAULT + ROOM + WORLD</span></section>
     <section className="vv3-collection" id="collection">
-      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and 3D collectible as one offer. Supplier authorization controls whether physical checkout can open.</p></div>
+      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and 3D collectible as one offer.</p></div>
       <div className="vv3-objectGrid">{REAL_WORLD_CATALOG.map((item,i)=><Card key={item.id} item={item} index={i}/>)}</div>
-      <div style={{marginTop:18,padding:'18px 20px',borderRadius:18,border:'1px solid rgba(167,139,250,.16)',background:'rgba(13,16,30,.58)',color:'rgba(255,255,255,.62)',fontSize:11,lineHeight:1.65}}><strong style={{color:'#fff'}}>How the offer works.</strong> Product sources establish real-world identity and provenance. Voxel Vault handles the customer-facing storefront and configured markup. Physical purchase is enabled only after the exact supplier/SKU is authorized, so the store never promises fulfillment it cannot actually deliver.</div>
+      <TrustSection/>
     </section>
     <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both, keep the 3D NFT in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
+    <MobileNav/>
   </main>;
 }
