@@ -25,9 +25,9 @@ function BuyBoth({item}){
   return <div className="vv3-buyBoth">
     {ready
       ? <Link href={`/marketplace?purchase=${encodeURIComponent(item.purchaseAssetId)}`} className="vv3-buyButton">BUY PHYSICAL + 3D NFT · ${item.customerPriceUsd}</Link>
-      : <div className="vv3-buyButton vv3-buyButtonDisabled">3D NFT INCLUDED · PHYSICAL CHECKOUT COMING</div>}
+      : <div className="vv3-buyButton vv3-buyButtonDisabled">CHECKOUT LOCKED · SUPPLIER CONNECTION REQUIRED</div>}
     <div className="vv3-buyPerks"><span>📦 physical object</span><span>🧊 3D twin included</span><span>🏠 Vault + Room</span></div>
-    {item.customerPriceUsd&&<div className="vv3-priceNote">Voxel Vault price · digital collectible included · shipping calculated at checkout</div>}
+    {item.customerPriceUsd&&<div className="vv3-priceNote">Vault retail price · configured markup · digital collectible included · shipping at checkout</div>}
   </div>;
 }
 
@@ -41,6 +41,7 @@ function Card({item,index}){
     </div>
     <div className="vv3-objectDetails"><div><small>{item.type}</small><h3>{item.name}</h3></div><strong>{item.customerPriceUsd?`$${item.customerPriceUsd}`:'Price on request'}</strong></div>
     <div className="vv3-objectMeta"><span>{item.sourceName}</span><span>3D TWIN · {item.digitalTwin?.status || 'READY'}</span></div>
+    <div className="vv3-sourceRow"><a href={item.sourceUrl} target="_blank" rel="noreferrer">View physical source ↗</a><span>{item.markupPercent ? `${item.markupPercent}% Vault markup` : 'Source pricing'}</span></div>
     <BuyBoth item={item}/>
   </article>;
 }
@@ -50,8 +51,8 @@ function TrustSection(){
     <strong>How the offer works.</strong>
     <span>Real product sources establish the physical object's identity.</span>
     <span>Voxel Vault adds its configured markup to eligible catalog pricing.</span>
-    <span>The 3D NFT is included with the bundle.</span>
-    <span>Physical checkout opens only when the exact supplier/SKU is authorized.</span>
+    <span>The 3D collectible is included with the bundle.</span>
+    <span>Physical checkout activates only after the exact supplier/SKU is connected.</span>
   </div>;
 }
 
@@ -69,9 +70,9 @@ export default function RealWorldCommerceHome(){
       <div className="vv3-heroCopy">
         <div className="vv3-eyebrow"><i/> PHYSICAL + DIGITAL COLLECTION</div>
         <h1>Real objects.<br/><em>3D NFTs.</em></h1>
-        <p>Choose a real-world object, see its Voxel Vault 3D digital twin, and collect both through one storefront. The physical object is fulfilled; the NFT lives in your Vault, Room, and World.</p>
+        <p>Choose a real-world object, inspect its interactive Voxel Vault 3D digital twin, and collect both through one storefront. Product sourcing and fulfillment stay separated from the collectible layer so the ownership record stays clean.</p>
         <div className="vv3-heroActions"><Link className="vv3-primaryCta" href="#collection">Shop both <Icon name="arrow" size={17}/></Link><Link className="vv3-textCta" href="/room"><span><Icon name="cube" size={14}/></span> Open Vault</Link></div>
-        <div className="vv3-proofRow"><span><Icon name="shield" size={16}/><b>Real product source</b></span><span><Icon name="cube" size={16}/><b>Automatic 3D twin</b></span><span><Icon name="shield" size={16}/><b>NFT included</b></span></div>
+        <div className="vv3-proofRow"><span><Icon name="shield" size={16}/><b>Real product source</b></span><span><Icon name="cube" size={16}/><b>Interactive 3D twin</b></span><span><Icon name="shield" size={16}/><b>Ownership-ready asset</b></span></div>
       </div>
       <div className="vv3-heroVisual">
         <div className="vv3-visualTop"><span><i/> 3D NFT</span><small>PHYSICAL PRODUCT + DIGITAL TWIN</small></div>
@@ -80,14 +81,14 @@ export default function RealWorldCommerceHome(){
         <BuyBoth item={hero}/>
       </div>
     </section>
-    <section className="vv3-signalBar"><span>REAL PRODUCTS</span><i/><span>3D DIGITAL TWINS</span><i/><span>NFT INCLUDED</span><i/><span>VAULT + ROOM + WORLD</span></section>
+    <section className="vv3-signalBar"><span>REAL PRODUCTS</span><i/><span>INTERACTIVE 3D TWINS</span><i/><span>NFT-READY ASSETS</span><i/><span>VAULT + ROOM + WORLD</span></section>
     <section className="vv3-collection" id="collection">
-      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and 3D collectible as one offer.</p></div>
+      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and digital collectible as one offer.</p></div>
       <div className="vv3-objectGrid">{REAL_WORLD_CATALOG.map((item,i)=><Card key={item.id} item={item} index={i}/>)}</div>
       <TrustSection/>
       <VaultRewardsInvite/>
     </section>
-    <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both, keep the 3D NFT in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
+    <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both, keep the 3D collectible in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
     <MobileNav/>
   </main>;
 }
