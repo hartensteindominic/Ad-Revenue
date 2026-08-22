@@ -1,12 +1,179 @@
 'use client';
+
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { getCatalogWindow } from '../../lib/catalog';
-const Lazy3DPreview=dynamic(()=>import('./Lazy3DPreview'),{ssr:false});
-const VoxelViewer=dynamic(()=>import('./VoxelViewer'),{ssr:false});
-const ArtPreview=dynamic(()=>import('./ArtPreview'),{ssr:false});
-const items=getCatalogWindow(0,8);
-const cats=['Everything','Objects','Food','Art','Finds'];
-function Card({item}){return <Link className="card" href={`/marketplace?asset=${encodeURIComponent(item.id)}`}><div className="art"><Lazy3DPreview minHeight={230} rootMargin="700px">{item.renderMode==='voxel'&&item.shape?<VoxelViewer shape={item.shape} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false}/>:<ArtPreview family={item.family||'sculpture'} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false}/>}</Lazy3DPreview><span className="twin">3D · NFT</span></div><div className="cardbody"><div><small>{item.type||'OBJECT'}</small><h3>{item.name}</h3></div><strong>${item.priceUsd}</strong></div><div className="chips"><span>Physical</span><span>QR</span></div></Link>}
-export default function VaultHomeV3(){const [q,setQ]=useState('');const [cat,setCat]=useState('Everything');const filtered=useMemo(()=>items.filter(x=>{const t=`${x.name} ${x.type} ${x.creator} ${x.material} ${x.family}`.toLowerCase();return(!q||t.includes(q.toLowerCase()))&&(cat==='Everything'||String(x.type||'').toLowerCase().includes(cat.slice(0,-1).toLowerCase())||cat==='Objects');}),[q,cat]);return <main className="v3"><header><Link href="/" className="logo"><span>V</span><b>VOXEL</b><i>VAULT</i></Link><Link href="/profile" className="avatar">D</Link></header><section className="hero"><div className="eyebrow">THE OBJECT MARKET</div><h1>Find it.<br/><em>Keep it.</em></h1><p>Real things with a digital twin.</p><div className="heroBtns"><Link href="/discover">Explore</Link><Link href="/receipt" className="ghost">Scan receipt</Link></div></section><div className="search"><span>⌕</span><input value={q} onChange={e=>setQ(e.target.value)} placeholder="What are you looking for?"/><Link href="/discover">⌁</Link></div><div className="cats">{cats.map(c=><button key={c} className={cat===c?'on':''} onClick={()=>setCat(c)}>{c}</button>)}</div><section className="feature"><div className="featureCopy"><small>BUY + COLLECT</small><h2>One object.<br/><em>Two worlds.</em></h2><p>Checkout in USD. Your physical purchase gets a 3D twin, QR identity and ownership history.</p><Link href="/marketplace">Shop the vault →</Link></div><div className="featureArt">{items[0]&&<Lazy3DPreview minHeight={280} rootMargin="0px">{items[0].renderMode==='voxel'&&items[0].shape?<VoxelViewer shape={items[0].shape} seed={items[0].seed} rarity={items[0].rarity} material={items[0].material} compact label={false}/>:<ArtPreview family={items[0].family||'sculpture'} seed={items[0].seed} rarity={items[0].rarity} material={items[0].material} compact label={false}/>}</Lazy3DPreview>}</div></section><section className="section"><div className="head"><div><small>DISCOVER</small><h2>Worth finding</h2></div><Link href="/marketplace">See all</Link></div><div className="grid">{filtered.map(x=><Card key={x.id} item={x}/>)}</div></section><section className="tools"><Link href="/receipt"><b>▣</b><span><small>SCAN</small>Turn a purchase into a collectible</span><i>›</i></Link><Link href="/room"><b>◇</b><span><small>VAULT</small>See your objects in 3D</span><i>›</i></Link><Link href="/ai"><b>✦</b><span><small>AI</small>Find, organize and understand your collection</span><i>›</i></Link></section><nav><Link className="active" href="/discover"><span>⌂</span>Find</Link><Link href="/receipt"><span>▣</span>Scan</Link><Link href="/room"><span>◇</span>Vault</Link><Link href="/ai"><span>✦</span>AI</Link></nav><style jsx>{`.v3{min-height:100vh;background:#07080d;color:#f7f8fb;padding:0 16px 100px;font-family:Inter,system-ui,sans-serif}.v3 *{box-sizing:border-box}.v3 a{text-decoration:none;color:inherit}header{height:62px;display:flex;align-items:center;justify-content:space-between}.logo{display:flex;align-items:baseline;gap:4px;letter-spacing:.08em}.logo span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#bba7ff,#68e5ff);color:#090a10;font-weight:1000;margin-right:3px}.logo b{font-size:12px}.logo i{font-size:9px;color:#8b92a4;font-style:normal}.avatar{width:30px;height:30px;border:1px solid #272b38;border-radius:50%;display:grid;place-items:center;font-size:10px;color:#aeb5c4}.hero{padding:31px 3px 21px}.eyebrow,.feature small,.section small,.tools small{font-size:8px;letter-spacing:.17em;color:#9f8cff;font-weight:900}.hero h1{font-size:56px;line-height:.86;letter-spacing:-.065em;margin:9px 0}.hero h1 em,.feature h2 em{font-style:normal;color:#a995ff}.hero p{margin:0;color:#858da0;font-size:13px}.heroBtns{display:flex;gap:8px;margin-top:17px}.heroBtns a,.featureCopy>a{padding:11px 15px;border-radius:12px;background:#f6f7fa;color:#090a0e;font-size:10px;font-weight:900}.heroBtns .ghost{background:#12151d;border:1px solid #272c38;color:#dce0e9}.search{height:52px;border:1px solid #242833;background:#0d1017;border-radius:16px;display:flex;align-items:center;padding:0 14px;gap:9px}.search span{font-size:20px;color:#737b8d}.search input{flex:1;background:none;border:0;outline:0;color:#fff;font-size:14px}.search input::placeholder{color:#6f7788}.search a{color:#8e96a9;font-size:18px}.cats{display:flex;gap:7px;overflow:auto;padding:11px 0 3px;scrollbar-width:none}.cats::-webkit-scrollbar{display:none}.cats button{border:1px solid #242833;background:#0c0f15;color:#858da0;border-radius:999px;padding:8px 12px;white-space:nowrap;font-size:9px}.cats .on{background:#f6f7fa;color:#090a0e;border-color:#f6f7fa;font-weight:900}.feature{margin-top:22px;min-height:285px;border:1px solid #252936;border-radius:23px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;background:radial-gradient(circle at 70% 30%,rgba(144,112,255,.2),transparent 43%),#0b0e15}.featureCopy{padding:22px 8px 22px 20px;display:flex;flex-direction:column;justify-content:center}.feature h2{font-size:30px;line-height:.94;letter-spacing:-.05em;margin:8px 0}.feature p{font-size:10px;line-height:1.5;color:#7f889a;margin:0 0 15px;max-width:220px}.featureArt{min-height:285px;display:grid;place-items:center;overflow:hidden}.featureArt :global(canvas){display:block;width:100%!important;height:100%!important}.section{margin-top:29px}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}.head h2{font-size:23px;letter-spacing:-.04em;margin:4px 0}.head a{font-size:9px;color:#9f8cff}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{background:#0c0f15;border:1px solid #202531;border-radius:18px;overflow:hidden}.art{height:230px;position:relative;background:radial-gradient(circle at 50% 45%,rgba(139,106,255,.18),transparent 52%),#090b11}.art :global(canvas){display:block;width:100%!important;height:100%!important}.twin{position:absolute;left:8px;bottom:8px;background:rgba(4,5,9,.75);border:1px solid #2b3040;border-radius:999px;padding:5px 7px;font-size:7px;letter-spacing:.1em}.cardbody{display:flex;justify-content:space-between;gap:8px;padding:11px 11px 5px}.cardbody small{font-size:7px;color:#6f7789;letter-spacing:.1em}.cardbody h3{font-size:13px;margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}.cardbody strong{font-size:11px;white-space:nowrap}.chips{display:flex;gap:5px;padding:0 11px 11px}.chips span{font-size:7px;color:#8b94a5;border:1px solid #222733;border-radius:999px;padding:4px 6px}.tools{margin-top:27px;border-top:1px solid #20242e}.tools a{display:flex;align-items:center;gap:11px;padding:14px 2px;border-bottom:1px solid #20242e}.tools b{width:32px;height:32px;border-radius:10px;background:#11151d;display:grid;place-items:center;color:#a994ff}.tools span{flex:1;font-size:10px;color:#d7dbe4}.tools small{display:block;margin-bottom:2px}.tools i{font-style:normal;color:#687183;font-size:20px}nav{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;height:62px;border:1px solid #292e3b;background:rgba(12,14,20,.9);backdrop-filter:blur(20px);border-radius:20px;display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 20px 60px rgba(0,0,0,.45)}nav a{display:grid;place-items:center;align-content:center;gap:3px;color:#747d8f;font-size:8px}nav a span{font-size:17px}nav a.active{color:#f6f7fa}nav a.active span{color:#a895ff}@media(min-width:800px){.v3{max-width:1120px;margin:auto;padding-bottom:60px}.grid{grid-template-columns:repeat(4,1fr)}.hero h1{font-size:72px}nav{position:sticky;max-width:420px;margin:28px auto 0}}@media(max-width:380px){.hero h1{font-size:48px}.feature{grid-template-columns:1fr}.featureCopy{padding-bottom:0}.featureArt{min-height:210px}.feature{min-height:0}}`}</style></main>}
+import './VaultHomeV3.css';
+
+const Lazy3DPreview = dynamic(() => import('./Lazy3DPreview'), { ssr: false });
+const VoxelViewer = dynamic(() => import('./VoxelViewer'), { ssr: false });
+const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
+
+const items = getCatalogWindow(0, 8);
+const categories = ['All objects', 'Artifacts', 'Vehicles', 'Creatures', 'Architecture'];
+
+function Icon({ name, size = 18 }) {
+  const paths = {
+    arrow: <><path d="M5 13 13 5" /><path d="M7 5h6v6" /></>,
+    search: <><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 3 3" /></>,
+    receipt: <><path d="M5 3h10v14l-2-1.5L11 17l-2-1.5L7 17l-2-1.5Z" /><path d="M8 7h4M8 10h5" /></>,
+    spark: <path d="m10 2 1.5 5.5L17 9l-5.5 1.5L10 16l-1.5-5.5L3 9l5.5-1.5Z" />,
+    room: <><path d="M3 8.5 10 3l7 5.5V17H3Z" /><path d="M7.5 17v-5h5v5" /></>,
+    shield: <><path d="M10 2.5 16 5v4.5c0 3.6-2.2 6.3-6 8-3.8-1.7-6-4.4-6-8V5Z" /><path d="m7.2 10 1.8 1.8 3.8-4" /></>,
+    cube: <><path d="m10 2.5 6.5 3.7v7.6L10 17.5l-6.5-3.7V6.2Z" /><path d="m3.7 6.3 6.3 3.6 6.3-3.6M10 9.9v7.3" /></>,
+  };
+  return <svg aria-hidden="true" className="vv3-icon" width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
+
+function Brand() {
+  return (
+    <Link href="/" className="vv3-brand" aria-label="Voxel Vault home">
+      <span className="vv3-brandMark"><i /><i /><i /></span>
+      <span>VOXEL <b>VAULT</b></span>
+    </Link>
+  );
+}
+
+function ObjectModel({ item, hero = false }) {
+  if (!item) return null;
+  return (
+    <Lazy3DPreview minHeight={hero ? 520 : 250} rootMargin={hero ? '80px' : '320px'}>
+      {item.renderMode === 'voxel' && item.shape ? (
+        <VoxelViewer shape={item.shape} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} />
+      ) : (
+        <ArtPreview family={item.family || 'sculpture'} seed={item.seed} rarity={item.rarity} material={item.material} compact label={false} interactive={hero} showcase={hero} />
+      )}
+    </Lazy3DPreview>
+  );
+}
+
+function ObjectCard({ item, index }) {
+  return (
+    <Link className="vv3-objectCard" href={`/marketplace?asset=${encodeURIComponent(item.id)}`} aria-label={`View ${item.name}`}>
+      <div className="vv3-objectVisual">
+        <ObjectModel item={item} />
+        <span className="vv3-cardIndex">{String(index + 1).padStart(2, '0')}</span>
+        <span className="vv3-liveBadge"><i /> DIGITAL TWIN</span>
+        <span className="vv3-cardArrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
+      </div>
+      <div className="vv3-objectDetails">
+        <div><small>{item.type || 'DIGITAL OBJECT'}</small><h3>{item.name}</h3></div>
+        <strong>${item.priceUsd}</strong>
+      </div>
+      <div className="vv3-objectMeta"><span>PHYSICAL + DIGITAL</span><span>{item.rarity || 'ORIGINAL'}</span></div>
+    </Link>
+  );
+}
+
+export default function VaultHomeV3() {
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All objects');
+  const heroItem = items[0];
+  const filtered = useMemo(() => items.filter((item) => {
+    const haystack = `${item.name} ${item.type} ${item.creator} ${item.material} ${item.family}`.toLowerCase();
+    const type = String(item.type || '').toLowerCase();
+    const categoryMatch = category === 'All objects' || type === category.replace(/s$/, '').toLowerCase();
+    return (!query.trim() || haystack.includes(query.trim().toLowerCase())) && categoryMatch;
+  }), [query, category]);
+
+  return (
+    <main className="vv3-home">
+      <div className="vv3-noise" aria-hidden="true" />
+      <header className="vv3-header">
+        <div className="vv3-topbar">
+          <Brand />
+          <nav className="vv3-desktopNav" aria-label="Primary navigation">
+            <Link href="/discover">Discover</Link>
+            <Link href="/marketplace">Marketplace</Link>
+            <Link href="/room">My vault</Link>
+            <Link href="/ai">Intelligence</Link>
+          </nav>
+          <div className="vv3-topActions">
+            <Link className="vv3-roundButton" href="#collection" aria-label="Search the collection"><Icon name="search" /></Link>
+            <Link className="vv3-headerCta" href="/room">Enter vault <Icon name="arrow" size={15} /></Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="vv3-hero">
+        <div className="vv3-heroGlow" aria-hidden="true" />
+        <div className="vv3-heroCopy">
+          <div className="vv3-eyebrow"><i /> THE PHYSICAL–DIGITAL COLLECTION</div>
+          <h1>Objects you own.<br /><em>Worlds you unlock.</em></h1>
+          <p>Turn real purchases into intelligent 3D collectibles—verified, explorable, and built to stay yours.</p>
+          <div className="vv3-heroActions">
+            <Link className="vv3-primaryCta" href="/discover">Explore objects <Icon name="arrow" size={17} /></Link>
+            <Link className="vv3-textCta" href="#how-it-works"><span><Icon name="spark" size={14} /></span> See how it works</Link>
+          </div>
+          <div className="vv3-proofRow" aria-label="Product benefits">
+            <span><Icon name="shield" size={16} /><b>Receipt verified</b></span>
+            <span><Icon name="cube" size={16} /><b>Interactive 3D</b></span>
+            <span><Icon name="room" size={16} /><b>Yours to keep</b></span>
+          </div>
+        </div>
+
+        <div className="vv3-heroVisual" aria-label="Interactive featured digital twin">
+          <div className="vv3-visualTop"><span><i /> LIVE OBJECT</span><small>DRAG TO INSPECT</small></div>
+          <div className="vv3-modelFrame"><div className="vv3-grid" /><div className="vv3-orbit" /><ObjectModel item={heroItem} hero /></div>
+          <div className="vv3-featureMeta">
+            <div><small>GENESIS OBJECT / 001</small><strong>{heroItem?.name || 'Vault Artifact'}</strong><span>{heroItem?.material || 'Rare material'} · {heroItem?.rarity || 'Original'}</span></div>
+            <Link href={`/marketplace?asset=${heroItem?.id || 1}`} aria-label="View featured object"><Icon name="arrow" size={20} /></Link>
+          </div>
+          <div className="vv3-verified"><span><Icon name="shield" size={15} /></span><div><small>AUTHENTICITY</small><b>VERIFIED</b></div></div>
+        </div>
+      </section>
+
+      <section className="vv3-signalBar" aria-label="Platform capabilities">
+        <span>MERCHANT VERIFIED</span><i />
+        <span>3D DIGITAL TWINS</span><i />
+        <span>ONCHAIN PROVENANCE</span><i />
+        <span>OBJECT INTELLIGENCE</span>
+      </section>
+
+      <section className="vv3-story" id="how-it-works">
+        <div className="vv3-sectionLabel"><span>01</span> THE IDEA</div>
+        <div className="vv3-storyTitle"><small>MORE THAN A MARKETPLACE</small><h2>Your things deserve<br /><em>a digital life.</em></h2></div>
+        <p>Voxel Vault connects every meaningful object to a living digital identity. Verify the purchase, create the twin, then make it part of your world.</p>
+      </section>
+
+      <section className="vv3-journey" aria-label="How Voxel Vault works">
+        <Link href="/receipt"><div className="vv3-stepTop"><span>01</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="receipt" size={25} /></div><small>CAPTURE</small><h3>Verify the purchase</h3><p>Turn a merchant-confirmed receipt into a secure object passport.</p></Link>
+        <Link href="/passport"><div className="vv3-stepTop"><span>02</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="spark" size={25} /></div><small>TRANSFORM</small><h3>Create the twin</h3><p>Give the object an intelligent identity and an interactive 3D form.</p></Link>
+        <Link href="/room"><div className="vv3-stepTop"><span>03</span><Icon name="arrow" /></div><div className="vv3-stepIcon"><Icon name="room" size={25} /></div><small>EXPERIENCE</small><h3>Build your world</h3><p>Collect, organize, share, and explore everything you own.</p></Link>
+      </section>
+
+      <section className="vv3-collection" id="collection">
+        <div className="vv3-collectionHead">
+          <div><div className="vv3-sectionLabel"><span>02</span> LIVE COLLECTION</div><h2>Objects worth<br /><em>discovering.</em></h2></div>
+          <p>A growing universe of physical objects and their interactive digital counterparts.</p>
+        </div>
+        <div className="vv3-collectionTools">
+          <div className="vv3-categories" role="group" aria-label="Filter objects by category">{categories.map((name) => <button type="button" key={name} className={category === name ? 'active' : ''} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
+          <label className="vv3-searchBox"><Icon name="search" size={16} /><input type="search" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search objects" aria-label="Search objects" /></label>
+        </div>
+        <p className="vv3-srOnly" aria-live="polite">Showing {filtered.length} {filtered.length === 1 ? 'object' : 'objects'}.</p>
+        <div className="vv3-objectGrid">{filtered.map((item, index) => <ObjectCard key={item.id} item={item} index={index} />)}</div>
+        {!filtered.length && <div className="vv3-emptyState" role="status"><Icon name="search" size={24} /><strong>No matching objects</strong><span>Try a different search or category.</span></div>}
+        <Link className="vv3-viewAll" href="/marketplace">View full collection <Icon name="arrow" size={16} /></Link>
+      </section>
+
+      <section className="vv3-intelligence">
+        <div className="vv3-aiVisual"><div className="vv3-aiHalo haloOne" /><div className="vv3-aiHalo haloTwo" /><div className="vv3-aiCore"><Icon name="spark" size={34} /></div><span><i /> CRESTODIAN ONLINE</span></div>
+        <div className="vv3-aiCopy"><div className="vv3-sectionLabel"><span>03</span> OBJECT INTELLIGENCE</div><h2>A vault that<br /><em>understands.</em></h2><p>Ask what an object is, where it came from, what makes it rare, and how it connects to everything else you own.</p><ul><li><i /> Collection intelligence</li><li><i /> Provenance research</li><li><i /> Spatial organization</li></ul><Link className="vv3-lightCta" href="/ai">Meet Crestodian <Icon name="arrow" size={16} /></Link></div>
+      </section>
+
+      <section className="vv3-finalCta">
+        <div><small>YOUR WORLD, VERIFIED</small><h2>Start with one object.</h2><p>Scan a purchase and watch it become something more.</p></div>
+        <Link className="vv3-primaryCta" href="/receipt">Create your first twin <Icon name="arrow" size={17} /></Link>
+      </section>
+
+      <footer className="vv3-footer">
+        <div className="vv3-footerTop"><Brand /><p>Real objects. Intelligent twins.<br />One living collection.</p><nav><Link href="/discover">Discover</Link><Link href="/marketplace">Marketplace</Link><Link href="/receipt">Scan receipt</Link><Link href="/room">My vault</Link><Link href="/ai">Intelligence</Link></nav></div>
+        <div className="vv3-footerBottom"><span>© 2026 VOXEL VAULT</span><div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><span className="vv3-status"><i /> VOXEL VAULT / 2026</span></div>
+      </footer>
+
+      <nav className="vv3-mobileNav" aria-label="Mobile navigation"><Link className="active" href="/discover"><Icon name="search" />Discover</Link><Link href="/receipt"><Icon name="receipt" />Scan</Link><Link href="/room"><Icon name="room" />Vault</Link><Link href="/ai"><Icon name="spark" />AI</Link></nav>
+    </main>
+  );
+}
