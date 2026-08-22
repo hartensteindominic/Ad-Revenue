@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -99,12 +99,23 @@ function buildProduct(item = {}) {
 
 export default function Product3DTwin({ item, hero=false }) {
   const host = useRef(null);
+  const [active, setActive] = useState(hero);
+
   useEffect(() => {
     const root = host.current;
-    if (!root) return undefined;
+    if (!root || hero) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setActive(entry.isIntersecting), { rootMargin: '240px' });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [hero]);
+
+  useEffect(() => {
+    const root = host.current;
+    if (!root || !active) return undefined;
     let mounted = true;
-    let renderer, scene, camera, controls, raf, ro;
+    let renderer, scene, camera, controls, raf, ro, object;
     let fallback;
+
     const setFallback = () => {
       if (!mounted || fallback || !root) return;
       fallback = document.createElement('div');
@@ -112,12 +123,13 @@ export default function Product3DTwin({ item, hero=false }) {
       fallback.setAttribute('aria-label', `${item?.name || 'Real-world object'} 3D NFT digital twin`);
       fallback.textContent = '3D DIGITAL TWIN';
       Object.assign(fallback.style, {
-        height:'100%', display:'grid', placeItems:'center', color:'#b5a7ff',
+        position:'absolute', inset:'0', display:'grid', placeItems:'center', color:'#b5a7ff',
         fontSize:'11px', fontWeight:'900', letterSpacing:'.16em',
         background:'radial-gradient(circle at 50% 40%, rgba(119,104,255,.16), transparent 52%)'
       });
       root.appendChild(fallback);
     };
+
     try {
       const lowPower = window.matchMedia('(prefers-reduced-motion: reduce)').matches || (navigator.hardwareConcurrency || 4) <= 4;
       scene = new THREE.Scene();
@@ -128,7 +140,6 @@ export default function Product3DTwin({ item, hero=false }) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.12;
       renderer.shadowMap.enabled = !lowPower;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none;outline:none';
       root.appendChild(renderer.domElement);
 
@@ -141,9 +152,8 @@ export default function Product3DTwin({ item, hero=false }) {
       floor.rotation.x = -Math.PI/2; floor.position.y = -1.72; floor.receiveShadow = true; scene.add(floor);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(2.55,.014,10,120), new THREE.MeshBasicMaterial({ color:0x7566ff, transparent:true, opacity:.34 }));
       ring.rotation.x = -Math.PI/2; ring.position.y = -1.69; scene.add(ring);
-      const ring2 = ring.clone(); ring2.scale.set(.78,.78,.78); ring2.material = ring.material.clone(); ring2.material.opacity = .16; scene.add(ring2);
 
-      const object = buildProduct(item); scene.add(object);
+      object = buildProduct(item); scene.add(object);
       const box = new THREE.Box3().setFromObject(object);
       const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
       object.position.sub(center); object.position.y += .1;
@@ -184,8 +194,9 @@ export default function Product3DTwin({ item, hero=false }) {
       renderer?.dispose();
       if (renderer?.domElement?.parentNode === root) root.removeChild(renderer.domElement);
       if (fallback?.parentNode === root) root.removeChild(fallback);
+      object = null;
     };
-  }, [item, hero]);
+  }, [item, hero, active]);
 
   return <div ref={host} role="img" aria-label={`${item?.name || 'Real-world object'} 3D NFT digital twin`} style={{ width:'100%', height:'100%', minHeight:hero ? 390 : 300, position:'relative', overflow:'hidden', borderRadius:'inherit' }} />;
 }
