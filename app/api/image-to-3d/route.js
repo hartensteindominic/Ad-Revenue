@@ -4,10 +4,6 @@ export const runtime = 'nodejs';
 
 const MESHY_ENDPOINT = 'https://api.meshy.ai/openapi/v1/image-to-3d';
 
-function configured() {
-  return Boolean(process.env.MESHY_API_KEY);
-}
-
 export async function POST(request) {
   const apiKey = process.env.MESHY_API_KEY;
   if (!apiKey) {
@@ -28,14 +24,18 @@ export async function POST(request) {
         image_url: imageUrl,
         model_type: 'standard',
         ai_model: 'latest',
+        ultra_mode: true,
         image_enhancement: true,
         remove_lighting: true,
         should_texture: true,
         enable_pbr: true,
-        texture_resolution: '2k',
+        texture_resolution: '4k',
+        texture_image_url: imageUrl,
+        texture_prompt: 'Photorealistic commercial product reconstruction. Preserve the exact visible product proportions, silhouette, materials, colors, buttons, seams, openings, hardware, and surface details from the reference image. Do not add decorative elements or invent branding. Produce a clean physically based material suitable for an e-commerce digital twin.',
         target_formats: ['glb'],
         auto_size: true,
         origin_at: 'bottom',
+        multi_view_thumbnails: true,
       }),
       cache: 'no-store',
     });
@@ -71,6 +71,7 @@ export async function GET(request) {
       progress: data?.progress ?? 0,
       modelUrl: data?.model_urls?.glb || null,
       thumbnailUrl: data?.thumbnail_url || null,
+      thumbnailUrls: data?.thumbnail_urls || null,
       error: data?.task_error?.message || null,
     });
   } catch (error) {
