@@ -13,12 +13,15 @@ export default function CanonicalNFTMedia({ item, interactive = false, className
     material: item?.material,
     seed: item?.seed,
     rarity: item?.rarity,
+    shape: item?.shape,
     interactive,
     showcase: !interactive,
     compact: !interactive,
     label: false,
   };
 
+  // A canonical collectible is always presented as a 3D NFT. A verified/licensed
+  // model takes priority; otherwise ArtPreview supplies the deterministic digital twin.
   if (media.modelUri) {
     return (
       <div className={`flex h-full min-h-[280px] w-full items-center justify-center overflow-hidden ${className}`}>
@@ -36,21 +39,12 @@ export default function CanonicalNFTMedia({ item, interactive = false, className
     );
   }
 
-  if (media.previewUri) {
-    return (
-      <div className={`flex h-full min-h-[280px] w-full items-center justify-center overflow-hidden ${className}`}>
-        <img
-          src={media.previewUri}
-          alt={item?.name || 'Voxel Vault collectible'}
-          className="block max-h-full max-w-full object-contain object-center"
-          loading={interactive ? 'eager' : 'lazy'}
-          decoding="async"
-          fetchPriority={interactive ? 'high' : 'auto'}
-          referrerPolicy="no-referrer"
-        />
+  return (
+    <div className={`relative flex h-full min-h-[280px] w-full items-center justify-center overflow-hidden ${className}`}>
+      <ArtPreview {...previewProps} />
+      <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-violet-300/20 bg-black/45 px-3 py-1 text-[9px] font-black uppercase tracking-[.18em] text-violet-200 backdrop-blur-md">
+        3D NFT Twin
       </div>
-    );
-  }
-
-  return fallback || <ArtPreview {...previewProps} />;
+    </div>
+  );
 }
