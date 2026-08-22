@@ -5,8 +5,9 @@ import { resolveNFTMedia } from '../../lib/media/assetResolver';
 
 const Safe3DViewer = dynamic(() => import('./Safe3DViewer'), { ssr: false });
 const ArtPreview = dynamic(() => import('./ArtPreview'), { ssr: false });
+const NFT3DStage = dynamic(() => import('./NFT3DStage'), { ssr: false });
 
-export default function CanonicalNFTMedia({ item, interactive = false, className = '', fallback = null }) {
+export default function CanonicalNFTMedia({ item, interactive = false, className = '' }) {
   const media = resolveNFTMedia(item);
   const previewProps = {
     family: item?.family,
@@ -15,36 +16,32 @@ export default function CanonicalNFTMedia({ item, interactive = false, className
     rarity: item?.rarity,
     shape: item?.shape,
     interactive,
-    showcase: !interactive,
-    compact: !interactive,
+    showcase: true,
+    compact: false,
     label: false,
   };
 
-  // A canonical collectible is always presented as a 3D NFT. A verified/licensed
-  // model takes priority; otherwise ArtPreview supplies the deterministic digital twin.
-  if (media.modelUri) {
-    return (
-      <div className={`flex h-full min-h-[280px] w-full items-center justify-center overflow-hidden ${className}`}>
-        <Safe3DViewer
-          assetUrl={media.modelUri}
-          previewProps={{ ...previewProps, imageUrl: media.previewUri || undefined }}
-          interactive={interactive}
-          shape={item?.shape}
-          family={item?.family}
-          material={item?.material}
-          rarity={item?.rarity}
-          seed={item?.seed}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`relative flex h-full min-h-[280px] w-full items-center justify-center overflow-hidden ${className}`}>
-      <ArtPreview {...previewProps} />
-      <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-violet-300/20 bg-black/45 px-3 py-1 text-[9px] font-black uppercase tracking-[.18em] text-violet-200 backdrop-blur-md">
-        3D NFT Twin
+    <NFT3DStage title={item?.name || 'Digital Twin'} status={media.modelUri ? 'VERIFIED 3D ASSET' : 'LIVE DIGITAL TWIN'}>
+      <div className={`relative flex min-h-[320px] items-center justify-center ${className}`}>
+        {media.modelUri ? (
+          <Safe3DViewer
+            assetUrl={media.modelUri}
+            previewProps={{ ...previewProps, imageUrl: media.previewUri || undefined, alt: item?.name || 'Real-world object' }}
+            interactive={interactive}
+            shape={item?.shape}
+            family={item?.family}
+            material={item?.material}
+            rarity={item?.rarity}
+            seed={item?.seed}
+          />
+        ) : (
+          <ArtPreview {...previewProps} />
+        )}
+        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-black/55 px-3 py-1.5 text-[8px] font-black uppercase tracking-[.18em] text-white/60 backdrop-blur-md">
+          3D collectible · NFT
+        </div>
       </div>
-    </div>
+    </NFT3DStage>
   );
 }
