@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe-server';
 import { getCatalogItem } from '../../../lib/catalog';
+import { getSupabaseAdmin } from '../../../lib/supabase-admin';
 
 export async function GET(request: Request) {
   try {
@@ -21,10 +22,26 @@ export async function GET(request: Request) {
 
     const item = getCatalogItem(catalogId - 1);
     if (!item) return NextResponse.json({ error: 'Catalog object unavailable' }, { status: 404 });
+
+    let fulfillmentStatus = null;
+    if (mintMode === 'physical_nft') {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: order, error } = await supabaseAdmin
+        .from('physical_orders')
+        .select('catalog_key,fulfillment_status')
+        .eq('stripe_checkout_session_id', sessionId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!order) return NextResponse.json({ paid: false, pending: true, error: 'Payment confirmed; waiting for the physical order record to be created.' }, { status: 202 });
+      if (order.catalog_key !== item.id) return NextResponse.json({ paid: false, error: 'Order/catalog mismatch' }, { status: 409 });
+      if (['cancelled', 'failed'].includes(order.fulfillment_status)) return NextResponse.json({ paid: false, error: 'Physical fulfillment is not available for this order.' }, { status: 409 });
+      fulfillmentStatus = order.fulfillment_status;
+    }
+
     return NextResponse.json({
       paid: true,
       fulfillmentIncluded: mintMode === 'physical_nft',
-      fulfillmentStatus: mintMode === 'physical_nft' ? 'awaiting_fulfillment' : null,
+      fulfillmentStatus,
       catalogId,
       wallet,
       item: { id: item.id, name: item.name, creator: item.creator, rarity: item.rarity, realityBasis: item.realityBasis, priceUsd: item.priceUsd, sourceUrl: item.sourceUrl, sourceName: item.sourceName },
