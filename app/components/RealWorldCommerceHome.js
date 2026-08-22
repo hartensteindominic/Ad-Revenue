@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { REAL_WORLD_CATALOG } from '../../lib/realWorldCatalog';
 import RealWorld3DNFT from './RealWorld3DNFT';
 import './VaultHomeV3.css';
+import './VaultCommercePolish.css';
 
 function Icon({ name, size = 18 }) {
   const paths = {
