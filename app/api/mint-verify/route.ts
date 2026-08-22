@@ -12,18 +12,22 @@ export async function GET(request: Request) {
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const metadataWallet = session.metadata?.wallet?.toLowerCase();
+    const mintMode = session.metadata?.mint_mode;
     const catalogId = Number(session.metadata?.catalog_id);
-    if (session.metadata?.mint_mode !== 'usd' || metadataWallet !== wallet || session.payment_status !== 'paid') {
+    if (!['usd', 'physical_nft'].includes(String(mintMode)) || metadataWallet !== wallet || session.payment_status !== 'paid') {
       return NextResponse.json({ paid: false }, { status: 402 });
     }
     if (!Number.isInteger(catalogId) || catalogId < 1) return NextResponse.json({ error: 'Invalid mint object' }, { status: 400 });
 
     const item = getCatalogItem(catalogId - 1);
+    if (!item) return NextResponse.json({ error: 'Catalog object unavailable' }, { status: 404 });
     return NextResponse.json({
       paid: true,
+      fulfillmentIncluded: mintMode === 'physical_nft',
+      fulfillmentStatus: mintMode === 'physical_nft' ? 'awaiting_fulfillment' : null,
       catalogId,
       wallet,
-      item: { id: item.id, name: item.name, creator: item.creator, rarity: item.rarity, realityBasis: item.realityBasis, priceUsd: item.priceUsd },
+      item: { id: item.id, name: item.name, creator: item.creator, rarity: item.rarity, realityBasis: item.realityBasis, priceUsd: item.priceUsd, sourceUrl: item.sourceUrl, sourceName: item.sourceName },
       sessionId,
     });
   } catch (error) {
