@@ -27,7 +27,7 @@ function BuyBoth({item}){
       ? <Link href={`/marketplace?purchase=${encodeURIComponent(item.purchaseAssetId)}`} className="vv3-buyButton">BUY PHYSICAL + 3D NFT · ${item.customerPriceUsd}</Link>
       : <div className="vv3-buyButton vv3-buyButtonDisabled">CHECKOUT LOCKED · SUPPLIER CONNECTION REQUIRED</div>}
     <div className="vv3-buyPerks"><span>📦 physical object</span><span>🧊 3D twin included</span><span>🏠 Vault + Room</span></div>
-    {item.customerPriceUsd&&<div className="vv3-priceNote">Vault retail price · configured markup · digital collectible included · shipping at checkout</div>}
+    {item.customerPriceUsd&&<div className="vv3-priceNote">Target retail · {item.markupPercent}% configured Vault markup over the reference price · physical checkout unlocks after a real supplier/SKU is connected</div>}
   </div>;
 }
 
@@ -41,7 +41,7 @@ function Card({item,index}){
     </div>
     <div className="vv3-objectDetails"><div><small>{item.type}</small><h3>{item.name}</h3></div><strong>{item.customerPriceUsd?`$${item.customerPriceUsd}`:'Price on request'}</strong></div>
     <div className="vv3-objectMeta"><span>{item.sourceName}</span><span>3D TWIN · {item.digitalTwin?.status || 'READY'}</span></div>
-    <div className="vv3-sourceRow"><a href={item.sourceUrl} target="_blank" rel="noreferrer">View physical source ↗</a><span>{item.markupPercent ? `${item.markupPercent}% Vault markup` : 'Source pricing'}</span></div>
+    <div className="vv3-sourceRow"><a href={item.sourceUrl} target="_blank" rel="noreferrer">View physical source ↗</a><span>{item.markupPercent ? `${item.markupPercent}% Vault markup` : 'Reference pricing'}</span></div>
     <BuyBoth item={item}/>
   </article>;
 }
@@ -49,10 +49,10 @@ function Card({item,index}){
 function TrustSection(){
   return <div className="vv3-trustSection">
     <strong>How the offer works.</strong>
-    <span>Real product sources establish the physical object's identity.</span>
-    <span>Voxel Vault adds its configured markup to eligible catalog pricing.</span>
-    <span>The 3D collectible is included with the bundle.</span>
-    <span>Physical checkout activates only after the exact supplier/SKU is connected.</span>
+    <span>Real product sources establish the physical object's reference and identity.</span>
+    <span>Voxel Vault can apply a configured markup to eligible reference pricing.</span>
+    <span>The interactive 3D collectible is presented as the digital layer.</span>
+    <span>Physical checkout stays locked until a real supplier, SKU, cost and fulfillment route are connected.</span>
   </div>;
 }
 
@@ -70,7 +70,7 @@ export default function RealWorldCommerceHome(){
       <div className="vv3-heroCopy">
         <div className="vv3-eyebrow"><i/> PHYSICAL + DIGITAL COLLECTION</div>
         <h1>Real objects.<br/><em>3D NFTs.</em></h1>
-        <p>Choose a real-world object, inspect its interactive Voxel Vault 3D digital twin, and collect both through one storefront. Product sourcing and fulfillment stay separated from the collectible layer so the ownership record stays clean.</p>
+        <p>Choose a real-world object, inspect its interactive Voxel Vault 3D digital twin, and collect both through one storefront. Physical sourcing stays separate from the collectible layer, so the ownership record and fulfillment economics remain clean.</p>
         <div className="vv3-heroActions"><Link className="vv3-primaryCta" href="#collection">Shop both <Icon name="arrow" size={17}/></Link><Link className="vv3-textCta" href="/room"><span><Icon name="cube" size={14}/></span> Open Vault</Link></div>
         <div className="vv3-proofRow"><span><Icon name="shield" size={16}/><b>Real product source</b></span><span><Icon name="cube" size={16}/><b>Interactive 3D twin</b></span><span><Icon name="shield" size={16}/><b>Ownership-ready asset</b></span></div>
       </div>
@@ -83,12 +83,12 @@ export default function RealWorldCommerceHome(){
     </section>
     <section className="vv3-signalBar"><span>REAL PRODUCTS</span><i/><span>INTERACTIVE 3D TWINS</span><i/><span>NFT-READY ASSETS</span><i/><span>VAULT + ROOM + WORLD</span></section>
     <section className="vv3-collection" id="collection">
-      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and digital collectible as one offer.</p></div>
+      <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source. Voxel Vault keeps reference pricing, target retail markup, supplier cost and actual profit as separate concepts so the store never pretends a retail reference price is a dropship cost.</p></div>
       <div className="vv3-objectGrid">{REAL_WORLD_CATALOG.map((item,i)=><Card key={item.id} item={item} index={i}/>)}</div>
       <TrustSection/>
       <VaultRewardsInvite/>
     </section>
-    <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both, keep the 3D collectible in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
+    <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both when a verified supplier route is live, keep the 3D collectible in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
     <MobileNav/>
   </main>;
 }
