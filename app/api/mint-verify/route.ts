@@ -38,13 +38,26 @@ export async function GET(request: Request) {
       fulfillmentStatus = order.fulfillment_status;
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.voxelvault.io';
     return NextResponse.json({
       paid: true,
       fulfillmentIncluded: mintMode === 'physical_nft',
       fulfillmentStatus,
       catalogId,
       wallet,
-      item: { id: item.id, name: item.name, creator: item.creator, rarity: item.rarity, realityBasis: item.realityBasis, priceUsd: item.priceUsd, sourceUrl: item.sourceUrl, sourceName: item.sourceName },
+      item: {
+        id: item.id,
+        name: item.name,
+        creator: item.creator,
+        rarity: item.rarity,
+        realityBasis: item.realityBasis,
+        material: item.material,
+        priceUsd: item.priceUsd,
+        sourceUrl: item.sourceUrl,
+        sourceName: item.sourceName,
+        nftAnimationUrl: `${appUrl}/twin?asset=${catalogId}`,
+        nftImageUrl: `${appUrl}/api/og?asset=${catalogId}`,
+      },
       sessionId,
     });
   } catch (error) {
