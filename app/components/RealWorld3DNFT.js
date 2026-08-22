@@ -20,22 +20,31 @@ export default function RealWorld3DNFT({ item, hero = false }) {
     <figure className={`vv3-modelFrame ${hero ? 'vv3-modelFrameHero' : ''}`} aria-labelledby={titleId}>
       <div className="vv3-twinHeader">
         <span className="vv3-twinPill"><span aria-hidden="true">◆</span> 3D NFT INCLUDED</span>
-        <span className="vv3-twinSource">REAL PRODUCT 3D COLLECTIBLE</span>
+        <span className="vv3-twinSource">REAL PRODUCT + INTERACTIVE 3D NFT</span>
       </div>
 
-      <RealProduct3DCollectible item={item} hero={hero} />
+      <div className="vv3-3dDualStage">
+        <Product3DTwin item={item} hero={hero} />
+        {preview && <RealProduct3DCollectible item={item} hero={hero} />}
+      </div>
 
       <div className="vv3-nftBadge" aria-hidden="true">
         <span>REAL PRODUCT + 3D NFT</span>
-        <small>MATCHED DIGITAL COLLECTIBLE</small>
+        <small>THE 3D NFT IS LIVE ABOVE · MATCHED TO THIS PHYSICAL ITEM</small>
       </div>
 
-      {!preview && <Product3DTwin item={item} hero={hero} />}
-
       <figcaption className="vv3-twinFooter" id={titleId}>
-        <div className="vv3-twinName"><small>{item?.creator || 'Voxel Vault'}</small><strong>{item?.name || 'Collectible object'}</strong></div>
-        <div className="vv3-twinPrice"><small>PHYSICAL + DIGITAL</small>{price && <strong>{price}</strong>}</div>
-        <a className="vv3-twinOpen" href={twinUrl} aria-label={`Open permanent 3D NFT for ${item?.name || 'this collectible'}`}>OPEN 3D NFT ↗</a>
+        <div className="vv3-twinName">
+          <small>{item?.creator || 'Voxel Vault'}</small>
+          <strong>{item?.name || 'Collectible object'}</strong>
+        </div>
+        <div className="vv3-twinPrice">
+          <small>PHYSICAL + DIGITAL</small>
+          {price && <strong>{price}</strong>}
+        </div>
+        <a className="vv3-twinOpen" href={twinUrl} aria-label={`Open permanent 3D NFT for ${item?.name || 'this collectible'}`}>
+          OPEN 3D NFT ↗
+        </a>
       </figcaption>
     </figure>
   );
