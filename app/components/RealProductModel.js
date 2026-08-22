@@ -6,6 +6,23 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const CACHE_PREFIX = 'vv3-image-to-3d:';
 
+function isPlaceholderImage(url = '') {
+  return /images\\.unsplash\\.com|unsplash\\.com/i.test(url);
+}
+
+async function resolveProductImage(imageUrl, sourceUrl) {
+  if (imageUrl && !isPlaceholderImage(imageUrl)) return imageUrl;
+  if (!sourceUrl) return imageUrl || '';
+  try {
+    const response = await fetch(`/api/product-image?url=${encodeURIComponent(sourceUrl)}`, { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.imageUrl) return data.imageUrl;
+    }
+  } catch {}
+  return imageUrl || '';
+}
+
 async function generateFromImage(imageUrl, item, cacheKey) {
   const cacheName = CACHE_PREFIX + cacheKey;
   const cached = window.localStorage.getItem(cacheName);
@@ -19,7 +36,7 @@ async function generateFromImage(imageUrl, item, cacheKey) {
   const start = await fetch('/api/image-to-3d', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageUrl, item: { name: item?.name, type: item?.type, material: item?.material, sourceName: item?.sourceName, sourceNote: item?.sourceNote } }),
+    body: JSON.stringify({ imageUrl, item: { name: item?.name, type: item?.type, material: item?.material, sourceName: item?.sourceName, sourceNote: item?.sourceNote, sourceUrl: item?.sourceUrl } }),
   });
   if (!start.ok) throw new Error('Image-to-3D generation is not configured or failed to start.');
   const { taskId } = await start.json();
@@ -53,6 +70,10 @@ function createProductTwin(item, imageUrl) {
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.28, 48), dark); base.position.y = -0.92; group.add(base);
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.2, 48), dark); cap.position.y = 1.42; group.add(cap);
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.11, 18, 48, Math.PI), dark); handle.rotation.z = Math.PI / 2; handle.position.set(0.7, 0.25, 0); group.add(handle);
+  } else if (name.includes('spiral')) {
+    box(group, [1.55, 0.18, 1.0], [0, -1.15, 0], dark);
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.09, 16, 72, Math.PI * 1.75), metal); coil.rotation.z = Math.PI / 2; coil.position.y = 0.15; group.add(coil);
+    const diffuser = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 1.35, 8, 20), product); diffuser.position.set(0, 0.25, 0.05); diffuser.rotation.z = -0.18; group.add(diffuser);
   } else if (name.includes('lamp')) {
     box(group, [1.65, 0.24, 1.05], [0, -1.15, 0], dark);
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.85, 24), metal); stem.position.set(0, -0.15, 0); stem.rotation.z = -0.12; group.add(stem);
@@ -79,8 +100,8 @@ export default function RealProductModel({ item, onLoaded }) {
   useEffect(() => {
     const root = host.current;
     const directUrl = item?.modelUri || item?.digitalTwin?.modelUrl;
-    const imageUrl = item?.previewUri || item?.digitalTwin?.previewUrl;
-    if (!root || (!directUrl && !imageUrl)) return undefined;
+    let imageUrl = item?.previewUri || item?.digitalTwin?.previewUrl;
+    if (!root || (!directUrl && !imageUrl && !item?.sourceUrl)) return undefined;
     let alive = true;
     const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100), renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15; renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'; root.appendChild(renderer.domElement);
@@ -91,6 +112,7 @@ export default function RealProductModel({ item, onLoaded }) {
     const loadGlb = url => new Promise((resolve, reject) => new GLTFLoader().load(url, gltf => resolve(gltf.scene), undefined, reject));
     const createProceduralTwin = () => { if (alive) showModel(createProductTwin(item, imageUrl)); };
     (async () => {
+      imageUrl = await resolveProductImage(imageUrl, item?.sourceUrl);
       if (directUrl) { try { showModel(await loadGlb(directUrl)); return; } catch { createProceduralTwin(); return; } }
       if (!imageUrl) return;
       try {
@@ -103,6 +125,6 @@ export default function RealProductModel({ item, onLoaded }) {
     resize(); const ro = new ResizeObserver(resize); ro.observe(root); const tick = () => { if (!alive) return; raf = requestAnimationFrame(tick); if (model) model.rotation.y += 0.0024; renderer.render(scene, camera); }; tick();
     return () => { alive = false; cancelAnimationFrame(raf); ro.disconnect(); if (renderer.domElement.parentNode === root) root.removeChild(renderer.domElement); scene.traverse(object => { object.geometry?.dispose?.(); if (Array.isArray(object.material)) object.material.forEach(m => { m.map?.dispose?.(); m.dispose?.(); }); else { object.material?.map?.dispose?.(); object.material?.dispose?.(); } }); renderer.dispose(); };
   }, [item, onLoaded]);
-  if (!item?.modelUri && !item?.digitalTwin?.modelUrl && !item?.previewUri && !item?.digitalTwin?.previewUrl) return null;
+  if (!item?.modelUri && !item?.digitalTwin?.modelUrl && !item?.previewUri && !item?.digitalTwin?.previewUrl && !item?.sourceUrl) return null;
   return <div ref={host} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }} />;
 }
