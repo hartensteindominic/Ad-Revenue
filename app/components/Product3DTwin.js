@@ -97,9 +97,26 @@ function buildProduct(item = {}) {
   return g;
 }
 
+function TwinFallback({ item, hidden }) {
+  return (
+    <div
+      className="vv3-twinFallback"
+      role="img"
+      aria-label={`${item?.name || 'Real-world object'} 3D NFT digital twin`}
+      aria-hidden={hidden ? 'true' : undefined}
+      style={{ opacity: hidden ? 0 : 1, pointerEvents: hidden ? 'none' : 'auto' }}
+    >
+      <div className="vv3-twinFallbackOrb" aria-hidden="true" />
+      <span>3D DIGITAL TWIN</span>
+      <small>Interactive model loading</small>
+    </div>
+  );
+}
+
 export default function Product3DTwin({ item, hero=false }) {
   const host = useRef(null);
   const [active, setActive] = useState(hero);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const root = host.current;
@@ -114,20 +131,9 @@ export default function Product3DTwin({ item, hero=false }) {
     if (!root || !active) return undefined;
     let mounted = true;
     let renderer, scene, camera, controls, raf, ro, object;
-    let fallback;
 
-    const setFallback = () => {
-      if (!mounted || fallback || !root) return;
-      fallback = document.createElement('div');
-      fallback.setAttribute('role', 'img');
-      fallback.setAttribute('aria-label', `${item?.name || 'Real-world object'} 3D NFT digital twin`);
-      fallback.textContent = '3D DIGITAL TWIN';
-      Object.assign(fallback.style, {
-        position:'absolute', inset:'0', display:'grid', placeItems:'center', color:'#b5a7ff',
-        fontSize:'11px', fontWeight:'900', letterSpacing:'.16em',
-        background:'radial-gradient(circle at 50% 40%, rgba(119,104,255,.16), transparent 52%)'
-      });
-      root.appendChild(fallback);
+    const showFallback = () => {
+      if (mounted) setReady(false);
     };
 
     try {
@@ -140,7 +146,9 @@ export default function Product3DTwin({ item, hero=false }) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.12;
       renderer.shadowMap.enabled = !lowPower;
-      renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none;outline:none';
+      renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none';
+      renderer.domElement.setAttribute('aria-hidden', 'true');
+      renderer.domElement.addEventListener('webglcontextlost', showFallback, { passive: true });
       root.appendChild(renderer.domElement);
 
       scene.add(new THREE.HemisphereLight(0xf2f6ff, 0x10121d, 2.0));
@@ -178,14 +186,17 @@ export default function Product3DTwin({ item, hero=false }) {
         controls.update(); renderer.render(scene,camera);
       };
       animate();
+      if (mounted) setReady(true);
     } catch {
-      setFallback();
+      showFallback();
     }
+
     return () => {
       mounted = false;
       if (raf) cancelAnimationFrame(raf);
       ro?.disconnect();
       controls?.dispose();
+      renderer?.domElement?.removeEventListener('webglcontextlost', showFallback);
       scene?.traverse((o) => {
         o.geometry?.dispose?.();
         if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
@@ -193,10 +204,13 @@ export default function Product3DTwin({ item, hero=false }) {
       });
       renderer?.dispose();
       if (renderer?.domElement?.parentNode === root) root.removeChild(renderer.domElement);
-      if (fallback?.parentNode === root) root.removeChild(fallback);
       object = null;
     };
   }, [item, hero, active]);
 
-  return <div ref={host} role="img" aria-label={`${item?.name || 'Real-world object'} 3D NFT digital twin`} style={{ width:'100%', height:'100%', minHeight:hero ? 390 : 300, position:'relative', overflow:'hidden', borderRadius:'inherit' }} />;
+  return (
+    <div ref={host} style={{ width:'100%', height:'100%', minHeight:hero ? 390 : 300, position:'relative', overflow:'hidden', borderRadius:'inherit' }}>
+      <TwinFallback item={item} hidden={ready} />
+    </div>
+  );
 }
