@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { REAL_WORLD_CATALOG } from '../../lib/realWorldCatalog';
 import RealWorld3DNFT from './RealWorld3DNFT';
+import VaultRewardsInvite from './VaultRewardsInvite';
 import './VaultHomeV3.css';
 import './VaultCommercePolish.css';
 
@@ -39,7 +40,7 @@ function Card({item,index}){
       <span className="vv3-nftBadge">3D NFT INCLUDED</span>
     </div>
     <div className="vv3-objectDetails"><div><small>{item.type}</small><h3>{item.name}</h3></div><strong>{item.customerPriceUsd?`$${item.customerPriceUsd}`:'Price on request'}</strong></div>
-    <div className="vv3-objectMeta"><span>{item.sourceName}</span><span>REAL-WORLD DIGITAL TWIN</span></div>
+    <div className="vv3-objectMeta"><span>{item.sourceName}</span><span>3D TWIN · {item.digitalTwin?.status || 'READY'}</span></div>
     <BuyBoth item={item}/>
   </article>;
 }
@@ -84,6 +85,7 @@ export default function RealWorldCommerceHome(){
       <div className="vv3-collectionHead"><div><div className="vv3-sectionLabel"><span>01</span> SHOP THE COLLECTION</div><h2>Buy the object.<br/><em>Own the twin.</em></h2></div><p>Each listing is anchored to a real-world product source from an established manufacturer or retailer. Voxel Vault adds its configured markup to eligible catalog pricing and presents the physical object and 3D collectible as one offer.</p></div>
       <div className="vv3-objectGrid">{REAL_WORLD_CATALOG.map((item,i)=><Card key={item.id} item={item} index={i}/>)}</div>
       <TrustSection/>
+      <VaultRewardsInvite/>
     </section>
     <section className="vv3-finalCta"><div><small>VOXEL VAULT</small><h2>Physical in your hands. Digital in your world.</h2><p>Buy both, keep the 3D NFT in your Vault, place it in your Room, and make it discoverable in the World.</p></div><Link className="vv3-primaryCta" href="/room">Open My Room <Icon name="arrow" size={17}/></Link></section>
     <MobileNav/>
