@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe-server';
 import { getCatalogItem } from '../../../lib/catalog';
+import { getSupabaseAdmin } from '../../../lib/supabase-admin';
 
 const NFT_FEE_CENTS = 299;
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const auth = request.headers.get('authorization');
+    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (!token) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+
     const { catalogId, wallet } = await request.json();
     const id = Number(catalogId);
     const normalizedWallet = String(wallet || '').toLowerCase();
@@ -17,11 +25,11 @@ export async function POST(request: Request) {
     if (!item) return NextResponse.json({ error: 'Product unavailable' }, { status: 404 });
     if (!item.sourceUrl || !item.sourceName) return NextResponse.json({ error: 'This product has no verified online source' }, { status: 409 });
 
-    // Physical fulfillment is deliberately fail-closed. A product cannot be presented as
-    // "ships to you" until a real fulfillment adapter is configured and verified.
+    // Fail closed: Voxel Vault must never accept a "ships to you" order unless
+    // a real fulfillment provider is configured server-side.
     if (!process.env.FULFILLMENT_API_URL || !process.env.FULFILLMENT_API_KEY) {
       return NextResponse.json({
-        error: 'Physical fulfillment is not configured yet. Use the verified retailer link for the physical product; NFT checkout remains available separately.',
+        error: 'Automatic physical fulfillment is not connected yet. The verified retailer remains available for the physical purchase, while NFT checkout can be completed separately.',
         code: 'FULFILLMENT_NOT_CONFIGURED',
         sourceUrl: item.sourceUrl,
       }, { status: 503 });
@@ -31,37 +39,46 @@ export async function POST(request: Request) {
     if (!Number.isFinite(physicalCents) || physicalCents < 50) return NextResponse.json({ error: 'Product price is not configured for checkout' }, { status: 500 });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://voxelvault.io';
+    const metadata = {
+      mint_mode: 'physical_nft',
+      catalog_id: String(id),
+      catalog_key: item.id,
+      wallet: normalizedWallet,
+      buyer_id: user.id,
+      physical_amount_cents: String(physicalCents),
+      nft_amount_cents: String(NFT_FEE_CENTS),
+      product_source_url: item.sourceUrl,
+    };
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      customer_email: user.email || undefined,
+      billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: ['US'] },
+      phone_number_collection: { enabled: true },
       line_items: [{
         quantity: 1,
         price_data: {
           currency: 'usd',
-          unit_amount: physicalCents + NFT_FEE_CENTS,
+          unit_amount: physicalCents,
           product_data: {
-            name: `${item.name} + Voxel Vault Digital Twin`,
-            description: `Physical ${item.name} fulfillment plus one Voxel Vault digital collectible. Physical fulfillment is submitted only after verified payment.`,
+            name: item.name,
+            description: `Verified real-world product from ${item.sourceName}.`,
+          },
+        },
+      }, {
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          unit_amount: NFT_FEE_CENTS,
+          product_data: {
+            name: `${item.name} · Voxel Vault Digital Twin`,
+            description: 'One digital collectible for your Vault, Room, and world placement.',
           },
         },
       }],
-      metadata: {
-        mint_mode: 'physical_nft',
-        catalog_id: String(id),
-        catalog_key: item.id,
-        wallet: normalizedWallet,
-        physical_amount_cents: String(physicalCents),
-        nft_amount_cents: String(NFT_FEE_CENTS),
-        product_source_url: item.sourceUrl,
-      },
-      payment_intent_data: {
-        metadata: {
-          mint_mode: 'physical_nft',
-          catalog_id: String(id),
-          catalog_key: item.id,
-          wallet: normalizedWallet,
-        },
-      },
+      metadata,
+      payment_intent_data: { metadata },
       success_url: `${appUrl}/mint?catalog=${id}&session_id={CHECKOUT_SESSION_ID}&physical=1`,
       cancel_url: `${appUrl}/mint?catalog=${id}&cancelled=1`,
     });
