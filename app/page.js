@@ -1,3 +1,3 @@
 'use client';
-import RealWorldVaultHome from './components/RealWorldVaultHome';
-export default function Home(){return <RealWorldVaultHome/>;}
+import RealWorldCommerceHome from './components/RealWorldCommerceHome';
+export default function Home(){return <RealWorldCommerceHome/>;}
